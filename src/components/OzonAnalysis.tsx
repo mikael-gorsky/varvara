@@ -314,6 +314,82 @@ const OzonAnalysis: React.FC<OzonAnalysisProps> = ({ onBack }) => {
                 </div>
               </div>
             )}
+
+            {/* Field Mapping Preview */}
+            <div className="bg-white/5 rounded-lg p-4 mb-6">
+              <h3 className="text-white font-semibold mb-4 flex items-center gap-2">
+                <Database className="w-5 h-5" />
+                Imported Data Fields
+              </h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                <div className="bg-white/5 rounded p-3">
+                  <p className="text-blue-200 text-xs font-medium mb-1">NAME</p>
+                  <p className="text-white text-sm font-semibold mb-1">
+                    {selectedData.rows.filter(r => r.name).length} / {selectedData.rows.length} populated
+                  </p>
+                  <p className="text-blue-300 text-xs truncate">
+                    Sample: {selectedData.rows.find(r => r.name)?.name || 'N/A'}
+                  </p>
+                </div>
+                
+                <div className="bg-white/5 rounded p-3">
+                  <p className="text-blue-200 text-xs font-medium mb-1">CATEGORY</p>
+                  <p className="text-white text-sm font-semibold mb-1">
+                    {selectedData.rows.filter(r => r.category).length} / {selectedData.rows.length} populated
+                  </p>
+                  <p className="text-blue-300 text-xs truncate">
+                    Sample: {selectedData.rows.find(r => r.category)?.category || 'N/A'}
+                  </p>
+                </div>
+                
+                <div className="bg-white/5 rounded p-3">
+                  <p className="text-blue-200 text-xs font-medium mb-1">PRICE</p>
+                  <p className="text-white text-sm font-semibold mb-1">
+                    {selectedData.rows.filter(r => r.price !== null).length} / {selectedData.rows.length} populated
+                  </p>
+                  <p className="text-blue-300 text-xs truncate">
+                    Sample: {selectedData.rows.find(r => r.price !== null)?.price || 'N/A'}
+                  </p>
+                </div>
+                
+                <div className="bg-white/5 rounded p-3">
+                  <p className="text-blue-200 text-xs font-medium mb-1">QUANTITY</p>
+                  <p className="text-white text-sm font-semibold mb-1">
+                    {selectedData.rows.filter(r => r.quantity !== null).length} / {selectedData.rows.length} populated
+                  </p>
+                  <p className="text-blue-300 text-xs truncate">
+                    Sample: {selectedData.rows.find(r => r.quantity !== null)?.quantity || 'N/A'}
+                  </p>
+                </div>
+                
+                <div className="bg-white/5 rounded p-3">
+                  <p className="text-blue-200 text-xs font-medium mb-1">SUPPLIER</p>
+                  <p className="text-white text-sm font-semibold mb-1">
+                    {selectedData.rows.filter(r => r.supplier).length} / {selectedData.rows.length} populated
+                  </p>
+                  <p className="text-blue-300 text-xs truncate">
+                    Sample: {selectedData.rows.find(r => r.supplier)?.supplier || 'N/A'}
+                  </p>
+                </div>
+                
+                <div className="bg-white/5 rounded p-3">
+                  <p className="text-blue-200 text-xs font-medium mb-1">EXTERNAL ID</p>
+                  <p className="text-white text-sm font-semibold mb-1">
+                    {selectedData.rows.filter(r => r.external_id).length} / {selectedData.rows.length} populated
+                  </p>
+                  <p className="text-blue-300 text-xs truncate">
+                    Sample: {selectedData.rows.find(r => r.external_id)?.external_id || 'N/A'}
+                  </p>
+                </div>
+              </div>
+              
+              <div className="mt-4 p-3 bg-blue-500/10 rounded border border-blue-500/30">
+                <h4 className="text-blue-300 text-sm font-medium mb-2">Raw Headers Detected:</h4>
+                <p className="text-blue-200 text-xs">
+                  {selectedData.headers.join(' | ')}
+                </p>
+              </div>
+            </div>
           </div>
         )}
 

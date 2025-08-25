@@ -91,29 +91,10 @@ const mapHeaders = (actualHeaders: string[], expectedHeaders: string[]): Record<
   // Log headers for debugging
   console.log('Detected headers:', actualHeaders);
   
-  expectedHeaders.forEach(expected => {
-    const index = actualHeaders.findIndex(actual => {
-      const actualLower = String(actual || '').toLowerCase().trim();
-      const expectedLower = expected.toLowerCase();
-      
-      // Direct match
-      if (actualLower === expectedLower) return true;
-      
-      // Partial matches for common variations
-      if (expectedLower === 'name' && (actualLower.includes('name') || actualLower.includes('наименование') || actualLower.includes('название'))) return true;
-      if (expectedLower === 'category' && (actualLower.includes('category') || actualLower.includes('категория') || actualLower.includes('тип'))) return true;
-      if (expectedLower === 'price' && (actualLower.includes('price') || actualLower.includes('цена') || actualLower.includes('стоимость'))) return true;
-      if (expectedLower === 'quantity' && (actualLower.includes('quantity') || actualLower.includes('количество') || actualLower.includes('qty'))) return true;
-      if (expectedLower === 'supplier' && (actualLower.includes('supplier') || actualLower.includes('поставщик') || actualLower.includes('vendor'))) return true;
-      if (expectedLower === 'date' && (actualLower.includes('date') || actualLower.includes('дата'))) return true;
-      if (expectedLower === 'id' && (actualLower.includes('id') || actualLower === 'номер' || actualLower === '№')) return true;
-      
-      return false;
-    }
-    );
-    if (index !== -1) {
-      map[expected] = index;
-    }
+  // Map ALL headers directly by index - no filtering or judgment
+  actualHeaders.forEach((header, index) => {
+    const cleanHeader = String(header || `column_${index + 1}`).trim();
+    map[`col_${index}`] = index;
   });
   
   console.log('Header mapping:', map);
@@ -121,48 +102,81 @@ const mapHeaders = (actualHeaders: string[], expectedHeaders: string[]): Record<
 };
 
 const mapRowToProduct = (row: any[], headerMap: Record<string, number>, headers: string[]): ProductRow | null => {
-  // Process ALL rows from ERP system - no filtering
+  // Process ALL rows from ERP system - map all 33 columns
 
-  const getValue = (key: string): any => {
-    const index = headerMap[key];
+  const getValue = (colIndex: number): any => {
+    const index = colIndex;
     const value = index !== undefined && index < row.length ? row[index] : null;
     return value;
   };
 
-  // Map to database columns - use first two columns if no header mapping
-  let name = String(getValue('name') || row[0] || '').trim();
-  let category = String(getValue('category') || row[1] || 'General').trim();
+  // Map ALL columns from your 33-column ERP system
+  const productData: ProductRow = {
+    // Basic required fields
+    name: String(getValue(0) || '').trim() || `Item_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+    category: String(getValue(1) || 'General').trim(),
+    
+    // Map all other columns to available database fields
+    external_id: String(getValue(2) || ''),
+    price: parseFloat(String(getValue(3) || '0').replace(',', '.')),
+    quantity: parseInt(String(getValue(4) || '0')),
+    supplier: String(getValue(5) || '').trim() || null,
+    
+    // Extended ERP fields - map remaining columns
+    sku: String(getValue(6) || '').trim() || null,
+    barcode: String(getValue(7) || '').trim() || null,
+    subcategory: String(getValue(8) || '').trim() || null,
+    brand: String(getValue(9) || '').trim() || null,
+    model: String(getValue(10) || '').trim() || null,
+    
+    cost_price: parseFloat(String(getValue(11) || '0').replace(',', '.')) || null,
+    wholesale_price: parseFloat(String(getValue(12) || '0').replace(',', '.')) || null,
+    retail_price: parseFloat(String(getValue(13) || '0').replace(',', '.')) || null,
+    margin_percent: parseFloat(String(getValue(14) || '0').replace(',', '.')) || null,
+    tax_rate: parseFloat(String(getValue(15) || '0').replace(',', '.')) || null,
+    
+    min_stock: parseInt(String(getValue(16) || '0')) || null,
+    max_stock: parseInt(String(getValue(17) || '0')) || null,
+    reorder_point: parseInt(String(getValue(18) || '0')) || null,
+    warehouse_location: String(getValue(19) || '').trim() || null,
+    weight: parseFloat(String(getValue(20) || '0').replace(',', '.')) || null,
+    dimensions: String(getValue(21) || '').trim() || null,
+    
+    supplier_sku: String(getValue(22) || '').trim() || null,
+    supplier_price: parseFloat(String(getValue(23) || '0').replace(',', '.')) || null,
+    lead_time_days: parseInt(String(getValue(24) || '0')) || null,
+    supplier_contact: String(getValue(25) || '').trim() || null,
+    
+    description: String(getValue(26) || '').trim() || null,
+    short_description: String(getValue(27) || '').trim() || null,
+    sales_rank: parseInt(String(getValue(28) || '0')) || null,
+    sales_velocity: parseFloat(String(getValue(29) || '0').replace(',', '.')) || null,
+    
+    status: String(getValue(30) || 'active').trim(),
+    is_active: Boolean(getValue(31)) || true,
+    
+    // Custom fields for remaining columns
+    custom_field_1: String(getValue(32) || '').trim() || null,
+    custom_field_2: String(getValue(33) || '').trim() || null,
+    custom_field_3: String(getValue(34) || '').trim() || null,
+    custom_field_4: String(getValue(35) || '').trim() || null,
+    custom_field_5: String(getValue(36) || '').trim() || null,
+  };
   
-  // Use row data as-is - no judgement calls
-  if (!name) {
-    name = `Item_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-  }
-  
-  const price = parseFloat(String(getValue('price') || '0').replace(',', '.'));
-  const quantity = parseInt(String(getValue('quantity') || '0'));
-  
-  let importDate: string | null = null;
-  const dateValue = getValue('date');
+  // Handle date field if present
+  const dateValue = getValue(37); // Assuming date might be in column 38
   if (dateValue) {
     try {
       const date = new Date(dateValue);
       if (!isNaN(date.getTime())) {
-        importDate = date.toISOString().split('T')[0];
+        productData.import_date = date.toISOString().split('T')[0];
       }
     } catch {
-      // Keep as null if date parsing fails
+      productData.import_date = null;
     }
   }
-
-  return {
-    external_id: String(getValue('id') || ''),
-    name,
-    category,
-    price: isNaN(price) ? null : price,
-    quantity: isNaN(quantity) ? null : quantity,
-    supplier: String(getValue('supplier') || '').trim() || null,
-    import_date: importDate
-  };
+  
+  return productData;
 };
 
 export const validateProductRow = (row: ProductRow): string[] => {

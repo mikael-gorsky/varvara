@@ -348,6 +348,39 @@ const OzonAnalysis: React.FC<OzonAnalysisProps> = ({ onBack }) => {
         )}
 
         {/* Status */}
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b border-white/20">
+                    <th className="text-left text-blue-200 p-3 font-medium">Name</th>
+                    <th className="text-left text-blue-200 p-3 font-medium">Category</th>
+                    <th className="text-left text-blue-200 p-3 font-medium">Price</th>
+                    <th className="text-left text-blue-200 p-3 font-medium">Quantity</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {selectedData.rows.slice(0, 10).map((row, index) => (
+                    <tr key={index} className="border-b border-white/10 hover:bg-white/5">
+                      <td className="text-white p-3 max-w-xs truncate">{row.name}</td>
+                      <td className="text-blue-200 p-3">{row.category}</td>
+                      <td className="text-emerald-400 p-3">{row.price ? `$${row.price}` : '-'}</td>
+                      <td className="text-blue-300 p-3">{row.quantity || '-'}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+              {selectedData.rows.length > 10 && (
+                <div className="text-center py-4">
+                  <p className="text-blue-300 text-sm">
+                    Showing 10 of {selectedData.rows.length} rows
+                  </p>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* Status */}
         <div className="backdrop-blur-xl bg-white/10 rounded-xl border border-white/20 shadow-xl p-4">
           <div className="flex items-center justify-center space-x-3">
             <div className="w-3 h-3 bg-emerald-400 rounded-full animate-pulse shadow-lg shadow-emerald-400/50"></div>

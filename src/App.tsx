@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
 import AnalyticsPicker from './components/AnalyticsPicker';
 import CEODashboard from './components/CEODashboard';
-import ExcelImport from './components/ExcelImport';
+import OzonAnalysis from './components/OzonAnalysis';
 
-type ActiveModule = 'picker' | 'ceo-dashboard' | 'excel-import';
+type ActiveModule = 'picker' | 'ceo-dashboard' | 'ozon-analysis';
 
 function App() {
   const [activeModule, setActiveModule] = useState<ActiveModule>('picker');
@@ -20,8 +20,8 @@ function App() {
     switch (activeModule) {
       case 'ceo-dashboard':
         return <CEODashboard onBack={handleBack} />;
-      case 'excel-import':
-        return <ExcelImport onBack={handleBack} />;
+      case 'ozon-analysis':
+        return <OzonAnalysis onBack={handleBack} />;
       default:
         return <AnalyticsPicker onSelectModule={handleSelectModule} />;
     }

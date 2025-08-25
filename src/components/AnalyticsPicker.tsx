@@ -25,9 +25,9 @@ const AnalyticsPicker: React.FC<AnalyticsPickerProps> = ({ onSelectModule }) => 
       available: true
     },
     {
-      id: 'excel-import',
-      title: 'Excel Data Import',
-      description: 'Upload and process Excel files into database',
+      id: 'ozon-analysis',
+      title: 'OZON Data Analysis',
+      description: 'Import and analyze OZON marketplace reports and data',
       icon: <FileSpreadsheet className="w-8 h-8" />,
       color: 'from-emerald-400 to-teal-500',
       available: true

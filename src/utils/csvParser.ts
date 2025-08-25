@@ -91,35 +91,83 @@ const processRawData = (rawData: any[][]): ParsedData => {
 const mapHeaders = (actualHeaders: string[], expectedHeaders: string[]): Record<string, number> => {
   const map: Record<string, number> = {};
   
+  // Log headers for debugging
+  console.log('Detected headers:', actualHeaders);
+  
   expectedHeaders.forEach(expected => {
-    const index = actualHeaders.findIndex(actual => 
-      actual.toLowerCase().includes(expected.toLowerCase()) ||
-      expected.toLowerCase().includes(actual.toLowerCase())
+    const index = actualHeaders.findIndex(actual => {
+      const actualLower = String(actual || '').toLowerCase().trim();
+      const expectedLower = expected.toLowerCase();
+      
+      // Direct match
+      if (actualLower === expectedLower) return true;
+      
+      // Partial matches for common variations
+      if (expectedLower === 'name' && (actualLower.includes('name') || actualLower.includes('наименование') || actualLower.includes('название'))) return true;
+      if (expectedLower === 'category' && (actualLower.includes('category') || actualLower.includes('категория') || actualLower.includes('тип'))) return true;
+      if (expectedLower === 'price' && (actualLower.includes('price') || actualLower.includes('цена') || actualLower.includes('стоимость'))) return true;
+      if (expectedLower === 'quantity' && (actualLower.includes('quantity') || actualLower.includes('количество') || actualLower.includes('qty'))) return true;
+      if (expectedLower === 'supplier' && (actualLower.includes('supplier') || actualLower.includes('поставщик') || actualLower.includes('vendor'))) return true;
+      if (expectedLower === 'date' && (actualLower.includes('date') || actualLower.includes('дата'))) return true;
+      if (expectedLower === 'id' && (actualLower.includes('id') || actualLower === 'номер' || actualLower === '№')) return true;
+      
+      return false;
+    }
     );
     if (index !== -1) {
       map[expected] = index;
     }
   });
   
+  console.log('Header mapping:', map);
   return map;
 };
 
 const mapRowToProduct = (row: any[], headerMap: Record<string, number>, headers: string[]): ProductRow | null => {
   // Skip empty rows
-  if (row.every(cell => !cell || String(cell).trim() === '')) {
+  if (!row || row.length === 0 || row.every(cell => !cell || String(cell).trim() === '')) {
     return null;
   }
 
+  console.log('Processing row:', row);
+  console.log('Using header map:', headerMap);
+
   const getValue = (key: string): any => {
     const index = headerMap[key];
-    return index !== undefined ? row[index] : null;
+    const value = index !== undefined && index < row.length ? row[index] : null;
+    console.log(`${key} (index ${index}):`, value);
+    return value;
   };
 
-  const name = String(getValue('name') || '').trim();
-  const category = String(getValue('category') || '').trim();
+  // Try to get name from any available column if mapping failed
+  let name = String(getValue('name') || '').trim();
+  let category = String(getValue('category') || '').trim();
+  
+  // If no mapped name column, try first non-empty column
+  if (!name && row.length > 0) {
+    for (let i = 0; i < row.length; i++) {
+      const cellValue = String(row[i] || '').trim();
+      if (cellValue && cellValue !== 'undefined' && cellValue !== 'null') {
+        name = cellValue;
+        break;
+      }
+    }
+  }
+  
+  // If no mapped category, try second column or use a default
+  if (!category && row.length > 1) {
+    const secondCol = String(row[1] || '').trim();
+    if (secondCol && secondCol !== 'undefined' && secondCol !== 'null') {
+      category = secondCol;
+    } else {
+      category = 'General'; // Default category
+    }
+  } else if (!category) {
+    category = 'General';
+  }
   
   if (!name || !category) {
-    throw new Error('Name and category are required');
+    throw new Error(`Name and category are required. Got name: "${name}", category: "${category}"`);
   }
 
   const price = parseFloat(String(getValue('price') || '0').replace(',', '.'));

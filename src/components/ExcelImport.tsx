@@ -225,7 +225,9 @@ const ExcelImport: React.FC<ExcelImportProps> = ({ onBack }) => {
                 </p>
                 <div className="text-xs text-blue-300 bg-white/5 rounded-lg p-3">
                   <p className="font-medium mb-2">Expected columns:</p>
-                  <p>id, name, category, price, quantity, supplier, date</p>
+                  <p>Any structure with at least 2 columns</p>
+                  <p className="text-xs mt-1 opacity-75">Auto-detects: name, category, price, quantity, supplier, date</p>
+                  <p className="text-xs mt-1 opacity-75">Supports Russian: наименование, категория, цена, количество, поставщик, дата</p>
                 </div>
                 
                 <input

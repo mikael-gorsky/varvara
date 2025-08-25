@@ -1,3 +1,4 @@
+import React, { useState } from 'react';
 import { parseCSVFile, parseExcelFile, ParsedData, ProductRow } from '../utils/csvParser';
 
 interface OzonAnalysisProps {

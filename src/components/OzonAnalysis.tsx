@@ -7,5 +7,3 @@ interface OzonAnalysisProps {
 const OzonAnalysis: React.FC<OzonAnalysisProps> = ({ onBack }) => {
   const [isDragging, setIsDragging] = useState(false);
 };
-
-export default OzonAnalysis;

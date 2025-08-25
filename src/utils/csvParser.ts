@@ -54,40 +54,9 @@ const processRawData = (rawData: any[][]): ParsedData => {
     };
   }
 
-  // For report-style data, detect headers more intelligently
-  let headers: string[] = [];
-  let dataStartIndex = 0;
-  
-  // Look for the first row that looks like column headers
-  for (let i = 0; i < Math.min(rawData.length, 10); i++) {
-    const row = rawData[i];
-    if (row && row.length >= 2) {
-      const firstCell = String(row[0] || '').trim().toLowerCase();
-      const secondCell = String(row[1] || '').trim().toLowerCase();
-      
-      // Skip report metadata rows
-      if (firstCell.includes('период') || firstCell.includes('категория') || 
-          firstCell.includes('среднее') || firstCell.includes('отчет') ||
-          secondCell.includes('дней') || secondCell.includes('уровня')) {
-        continue;
-      }
-      
-      // This looks like actual product data
-      if (firstCell && secondCell && firstCell.length > 3 && secondCell.length > 3) {
-        headers = ['name', 'category']; // Simplified for report data
-        dataStartIndex = i;
-        break;
-      }
-    }
-  }
-  
-  // If no clear headers found, use first row
-  if (headers.length === 0) {
-    headers = ['name', 'category'];
-    dataStartIndex = 0;
-  }
-  
-  const dataRows = rawData.slice(dataStartIndex);
+  // Use first row as headers, all subsequent rows as data
+  const headers = rawData.length > 0 ? rawData[0].map((h, i) => String(h || `column_${i + 1}`)) : [];
+  const dataRows = rawData.slice(1);
   
   const expectedHeaders = ['id', 'name', 'category', 'price', 'quantity', 'supplier', 'date'];
   const headerMap = mapHeaders(headers, expectedHeaders);
@@ -98,11 +67,7 @@ const processRawData = (rawData: any[][]): ParsedData => {
   dataRows.forEach((row, index) => {
     try {
       const mappedRow = mapRowToProduct(row, headerMap, headers);
-      if (mappedRow) {
-        validRows.push(mappedRow);
-      } else {
-        errors.push(`Row ${index + 2}: Empty or invalid row`);
-      }
+      validRows.push(mappedRow);
     } catch (error) {
       errors.push(`Row ${index + 2}: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
@@ -156,74 +121,23 @@ const mapHeaders = (actualHeaders: string[], expectedHeaders: string[]): Record<
 };
 
 const mapRowToProduct = (row: any[], headerMap: Record<string, number>, headers: string[]): ProductRow | null => {
-  // Skip empty rows
-  if (!row || row.length === 0 || row.every(cell => !cell || String(cell).trim() === '')) {
-    return null;
-  }
-
-  // Skip report metadata rows
-  const firstCell = String(row[0] || '').trim().toLowerCase();
-  const secondCell = String(row[1] || '').trim().toLowerCase();
-  
-  if (firstCell.includes('период') || firstCell.includes('категория') || 
-      firstCell.includes('среднее') || firstCell.includes('отчет') ||
-      firstCell.includes('название товара') || firstCell.includes('ссылка') ||
-      secondCell.includes('дней') || secondCell.includes('уровня') ||
-      secondCell.includes('товар')) {
-    return null;
-  }
-  
-  // Skip URL-only rows (Ozon product links)
-  if (firstCell.startsWith('https://') || secondCell.startsWith('https://')) {
-    return null;
-  }
-  console.log('Processing row:', row);
-  console.log('Using header map:', headerMap);
+  // Process ALL rows from ERP system - no filtering
 
   const getValue = (key: string): any => {
     const index = headerMap[key];
     const value = index !== undefined && index < row.length ? row[index] : null;
-    console.log(`${key} (index ${index}):`, value);
     return value;
   };
 
-  // Try to get name from any available column if mapping failed
-  let name = String(getValue('name') || '').trim();
-  let category = String(getValue('category') || '').trim();
+  // Map to database columns - use first two columns if no header mapping
+  let name = String(getValue('name') || row[0] || '').trim();
+  let category = String(getValue('category') || row[1] || 'General').trim();
   
-  // For report data, use first column as name, second as category/info
-  if (!name && row.length > 0) {
-    name = String(row[0] || '').trim();
-  }
-  if (!category && row.length > 1) {
-    category = String(row[1] || '').trim();
+  // Use row data as-is - no judgement calls
+  if (!name) {
+    name = `Item_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
   }
   
-  // Clean up category - if it's a URL or too long, use a sensible default
-  if (category.startsWith('https://') || category.length > 100) {
-    category = 'Товары'; // Russian for "Products"
-  }
-  
-  // If no mapped name column, try first non-empty column
-  if (!name && row.length > 0) {
-    for (let i = 0; i < row.length; i++) {
-      const cellValue = String(row[i] || '').trim();
-      if (cellValue && cellValue !== 'undefined' && cellValue !== 'null') {
-        name = cellValue;
-        break;
-      }
-    }
-  }
-  
-  // Ensure we have a category
-  if (!category || category === 'undefined' || category === 'null') {
-    category = 'Товары';
-  }
-  
-  if (!name || !category) {
-    throw new Error(`Name and category are required. Got name: "${name}", category: "${category}"`);
-  }
-
   const price = parseFloat(String(getValue('price') || '0').replace(',', '.'));
   const quantity = parseInt(String(getValue('quantity') || '0'));
   
@@ -236,7 +150,7 @@ const mapRowToProduct = (row: any[], headerMap: Record<string, number>, headers:
         importDate = date.toISOString().split('T')[0];
       }
     } catch {
-      // Invalid date, keep as null
+      // Keep as null if date parsing fails
     }
   }
 

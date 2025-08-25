@@ -314,6 +314,8 @@ const OzonAnalysis: React.FC<OzonAnalysisProps> = ({ onBack }) => {
                 </div>
               </div>
             )}
+          </div>
+        )}
 
         <div className="backdrop-blur-xl bg-white/10 rounded-xl border border-white/20 shadow-xl p-4">
           <div className="flex items-center justify-center space-x-3">

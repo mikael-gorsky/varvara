@@ -319,78 +319,86 @@ const OzonAnalysis: React.FC<OzonAnalysisProps> = ({ onBack }) => {
             <div className="bg-white/5 rounded-lg p-4 mb-6">
               <h3 className="text-white font-semibold mb-4 flex items-center gap-2">
                 <Database className="w-5 h-5" />
-                Imported Data Fields
+                ERP Data Columns ({selectedData.headers.length} columns)
               </h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                <div className="bg-white/5 rounded p-3">
-                  <p className="text-blue-200 text-xs font-medium mb-1">NAME</p>
-                  <p className="text-white text-sm font-semibold mb-1">
-                    {selectedData.rows.filter(r => r.name).length} / {selectedData.rows.length} populated
-                  </p>
-                  <p className="text-blue-300 text-xs truncate">
-                    Sample: {selectedData.rows.find(r => r.name)?.name || 'N/A'}
-                  </p>
-                </div>
-                
-                <div className="bg-white/5 rounded p-3">
-                  <p className="text-blue-200 text-xs font-medium mb-1">CATEGORY</p>
-                  <p className="text-white text-sm font-semibold mb-1">
-                    {selectedData.rows.filter(r => r.category).length} / {selectedData.rows.length} populated
-                  </p>
-                  <p className="text-blue-300 text-xs truncate">
-                    Sample: {selectedData.rows.find(r => r.category)?.category || 'N/A'}
-                  </p>
-                </div>
-                
-                <div className="bg-white/5 rounded p-3">
-                  <p className="text-blue-200 text-xs font-medium mb-1">PRICE</p>
-                  <p className="text-white text-sm font-semibold mb-1">
-                    {selectedData.rows.filter(r => r.price !== null).length} / {selectedData.rows.length} populated
-                  </p>
-                  <p className="text-blue-300 text-xs truncate">
-                    Sample: {selectedData.rows.find(r => r.price !== null)?.price || 'N/A'}
-                  </p>
-                </div>
-                
-                <div className="bg-white/5 rounded p-3">
-                  <p className="text-blue-200 text-xs font-medium mb-1">QUANTITY</p>
-                  <p className="text-white text-sm font-semibold mb-1">
-                    {selectedData.rows.filter(r => r.quantity !== null).length} / {selectedData.rows.length} populated
-                  </p>
-                  <p className="text-blue-300 text-xs truncate">
-                    Sample: {selectedData.rows.find(r => r.quantity !== null)?.quantity || 'N/A'}
-                  </p>
-                </div>
-                
-                <div className="bg-white/5 rounded p-3">
-                  <p className="text-blue-200 text-xs font-medium mb-1">SUPPLIER</p>
-                  <p className="text-white text-sm font-semibold mb-1">
-                    {selectedData.rows.filter(r => r.supplier).length} / {selectedData.rows.length} populated
-                  </p>
-                  <p className="text-blue-300 text-xs truncate">
-                    Sample: {selectedData.rows.find(r => r.supplier)?.supplier || 'N/A'}
-                  </p>
-                </div>
-                
-                <div className="bg-white/5 rounded p-3">
-                  <p className="text-blue-200 text-xs font-medium mb-1">EXTERNAL ID</p>
-                  <p className="text-white text-sm font-semibold mb-1">
-                    {selectedData.rows.filter(r => r.external_id).length} / {selectedData.rows.length} populated
-                  </p>
-                  <p className="text-blue-300 text-xs truncate">
-                    Sample: {selectedData.rows.find(r => r.external_id)?.external_id || 'N/A'}
-                  </p>
-                </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3 max-h-96 overflow-y-auto">
+                {selectedData.headers.map((header, index) => {
+                  const sampleValue = selectedData.rows.find(row => {
+                    const rowArray = Object.values(row);
+                    return rowArray[index] && String(rowArray[index]).trim();
+                  });
+                  const sampleData = sampleValue ? Object.values(sampleValue)[index] : 'N/A';
+                  
+                  return (
+                    <div key={index} className="bg-white/5 rounded p-3">
+                      <p className="text-blue-200 text-xs font-medium mb-1 truncate" title={header}>
+                        {header || `Column ${index + 1}`}
+                      </p>
+                      <p className="text-blue-300 text-xs truncate" title={String(sampleData)}>
+                        {String(sampleData)}
+                      </p>
+                    </div>
+                  );
+                })}
               </div>
               
-              <div className="mt-4 p-3 bg-blue-500/10 rounded border border-blue-500/30">
-                <h4 className="text-blue-300 text-sm font-medium mb-2">Raw Headers Detected:</h4>
-                <p className="text-blue-200 text-xs">
+              <div className="mt-4 p-3 bg-emerald-500/10 rounded border border-emerald-500/30">
+                <h4 className="text-emerald-300 text-sm font-medium mb-2">✅ ERP Column Headers (Row 5):</h4>
+                <p className="text-emerald-200 text-xs leading-relaxed">
                   {selectedData.headers.join(' | ')}
                 </p>
-                <p className="text-blue-300 text-xs mt-2">
-                  Headers read from Row 5 of your ERP export
+                <p className="text-emerald-300 text-xs mt-2">
+                  Successfully imported all {selectedData.headers.length} columns from your ERP system
                 </p>
+              </div>
+            </div>
+          </div>
+        )}
+
+        <div className="backdrop-blur-xl bg-white/10 rounded-xl border border-white/20 shadow-xl p-4">
+          <div className="flex items-center justify-center space-x-3">
+                    {selectedData.headers.slice(0, 8).map((header, index) => (
+                      <th key={index} className="text-left text-blue-200 p-3 font-medium text-xs truncate max-w-32" title={header}>
+                        {header || `Col ${index + 1}`}
+                      </th>
+                    ))}
+                    {selectedData.headers.length > 8 && (
+                      <th className="text-left text-blue-200 p-3 font-medium text-xs">
+                        ...+{selectedData.headers.length - 8} more
+                      </th>
+                  {selectedData.rows.slice(0, 5).map((row, rowIndex) => {
+                    const rowArray = Object.values(row);
+                    return (
+                      <tr key={rowIndex} className="border-b border-white/10 hover:bg-white/5">
+                        {selectedData.headers.slice(0, 8).map((_, colIndex) => (
+                          <td key={colIndex} className="text-white p-3 text-xs truncate max-w-32" title={String(rowArray[colIndex] || '')}>
+                            {String(rowArray[colIndex] || '-')}
+                          </td>
+                        ))}
+                        {selectedData.headers.length > 8 && (
+                          <td className="text-blue-300 p-3 text-xs">...</td>
+                        )}
+                      </tr>
+
+            <div className="bg-white/5 rounded-lg p-4">
+              <h3 className="text-white font-semibold mb-2">Import Summary</h3>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+                <div>
+                  <p className="text-blue-200">Total Rows</p>
+                  <p className="text-white font-bold">{selectedData.rows.length}</p>
+                </div>
+                <div>
+                  <p className="text-blue-200">Total Columns</p>
+                  <p className="text-white font-bold">{selectedData.headers.length}</p>
+                </div>
+                <div>
+                  <p className="text-blue-200">Data Source</p>
+                  <p className="text-white font-bold">ERP Row 5+</p>
+                </div>
+                <div>
+                  <p className="text-blue-200">Status</p>
+                  <p className="text-emerald-400 font-bold">Ready to Import</p>
+                </div>
               </div>
             </div>
           </div>
@@ -408,4 +416,5 @@ const OzonAnalysis: React.FC<OzonAnalysisProps> = ({ onBack }) => {
   );
 };
 
+export default OzonAnalysis;
 export default OzonAnalysis;

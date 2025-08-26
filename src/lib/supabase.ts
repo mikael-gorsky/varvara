@@ -9,6 +9,14 @@ if (!supabaseUrl || !supabaseAnonKey) {
 
 export const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
+// Admin client for server operations (imports, etc.)
+const supabaseServiceKey = import.meta.env.VITE_SUPABASE_SERVICE_ROLE_KEY;
+if (!supabaseServiceKey) {
+  console.warn('VITE_SUPABASE_SERVICE_ROLE_KEY not found - admin operations will fail');
+}
+
+export const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey || supabaseAnonKey);
+
 export type Database = {
   public: {
     Tables: {

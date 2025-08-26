@@ -1,7 +1,7 @@
 import React, { useState, useCallback } from 'react';
 import { ArrowLeft, FileSpreadsheet, Upload, AlertTriangle, CheckCircle, Database, Download, Trash2 } from 'lucide-react';
 import { parseCSVFile, parseExcelFile, ParsedData, ProductRow } from '../utils/csvParser';
-import { supabase } from '../lib/supabase';
+import { supabase, supabaseAdmin } from '../lib/supabase';
 
 interface OzonAnalysisProps {
   onBack: () => void;
@@ -64,7 +64,7 @@ const OzonAnalysis: React.FC<OzonAnalysisProps> = ({ onBack }) => {
     setIsImporting(true);
     
     try {
-      const { data: insertedData, error } = await supabase
+      const { data: insertedData, error } = await supabaseAdmin
         .from('products')
         .insert(data.rows)
         .select();

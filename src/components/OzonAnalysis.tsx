@@ -13,6 +13,7 @@ const OzonAnalysis: React.FC<OzonAnalysisProps> = ({ onBack }) => {
   const [isUploading, setIsUploading] = useState(false);
   const [isImporting, setIsImporting] = useState(false);
   const [selectedFile, setSelectedFile] = useState<string | null>(null);
+  const [showPreview, setShowPreview] = useState<Record<string, boolean>>({});
 
   const handleDrop = useCallback(async (e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();
@@ -114,12 +115,23 @@ const OzonAnalysis: React.FC<OzonAnalysisProps> = ({ onBack }) => {
     newFiles.delete(fileName);
     setUploadedFiles(newFiles);
     
+    // Clean up preview state
+    const newShowPreview = { ...showPreview };
+    delete newShowPreview[fileName];
+    setShowPreview(newShowPreview);
+    
     if (selectedFile === fileName) {
       const remainingFiles = Array.from(newFiles.keys());
       setSelectedFile(remainingFiles.length > 0 ? remainingFiles[0] : null);
     }
   };
 
+  const togglePreview = (fileName: string) => {
+    setShowPreview(prev => ({
+      ...prev,
+      [fileName]: !prev[fileName]
+    }));
+  };
   const selectedData = selectedFile ? uploadedFiles.get(selectedFile) : null;
 
   return (
@@ -232,6 +244,15 @@ const OzonAnalysis: React.FC<OzonAnalysisProps> = ({ onBack }) => {
                             <span className={data.stats.errorRows > 0 ? 'text-yellow-400' : 'text-emerald-400'}>
                               {data.stats.errorRows} errors
                             </span>
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                togglePreview(fileName);
+                              }}
+                              className="text-blue-400 hover:text-blue-300 text-xs mt-2 underline transition-colors"
+                            >
+                              {showPreview[fileName] ? 'Hide Data Preview' : 'Show Data Preview'}
+                            </button>
                           </div>
                         </div>
                       </div>
@@ -253,7 +274,7 @@ const OzonAnalysis: React.FC<OzonAnalysisProps> = ({ onBack }) => {
         </div>
 
         {/* Data Preview */}
-        {selectedData && (
+        {selectedData && selectedFile && showPreview[selectedFile] && (
           <div className="backdrop-blur-xl bg-white/10 rounded-xl border border-white/20 shadow-2xl p-6">
             <div className="flex items-center justify-between mb-6">
               <h2 className="text-xl font-bold text-white">Data Preview</h2>

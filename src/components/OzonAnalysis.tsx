@@ -253,6 +253,16 @@ const OzonAnalysis: React.FC<OzonAnalysisProps> = ({ onBack }) => {
                             >
                               {showPreview[fileName] ? 'Hide Data Preview' : 'Show Data Preview'}
                             </button>
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                importToDatabase(fileName);
+                              }}
+                              disabled={isImporting || data.stats.validRows === 0}
+                              className="ml-3 px-3 py-1 bg-emerald-500 hover:bg-emerald-600 disabled:bg-gray-500 text-white rounded text-xs transition-colors"
+                            >
+                              {isImporting ? 'Importing...' : 'Import to DB'}
+                            </button>
                           </div>
                         </div>
                       </div>

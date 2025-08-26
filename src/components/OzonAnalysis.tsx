@@ -388,6 +388,9 @@ const OzonAnalysis: React.FC<OzonAnalysisProps> = ({ onBack }) => {
                 <p className="text-blue-200 text-xs">
                   {selectedData.headers.join(' | ')}
                 </p>
+                <p className="text-blue-300 text-xs mt-2">
+                  Headers read from Row 5 of your ERP export
+                </p>
               </div>
             </div>
           </div>

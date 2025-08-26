@@ -54,9 +54,9 @@ const processRawData = (rawData: any[][]): ParsedData => {
     };
   }
 
-  // Use first row as headers, all subsequent rows as data
-  const headers = rawData.length > 0 ? rawData[0].map((h, i) => String(h || `column_${i + 1}`)) : [];
-  const dataRows = rawData.slice(1);
+  // Use row 5 (index 4) as headers, all subsequent rows as data
+  const headers = rawData.length > 4 ? rawData[4].map((h, i) => String(h || `column_${i + 1}`)) : [];
+  const dataRows = rawData.slice(5); // Start from row 6 (index 5) for actual data
   
   const expectedHeaders = ['id', 'name', 'category', 'price', 'quantity', 'supplier', 'date'];
   const headerMap = mapHeaders(headers, expectedHeaders);
@@ -102,7 +102,7 @@ const mapHeaders = (actualHeaders: string[], expectedHeaders: string[]): Record<
 };
 
 const mapRowToProduct = (row: any[], headerMap: Record<string, number>, headers: string[]): ProductRow | null => {
-  // Process ALL rows from ERP system - map all 33 columns
+  // Process ALL rows from ERP system - map using ACTUAL column headers from row 5
 
   const getValue = (colIndex: number): any => {
     const index = colIndex;
@@ -110,9 +110,9 @@ const mapRowToProduct = (row: any[], headerMap: Record<string, number>, headers:
     return value;
   };
 
-  // Map ALL columns from your 33-column ERP system
+  // Map ALL 33 columns using the actual headers from your ERP system
   const productData: ProductRow = {
-    // Basic required fields
+    // Map using actual column positions (0-32 for 33 columns)
     name: String(getValue(0) || '').trim() || `Item_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
     category: String(getValue(1) || 'General').trim(),
     

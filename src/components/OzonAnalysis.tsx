@@ -352,35 +352,46 @@ const OzonAnalysis: React.FC<OzonAnalysisProps> = ({ onBack }) => {
                 </p>
               </div>
             </div>
-          </div>
-        )}
 
-        <div className="backdrop-blur-xl bg-white/10 rounded-xl border border-white/20 shadow-xl p-4">
-          <div className="flex items-center justify-center space-x-3">
-                    {selectedData.headers.slice(0, 8).map((header, index) => (
-                      <th key={index} className="text-left text-blue-200 p-3 font-medium text-xs truncate max-w-32" title={header}>
-                        {header || `Col ${index + 1}`}
-                      </th>
-                    ))}
-                    {selectedData.headers.length > 8 && (
-                      <th className="text-left text-blue-200 p-3 font-medium text-xs">
-                        ...+{selectedData.headers.length - 8} more
-                      </th>
-                  {selectedData.rows.slice(0, 5).map((row, rowIndex) => {
-                    const rowArray = Object.values(row);
-                    return (
-                      <tr key={rowIndex} className="border-b border-white/10 hover:bg-white/5">
-                        {selectedData.headers.slice(0, 8).map((_, colIndex) => (
-                          <td key={colIndex} className="text-white p-3 text-xs truncate max-w-32" title={String(rowArray[colIndex] || '')}>
-                            {String(rowArray[colIndex] || '-')}
-                          </td>
-                        ))}
-                        {selectedData.headers.length > 8 && (
-                          <td className="text-blue-300 p-3 text-xs">...</td>
-                        )}
-                      </tr>
+            <div className="bg-white/5 rounded-lg overflow-hidden">
+              <div className="overflow-x-auto">
+                <table className="w-full">
+                  <thead>
+                    <tr className="border-b border-white/10">
+                      {selectedData.headers.slice(0, 8).map((header, index) => (
+                        <th key={index} className="text-left text-blue-200 p-3 font-medium text-xs truncate max-w-32" title={header}>
+                          {header || `Col ${index + 1}`}
+                        </th>
+                      ))}
+                      {selectedData.headers.length > 8 && (
+                        <th className="text-left text-blue-200 p-3 font-medium text-xs">
+                          ...+{selectedData.headers.length - 8} more
+                        </th>
+                      )}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {selectedData.rows.slice(0, 5).map((row, rowIndex) => {
+                      const rowArray = Object.values(row);
+                      return (
+                        <tr key={rowIndex} className="border-b border-white/10 hover:bg-white/5">
+                          {selectedData.headers.slice(0, 8).map((_, colIndex) => (
+                            <td key={colIndex} className="text-white p-3 text-xs truncate max-w-32" title={String(rowArray[colIndex] || '')}>
+                              {String(rowArray[colIndex] || '-')}
+                            </td>
+                          ))}
+                          {selectedData.headers.length > 8 && (
+                            <td className="text-blue-300 p-3 text-xs">...</td>
+                          )}
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            </div>
 
-            <div className="bg-white/5 rounded-lg p-4">
+            <div className="bg-white/5 rounded-lg p-4 mt-6">
               <h3 className="text-white font-semibold mb-2">Import Summary</h3>
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
                 <div>
@@ -416,5 +427,4 @@ const OzonAnalysis: React.FC<OzonAnalysisProps> = ({ onBack }) => {
   );
 };
 
-export default OzonAnalysis;
 export default OzonAnalysis;

@@ -196,7 +196,7 @@ export class ProductAnalysisService {
 
       // If RPC doesn't work, fall back to processing the data manually
       const categoryData = distinctError ? data : distinctData;
-      const finalError = distinctError ? error : distinctError;</anoltAction>
+      const finalError = distinctError ? error : distinctError;
 
       if (finalError && error) {
         diagnostics.push({

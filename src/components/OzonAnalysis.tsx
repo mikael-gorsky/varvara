@@ -33,11 +33,14 @@ const OzonAnalysis: React.FC<OzonAnalysisProps> = ({ onBack }) => {
 
   const loadCategories = async () => {
     setIsLoadingCategories(true);
+    console.log('🔄 Loading categories...');
     try {
       const availableCategories = await ProductAnalysisService.getCategories();
+      console.log('📋 Received categories:', availableCategories);
       setCategories(availableCategories);
     } catch (error) {
-      console.error('Failed to load categories:', error);
+      console.error('❌ Failed to load categories:', error);
+      alert('Failed to load categories. Check console for details.');
     }
     setIsLoadingCategories(false);
   };

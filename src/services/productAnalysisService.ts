@@ -103,22 +103,36 @@ export class ProductAnalysisService {
    */
   static async getCategories(): Promise<string[]> {
     try {
+      console.log('🔍 Fetching categories from products table...');
+      
       const { data, error } = await supabase
         .from('products')
-        .select('category')
-        .eq('is_active', true);
+        .select('category, is_active')
+        .limit(1000); // Remove is_active filter temporarily for debugging
 
       if (error) {
-        console.error('Failed to fetch categories:', error);
+        console.error('❌ Failed to fetch categories:', error);
+        return [];
+      }
+
+      console.log(`📊 Found ${data?.length || 0} products in database`);
+      
+      if (!data || data.length === 0) {
+        console.warn('⚠️ No products found in database. Import some data first.');
         return [];
       }
 
       // Get unique categories
       const uniqueCategories = [...new Set(data?.map(p => p.category) || [])];
-      return uniqueCategories.filter(cat => cat && cat.trim());
+      const filteredCategories = uniqueCategories.filter(cat => cat && cat.trim());
+      
+      console.log(`📋 Found categories:`, filteredCategories);
+      console.log(`✅ Returning ${filteredCategories.length} unique categories`);
+      
+      return filteredCategories;
 
     } catch (error) {
-      console.error('Get categories error:', error);
+      console.error('❌ Get categories error:', error);
       return [];
     }
   }

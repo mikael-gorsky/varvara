@@ -105,26 +105,45 @@ export class ProductAnalysisService {
     try {
       console.log('🔍 Fetching categories from products table...');
       
+      // First, try to get total count of products
+      const { count: totalCount, error: countError } = await supabase
+        .from('products')
+        .select('*', { count: 'exact', head: true });
+
+      if (countError) {
+        console.error('❌ Failed to count products:', countError);
+        return [];
+      }
+
+      console.log(`📊 Total products in database: ${totalCount || 0}`);
+      
+      if (!totalCount || totalCount === 0) {
+        console.warn('⚠️ No products found in database. Import some data first.');
+        return [];
+      }
+
+      // Now get categories from all products (no RLS filtering)
       const { data, error } = await supabase
         .from('products')
-        .select('category, is_active')
-        .limit(1000); // Remove is_active filter temporarily for debugging
+        .select('category')
+        .not('category', 'is', null)
+        .not('category', 'eq', '');
 
       if (error) {
         console.error('❌ Failed to fetch categories:', error);
         return [];
       }
-
-      console.log(`📊 Found ${data?.length || 0} products in database`);
+      
+      console.log(`📊 Found ${data?.length || 0} products with valid categories`);
       
       if (!data || data.length === 0) {
-        console.warn('⚠️ No products found in database. Import some data first.');
+        console.warn('⚠️ No products with valid categories found.');
         return [];
       }
 
       // Get unique categories
-      const uniqueCategories = [...new Set(data?.map(p => p.category) || [])];
-      const filteredCategories = uniqueCategories.filter(cat => cat && cat.trim());
+      const uniqueCategories = [...new Set(data.map(p => p.category))];
+      const filteredCategories = uniqueCategories.filter(cat => cat && cat.trim() !== '');
       
       console.log(`📋 Found categories:`, filteredCategories);
       console.log(`✅ Returning ${filteredCategories.length} unique categories`);

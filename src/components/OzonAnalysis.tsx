@@ -35,14 +35,32 @@ const OzonAnalysis: React.FC<OzonAnalysisProps> = ({ onBack }) => {
     try {
       addDiagnostic('connect', 'loading', 'Connecting to database...');
       
+      // First check if we can connect at all
+      const { data: testData, error: testError } = await supabase
+        .from('products')
+        .select('id')
+        .limit(1);
+
+      if (testError) {
+        addDiagnostic('connection', 'error', 'Database connection failed', {
+          error: testError.message,
+          code: testError.code
+        });
+        setCategories([]);
+        return;
+      }
+
+      addDiagnostic('connection', 'success', 'Database connected successfully');
+      
       const fetchedCategories = await ProductAnalysisService.getCategories();
       
       if (fetchedCategories.length === 0) {
-        addDiagnostic('query', 'error', 'No categories found', {
-          suggestion: 'Import some products first or check if products have valid category values'
+        addDiagnostic('categories', 'error', 'No categories found', {
+          suggestion: 'Check if products table has data with valid category values',
+          action: 'Try importing some ERP data first'
         });
       } else {
-        addDiagnostic('query', 'success', `Found ${fetchedCategories.length} categories`, {
+        addDiagnostic('categories', 'success', `Found ${fetchedCategories.length} categories`, {
           categories: fetchedCategories
         });
       }
@@ -142,13 +160,13 @@ const OzonAnalysis: React.FC<OzonAnalysisProps> = ({ onBack }) => {
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-8">
       {/* Diagnostic Overlay */}
       {showDiagnostics && (
-        <div className="fixed inset-0 bg-black bg-opacity-30 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg shadow-xl p-6 max-w-md w-full mx-4">
+        <div className="fixed top-4 right-4 z-50 max-w-md">
+          <div className="bg-white bg-opacity-70 backdrop-blur-sm rounded-lg shadow-xl p-6 border border-gray-200">
             <div className="flex justify-between items-center mb-4">
               <h3 className="text-lg font-semibold">Diagnostic Information</h3>
               <button 
                 onClick={() => setShowDiagnostics(false)}
-                className="text-gray-500 hover:text-gray-700"
+                className="text-gray-600 hover:text-gray-800 bg-white bg-opacity-50 rounded p-1"
               >
                 <X className="w-5 h-5" />
               </button>

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { ArrowLeft, RefreshCw, BarChart3, TrendingUp, Users, AlertCircle, X } from 'lucide-react';
 import { ProductAnalysisService, ProductGroup, AnalysisResult } from '../services/productAnalysisService';
+import { supabase } from '../lib/supabase';
 
 interface OzonAnalysisProps {
   onBack: () => void;

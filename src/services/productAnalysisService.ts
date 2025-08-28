@@ -333,7 +333,9 @@ export class ProductAnalysisService {
       // 5. Get all categories from both columns
       const { data, error } = await supabaseAdmin
         .from('products')
-        .select('category_name');
+        .select('category_name')
+        .not('category_name', 'is', null)
+        .neq('category_name', '');
 
       if (error) {
         diagnostics.push({
@@ -347,15 +349,11 @@ export class ProductAnalysisService {
       
       // Get categories from category_name column only
       const allCategoryValues = data?.map(p => p.category_name).filter(c => c && c.trim() !== '') || [];
-      
-      const uniqueCategories = [...new Set(allCategoryValues)];
-      
       diagnostics.push({
         step: 'final_categories',
         status: 'success',
         message: `Found ${uniqueCategories.length} unique categories from category_name column`,
         details: {
-          from_category_name_column: uniqueCategories,
           final_categories: uniqueCategories
         }
       });

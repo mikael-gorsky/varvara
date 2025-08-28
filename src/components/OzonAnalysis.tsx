@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { ArrowLeft, RefreshCw, BarChart3, TrendingUp, Users, AlertCircle, X } from 'lucide-react';
 import { ProductAnalysisService, ProductGroup, AnalysisResult } from '../services/productAnalysisService';
-import { supabase } from '../lib/supabase';
+import { supabase, supabaseAdmin } from '../lib/supabase';
 
 interface OzonAnalysisProps {
   onBack: () => void;
@@ -210,11 +210,11 @@ const OzonAnalysis: React.FC<OzonAnalysisProps> = ({ onBack }) => {
   };
 
   const isCategoryAnalyzed = (category: string) => {
-    return analysisResults.some(result => result.category_name === category);
+    return analysisResults.some(result => result.category === category);
   };
 
   const getCategoryResults = (category: string) => {
-    return analysisResults.filter(result => result.category_name === category);
+    return analysisResults.filter(result => result.category === category);
   };
 
   return (

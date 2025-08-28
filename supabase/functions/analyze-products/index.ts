@@ -152,7 +152,7 @@ Return ONLY valid JSON in this exact format:
     
     for (const group of parsedGroups.groups) {
       const record = {
-        category_name,
+        category: category_name,
         group_name: group.group_name,
         group_description: group.group_description,
         product_names: group.products,
@@ -175,7 +175,7 @@ Return ONLY valid JSON in this exact format:
     await supabase
       .from('ai_product_groups')
       .delete()
-      .eq('category_name', category_name);
+      .eq('category', category_name);
 
     // Insert new groups
     const { data: insertedGroups, error: insertError } = await supabase

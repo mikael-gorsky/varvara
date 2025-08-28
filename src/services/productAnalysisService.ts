@@ -458,7 +458,7 @@ export class ProductAnalysisService {
         .order('created_at', { ascending: false });
 
       if (category) {
-        query = query.eq('category_name', category);
+        query = query.eq('category', category);
       }
 
       const { data, error } = await query;
@@ -484,7 +484,7 @@ export class ProductAnalysisService {
       const { error } = await supabase
         .from('ai_product_groups')
         .delete()
-        .eq('category_name', category);
+        .eq('category', category);
 
       if (error) {
         console.error('Failed to clear category analysis:', error);
@@ -505,7 +505,7 @@ export class ProductAnalysisService {
     try {
       const { data, error } = await supabase
         .from('ai_product_groups')
-        .select('category_name, confidence_score, created_at');
+        .select('category, confidence_score, created_at');
 
       if (error) {
         console.error('Failed to fetch analysis stats:', error);
@@ -514,7 +514,7 @@ export class ProductAnalysisService {
 
       const stats = {
         total_groups: data?.length || 0,
-        categories_analyzed: new Set(data?.map(g => g.category_name)).size,
+        categories_analyzed: new Set(data?.map(g => g.category)).size,
         avg_confidence: data?.length > 0 
           ? (data.reduce((sum, g) => sum + (g.confidence_score || 0), 0) / data.length).toFixed(2)
           : 0,

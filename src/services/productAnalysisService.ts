@@ -114,217 +114,31 @@ export class ProductAnalysisService {
     const diagnostics: Array<{ step: string; status: 'success' | 'error' | 'info'; message: string; details?: any }> = [];
     
     try {
-      // 1. Check database connection details
-      diagnostics.push({
-        step: 'db_config',
-        status: 'info',
-        message: 'Database configuration check...',
-        details: {
-          supabase_url: import.meta.env.VITE_SUPABASE_URL ? `${import.meta.env.VITE_SUPABASE_URL.slice(0, 30)}...` : 'NOT SET',
-          anon_key_available: !!import.meta.env.VITE_SUPABASE_ANON_KEY,
-          service_key_available: !!import.meta.env.VITE_SUPABASE_SERVICE_ROLE_KEY,
-          using_client_type: import.meta.env.VITE_SUPABASE_SERVICE_ROLE_KEY ? 'ADMIN (service_role)' : 'REGULAR (anon)'
-        }
-      });
-      
-      // 2. Test raw connection with COUNT
-      diagnostics.push({
-        step: 'count_test',
-        status: 'info',
-        message: 'Testing basic table access with COUNT(*)...',
-      });
-
+      // 1. Get count of all products
       const { count, error: countError } = await supabaseAdmin
         .from('products')
         .select('*', { count: 'exact', head: true });
 
       if (countError) {
         diagnostics.push({
-          step: 'count_error',
+          step: 'connection_error',
           status: 'error',
-          message: 'COUNT query failed - table access blocked',
-          details: { 
-            error_message: countError.message,
-            error_code: countError.code,
-            error_hint: countError.hint,
-            possible_causes: [
-              'Wrong database URL',
-              'Invalid service role key', 
-              'Table does not exist',
-              'RLS policy blocking admin access'
-            ]
-          }
+          message: 'Database connection failed',
+          details: { error: countError.message }
         });
         return { categories: [], diagnostics };
       }
 
       diagnostics.push({
-        step: 'count_result',
-        status: count > 0 ? 'success' : 'error',
+        step: 'connection',
+        status: 'success',
         message: `TABLE: products contains ${count} total rows`,
-        details: { total_products: count }
       });
 
       if (count === 0) {
         diagnostics.push({
-          step: 'empty_table',
-          status: 'error',
-          message: 'Table is completely empty - no products imported yet',
-          details: { 
-            action_needed: 'Import products data first',
-            table: 'products'
-          }
-        });
-        return { categories: [], diagnostics };
-      }
-
-      // 3. Test sample query with SELECT
-      diagnostics.push({
-        step: 'sample_query',
-        status: 'info',
-        message: 'Querying sample products with SELECT...',
-      });
-      
-      // Try different SELECT approaches to diagnose the exact issue
-      let sampleData = null;
-      let sampleError = null;
-      
-      // Test 1: Simple SELECT with just ID
-      diagnostics.push({
-        step: 'test_simple_select',
-        status: 'info',
-        message: 'Testing simple SELECT id only...'
-      });
-      
-      const { data: idTest, error: idError } = await supabaseAdmin
-        .from('products')
-        .select('id')
-        .limit(3);
-
-      if (idError) {
-        diagnostics.push({
-          step: 'simple_select_error',
-          status: 'error', 
-          message: 'Even simple SELECT id failed',
-          details: {
-            error_message: idError.message,
-            error_code: idError.code,
-            error_hint: idError.hint,
-            error_details: idError.details
-          }
-        });
-        sampleError = idError;
-      } else {
-        diagnostics.push({
-          step: 'simple_select_result',
-          status: idTest?.length > 0 ? 'success' : 'error',
-          message: `Simple SELECT returned ${idTest?.length || 0} IDs`,
-          details: { ids: idTest?.map(p => p.id.slice(0, 8) + '...') }
-        });
-        
-        if (idTest?.length > 0) {
-          // Test 2: Full field SELECT if simple works
-          diagnostics.push({
-            step: 'test_full_select',
-            status: 'info',
-            message: 'Testing full field SELECT...'
-          });
-          
-          const { data: fullData, error: fullError } = await supabaseAdmin
-            .from('products')
-            .select('id, name, link, category_name, supplier, price, is_active')
-            .limit(3);
-            
-          if (fullError) {
-            diagnostics.push({
-              step: 'full_select_error',
-              status: 'error',
-              message: 'Full field SELECT failed',
-              details: {
-                error_message: fullError.message,
-                error_code: fullError.code,
-                issue: 'Specific column access blocked by RLS policy'
-              }
-            });
-            sampleError = fullError;
-          } else {
-            sampleData = fullData;
-            diagnostics.push({
-              step: 'full_select_success',
-              status: 'success',
-              message: `Full SELECT returned ${fullData?.length || 0} products`
-            });
-          }
-        } else {
-          sampleError = { message: 'Simple SELECT returned empty despite COUNT > 0' };
-        }
-      }
-
-      if (sampleError) {
-        diagnostics.push({
-          step: 'sample_error',
-          status: 'error',
-          message: 'All SELECT queries failed with admin client',
-          details: { 
-            error_message: sampleError.message, 
-            code: sampleError.code,
-            hint: sampleError.hint,
-            count_works_but_select_fails: true,
-            diagnosis: sampleError.code === '42501' ? 'RLS policy specifically blocking SELECT operations for service role' : 'Service role misconfiguration or RLS policy issue',
-            solution: 'Check RLS policies on products table - they may be blocking service role SELECT operations'
-          }
-        });
-        return { categories: [], diagnostics };
-      }
-
-      diagnostics.push({
-        step: 'sample_data',
-        status: sampleData?.length > 0 ? 'success' : 'error',
-        message: `Final result: Retrieved ${sampleData?.length || 0} products from TABLE: products`,
-        details: {
-          sample_data: sampleData?.map(p => ({
-            id: p.id.slice(0, 8) + '...',
-            name: p.name?.slice(0, 30) + (p.name && p.name.length > 30 ? '...' : ''),
-            category: p.category,
-            category_name: p.category_name,
-            supplier: p.supplier,
-            price: p.price
-          })) || []
-        }
-      });
-      
-      if (!sampleData || sampleData.length === 0) {
-        diagnostics.push({
-          step: 'select_empty',
-          status: 'error',
-          message: 'SELECT returned empty result despite COUNT > 0',
-          details: { 
-            issue: 'This suggests a configuration problem - COUNT shows data exists but SELECT cannot retrieve it',
-            check: 'Verify service role key and database URL are correct'
-          }
-        });
-        return { categories: [], diagnostics };
-      }
-
-      // 4. Analyze category columns
-      const categoryAnalysis = {
-        sample_size: sampleData.length,
-        category_name_field: {
-          null_count: sampleData.filter(p => p.category_name === null).length,
-          empty_count: sampleData.filter(p => p.category_name === '').length,
-          valid_count: sampleData.filter(p => p.category_name && p.category_name.trim() !== '').length,
-          unique_values: [...new Set(sampleData.map(p => p.category_name).filter(c => c && c.trim() !== ''))]
-        }
-      };
-      
-      diagnostics.push({
-        step: 'category_analysis',
-        status: 'success',
-        message: 'Category columns analysis completed',
-        details: categoryAnalysis
-      });
-
-      // 5. Get all categories from both columns
+          step: 'no_data',
+      // 2. Get all unique categories
       const { data, error } = await supabaseAdmin
         .from('products')
         .select('category_name')
@@ -333,23 +147,23 @@ export class ProductAnalysisService {
 
       if (error) {
         diagnostics.push({
-          step: 'full_category_query_error',
+          step: 'query_error',
           status: 'error',
-          message: 'Failed to fetch all category data',
-          details: { error: error.message, code: error.code }
+          message: 'Failed to fetch categories',
+          details: { error: error.message }
         });
         return { categories: [], diagnostics };
       }
       
-      const allCategoryValues = data?.map(p => p.category_name).filter(c => c && c.trim() !== '') || [];
       const uniqueCategories = [...new Set(allCategoryValues)];
       
       diagnostics.push({
         step: 'final_result',
-        status: 'success',
-        message: `Found ${uniqueCategories.length} unique categories from category_name column`,
+        step: 'success',
+        message: `Found ${uniqueCategories.length} unique categories`,
         details: {
-          final_categories: uniqueCategories
+          categories: uniqueCategories,
+          total_category_records: allCategoryValues.length
         }
       });
       
@@ -357,9 +171,9 @@ export class ProductAnalysisService {
 
     } catch (error) {
       diagnostics.push({
-        step: 'exception',
+        step: 'error',
         status: 'error',
-        message: 'Unexpected error during category retrieval',
+        message: 'Unexpected error',
         details: { error: error instanceof Error ? error.message : 'Unknown error' }
       });
       return { categories: [], diagnostics };

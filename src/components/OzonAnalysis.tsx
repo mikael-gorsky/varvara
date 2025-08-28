@@ -103,6 +103,7 @@ const OzonAnalysis: React.FC<OzonAnalysisProps> = ({ onBack }) => {
 
   const loadSuppliers = async () => {
     try {
+      // Get all suppliers with their product counts
       const { data, error } = await supabaseAdmin
         .from('products')
         .select('supplier')

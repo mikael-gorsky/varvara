@@ -48,10 +48,38 @@ export class ProductAnalysisService {
         timestamp: new Date().toISOString()
       });
       
+      // Immediately check what env vars are available
+      diagnostics.push({
+        step: 'env_raw_check',
+        status: 'info',
+        message: 'Raw environment variable check',
+        details: {
+          import_meta_env: import.meta.env,
+          supabase_url_raw: import.meta.env.VITE_SUPABASE_URL,
+          anon_key_raw: import.meta.env.VITE_SUPABASE_ANON_KEY,
+          all_vite_vars: Object.keys(import.meta.env).filter(key => key.startsWith('VITE_'))
+        }
+      });
+      
       // Check required environment variables
       const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
       const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
       const openaiKey = import.meta.env.VITE_OPENAI_API_KEY;
+      
+      diagnostics.push({
+        step: 'env_vars_extracted',
+        status: 'info',
+        message: 'Environment variables extracted',
+        details: {
+          supabase_url_type: typeof supabaseUrl,
+          supabase_url_length: supabaseUrl?.length,
+          supabase_url_value: supabaseUrl,
+          anon_key_type: typeof supabaseAnonKey,
+          anon_key_length: supabaseAnonKey?.length,
+          openai_key_type: typeof openaiKey,
+          openai_key_present: !!openaiKey
+        }
+      });
 
       if (!supabaseUrl) {
         diagnostics.push({

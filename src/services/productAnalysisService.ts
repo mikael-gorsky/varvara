@@ -187,14 +187,23 @@ export class ProductAnalysisService {
         .from('products')
         .select('category_name')
         .not('category_name', 'is', null)
-        .neq('category_name', '');
+        .neq('category_name', '')
+        .order('category_name');
 
-      if (error) {
+      // Use a direct SQL query to get DISTINCT categories
+      const { data: distinctData, error: distinctError } = await supabaseAdmin
+        .rpc('get_distinct_categories');
+
+      // If RPC doesn't work, fall back to processing the data manually
+      const categoryData = distinctError ? data : distinctData;
+      const finalError = distinctError ? error : distinctError;</anoltAction>
+
+      if (finalError && error) {
         diagnostics.push({
           step: 'query_error',
           status: 'error',
           message: 'Failed to fetch categories',
-          details: { error: error.message }
+          details: { error: finalError?.message || error.message }
         });
         return { categories: [], diagnostics };
       }
@@ -202,13 +211,17 @@ export class ProductAnalysisService {
       diagnostics.push({
         step: 'raw_query_result',
         status: 'info',
-        message: `Query returned ${data?.length || 0} rows`,
+        message: `Query returned ${categoryData?.length || 0} rows`,
         details: {
-          first_10_results: data?.slice(0, 10).map(row => row.category_name)
+          first_10_results: categoryData?.slice(0, 10).map(row => 
+            typeof row === 'string' ? row : row.category_name
+          )
         }
       });
       
-      const allCategoryValues = data?.map(p => p.category_name).filter(c => c && c.trim() !== '') || [];
+      const allCategoryValues = categoryData?.map(p => 
+        typeof p === 'string' ? p : p.category_name
+      ).filter(c => c && c.trim() !== '') || [];
       const uniqueCategories = [...new Set(allCategoryValues)];
       
       diagnostics.push({

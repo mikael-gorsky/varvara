@@ -106,7 +106,7 @@ Deno.serve(async (req: Request) => {
 
     // Create AI prompt with price analysis context
     const prompt = `
-Analyze these products from category "${category_name}" and group similar/identical products together.</anoltAction>
+Analyze these products from category "${category_name}" and group similar/identical products together.
 
 Products to analyze:
 ${productAnalysis.map((p, i) => 
@@ -144,7 +144,25 @@ Return ONLY valid JSON in this exact format:
   "analysis_confidence": 0.90
 }`;
 
-    // Call OpenAI GPT-5-mini API
+    addDiagnostic('openai_request_prepared', 'info', 'OpenAI request prepared', {
+      model: 'gpt-4o-mini',
+      temperature: 0.1,
+      max_tokens: 2000,
+      messages_count: 2,
+      prompt_preview: prompt.slice(0, 500) + '...',
+      full_prompt: prompt
+    });
+
+    addDiagnostic('openai_api_call_start', 'loading', 'Making OpenAI API call...', {
+      url: 'https://api.openai.com/v1/chat/completions',
+      method: 'POST',
+      headers: {
+        'Authorization': 'Bearer ' + openaiApiKey.slice(0, 7) + '...',
+        'Content-Type': 'application/json'
+      }
+    });
+
+    // Call OpenAI GPT-4o-mini API
     const openaiResponse = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
       headers: {
@@ -152,29 +170,42 @@ Return ONLY valid JSON in this exact format:
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'gpt-5-mini',  // Using GPT-5-mini as requested
+        model: 'gpt-4o-mini',
         messages: [
-    addDiagnostic('openai_api_call_complete', openaiResponse.ok ? 'success' : 'error', `OpenAI API responded with status ${openaiResponse.status}`, {
+          {
             role: 'system',
             content: 'You are an expert product analyst. Analyze product names and group similar products together. Always respond with valid JSON only.'
-      headers: Object.fromEntries(openaiResponse.headers.entries()),
-      response_ok: openaiResponse.ok
+          },
           {
             role: 'user',
             content: prompt
           }
-      addDiagnostic('openai_api_error', 'error', 'OpenAI API returned error', {
+        ],
         temperature: 0.1,
         max_tokens: 2000
-        error_body: errorText,
-        headers: Object.fromEntries(openaiResponse.headers.entries())
+      })
+    });
+
+    addDiagnostic('openai_api_call_complete', openaiResponse.ok ? 'success' : 'error', `OpenAI API responded with status ${openaiResponse.status}`, {
+      status: openaiResponse.status,
+      headers: Object.fromEntries(openaiResponse.headers.entries()),
+      response_ok: openaiResponse.ok
     });
 
     if (!openaiResponse.ok) {
+      const errorText = await openaiResponse.text();
+      addDiagnostic('openai_api_error', 'error', 'OpenAI API returned error', {
+        status: openaiResponse.status,
+        error_body: errorText,
+        headers: Object.fromEntries(openaiResponse.headers.entries())
+      });
       throw new Error(`OpenAI API error: ${openaiResponse.status} ${openaiResponse.statusText}`);
+    }
+
     addDiagnostic('openai_response_parsing', 'loading', 'Parsing OpenAI response...');
-      prompt_preview: prompt.slice(0, 500) + '...',
-      full_prompt: prompt
+    
+    const aiResult = await openaiResponse.json();
+    
     addDiagnostic('openai_response_received', 'success', 'OpenAI response received', {
       usage: aiResult.usage,
       model: aiResult.model,
@@ -182,13 +213,13 @@ Return ONLY valid JSON in this exact format:
       first_choice_finish_reason: aiResult.choices?.[0]?.finish_reason,
       response_length: aiResult.choices?.[0]?.message?.content?.length,
       raw_response: aiResult.choices?.[0]?.message?.content
+    });
 
+    let parsedGroups;
+    addDiagnostic('json_parsing', 'loading', 'Parsing AI response JSON...');
+    
     try {
       parsedGroups = JSON.parse(aiResult.choices[0].message.content);
-    } catch (e) {
-      throw new Error(`Failed to parse AI response: ${e.message}`);
-      addDiagnostic('json_parsing', 'loading', 'Parsing AI response JSON...');
-    }
       addDiagnostic('json_parsing', 'success', 'Successfully parsed AI response', {
         groups_count: parsedGroups.groups?.length,
         ungrouped_count: parsedGroups.ungrouped?.length,
@@ -200,12 +231,15 @@ Return ONLY valid JSON in this exact format:
           total_groups: parsedGroups.total_groups
         }
       });
-
+    } catch (e) {
       addDiagnostic('json_parsing', 'error', 'Failed to parse AI response as JSON', {
         parse_error: e.message,
         raw_content: aiResult.choices[0].message.content,
         content_length: aiResult.choices[0].message.content?.length
       });
+      throw new Error(`Failed to parse AI response: ${e.message}`);
+    }
+
     // Store results in database
     addDiagnostic('database_storage', 'loading', 'Storing results in database...');
     
@@ -218,7 +252,7 @@ Return ONLY valid JSON in this exact format:
         group_description: group.group_description,
         product_names: group.products,
         price_analysis: group.price_analysis,
-      model: 'gpt-4o-mini',
+        confidence_score: group.confidence_score,
         vendor_analysis: {
           vendor_count: group.vendor_count,
           vendors: group.vendors
@@ -266,29 +300,10 @@ Return ONLY valid JSON in this exact format:
       }
     );
 
-    addDiagnostic('openai_request_prepared', 'info', 'OpenAI request prepared', {
-      model: openaiRequestBody.model,
-      temperature: openaiRequestBody.temperature,
-      max_tokens: openaiRequestBody.max_tokens,
-      messages_count: openaiRequestBody.messages.length,
-      system_message: openaiRequestBody.messages[0].content,
-      request_size_bytes: JSON.stringify(openaiRequestBody).length
-    });
-
   } catch (error) {
-    addDiagnostic('edge_function_error', 'error', 'Edge function failed with error', {
-      error: error.message,
-      error_type: error.constructor.name,
-      stack: error.stack
-    });
-    
-    addDiagnostic('openai_api_call_start', 'loading', 'Making OpenAI API call...', {
-      url: 'https://api.openai.com/v1/chat/completions',
-      method: 'POST',
-      headers: {
-        'Authorization': 'Bearer ' + openaiApiKey.slice(0, 7) + '...',
-        'Content-Type': 'application/json'
-      }
+    addDiagnostic('error_occurred', 'error', 'Function error', {
+      error_message: error.message,
+      error_stack: error.stack
     });
     
     return new Response(

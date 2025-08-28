@@ -347,13 +347,8 @@ export class ProductAnalysisService {
         return { categories: [], diagnostics };
       }
       
-      // Get categories from category_name column only
-      const allCategoryValues = data?.map(p => p.category_name).filter(c => c && c.trim() !== '') || [];
-      diagnostics.push({
-        step: 'final_categories',
-        status: 'success',
         message: `Found ${uniqueCategories.length} unique categories from category_name column`,
-        details: {
+      const allCategoryValues = data?.map(p => p.category_name).filter(c => c && c.trim() !== '') || [];
           final_categories: uniqueCategories
         }
       });

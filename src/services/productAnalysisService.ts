@@ -40,7 +40,7 @@ export class ProductAnalysisService {
   static async analyzeCategory(category: string): Promise<AnalysisResult> {
     try {
       // 1. Get all products for this category
-      const { data: products, error: queryError } = await supabase
+      const { data: products, error: queryError } = await supabaseAdmin
         .from('products')
         .select('name, price, supplier, category_name') // Updated column names
         .eq('category', category)

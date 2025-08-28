@@ -103,7 +103,7 @@ const OzonAnalysis: React.FC<OzonAnalysisProps> = ({ onBack }) => {
 
   const loadSuppliers = async () => {
     try {
-      const { data, error } = await supabase
+      const { data, error } = await supabaseAdmin
         .from('products')
         .select('supplier')
         .not('supplier', 'is', null)

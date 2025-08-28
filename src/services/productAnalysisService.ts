@@ -232,7 +232,7 @@ export class ProductAnalysisService {
           
           const { data: fullData, error: fullError } = await supabaseAdmin
             .from('products')
-            .select('id, name, category, category_name, supplier, price, is_active')
+            .select('id, name, link, category_name, supplier, price, is_active')
             .limit(3);
             
           if (fullError) {

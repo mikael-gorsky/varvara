@@ -105,29 +105,45 @@ export class ProductAnalysisService {
     try {
       console.log('🔍 Fetching categories from products table...');
       
-      // First, try to get total count of products
+      // First, get sample of actual data to diagnose category column
+      const { data: sampleData, error: sampleError } = await supabase
+        .from('products')
+        .select('id, name, category, is_active')
+        .limit(10);
+
+      if (sampleError) {
+        console.error('❌ Failed to get sample data:', sampleError);
+        return [];
+      }
+
+      console.log(`📊 Sample products:`, sampleData);
+      
+      if (!sampleData || sampleData.length === 0) {
+        console.warn('⚠️ No products found in database.');
+        return [];
+      }
+
+      // Check what category values look like
+      const categoryValues = sampleData.map(p => ({ 
+        id: p.id.slice(0, 8), 
+        name: p.name?.slice(0, 20) + '...', 
+        category: p.category,
+        is_active: p.is_active
+      }));
+      console.log(`🔍 Category values sample:`, categoryValues);
+
+      // Count total products and categories
       const { count: totalCount, error: countError } = await supabase
         .from('products')
         .select('*', { count: 'exact', head: true });
 
-      if (countError) {
-        console.error('❌ Failed to count products:', countError);
-        return [];
-      }
-
       console.log(`📊 Total products in database: ${totalCount || 0}`);
-      
-      if (!totalCount || totalCount === 0) {
-        console.warn('⚠️ No products found in database. Import some data first.');
-        return [];
-      }
 
-      // Now get categories from all products (no RLS filtering)
+      // Get all categories
       const { data, error } = await supabase
         .from('products')
         .select('category')
-        .not('category', 'is', null)
-        .not('category', 'eq', '');
+        .not('category', 'is', null);
 
       if (error) {
         console.error('❌ Failed to fetch categories:', error);
@@ -137,15 +153,20 @@ export class ProductAnalysisService {
       console.log(`📊 Found ${data?.length || 0} products with valid categories`);
       
       if (!data || data.length === 0) {
-        console.warn('⚠️ No products with valid categories found.');
+        console.warn('⚠️ No products with non-null categories found.');
         return [];
       }
 
-      // Get unique categories
-      const uniqueCategories = [...new Set(data.map(p => p.category))];
+      // Log all category values before filtering
+      const allCategories = data.map(p => p.category);
+      console.log(`📋 All category values (first 20):`, allCategories.slice(0, 20));
+      
+      // Get unique categories and filter empties
+      const uniqueCategories = [...new Set(allCategories)];
       const filteredCategories = uniqueCategories.filter(cat => cat && cat.trim() !== '');
       
-      console.log(`📋 Found categories:`, filteredCategories);
+      console.log(`📋 Unique categories before filtering:`, uniqueCategories);
+      console.log(`📋 Valid categories after filtering:`, filteredCategories);
       console.log(`✅ Returning ${filteredCategories.length} unique categories`);
       
       return filteredCategories;

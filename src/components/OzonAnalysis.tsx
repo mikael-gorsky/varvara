@@ -53,12 +53,14 @@ const OzonAnalysis: React.FC<OzonAnalysisProps> = ({ onBack }) => {
 
       addDiagnostic('connection', 'success', 'Database connected successfully');
       
+      addDiagnostic('sample', 'loading', 'Checking sample data...');
       const fetchedCategories = await ProductAnalysisService.getCategories();
       
       if (fetchedCategories.length === 0) {
-        addDiagnostic('categories', 'error', 'No categories found', {
-          suggestion: 'Check if products table has data with valid category values',
-          action: 'Try importing some ERP data first'
+        addDiagnostic('categories', 'error', 'No valid categories found', {
+          issue: 'Category column appears to be NULL or empty in all products',
+          suggestion: 'Check your import data - category column should have values like "Office Equipment", "Packaging", etc.',
+          next_step: 'Open browser console (F12) to see detailed category diagnosis'
         });
       } else {
         addDiagnostic('categories', 'success', `Found ${fetchedCategories.length} categories`, {

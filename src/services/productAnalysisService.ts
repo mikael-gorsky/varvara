@@ -179,6 +179,7 @@ export class ProductAnalysisService {
         message: 'Calling Supabase Edge Function...'
       });
       
+      const requestStart = Date.now();
       const response = await fetch(functionUrl, {
         method: 'POST',
         headers: {
@@ -187,6 +188,7 @@ export class ProductAnalysisService {
         },
         body: JSON.stringify(requestPayload)
       });
+      const requestEnd = Date.now();
       
       diagnostics.push({
         step: 'call_edge_function',
@@ -195,7 +197,10 @@ export class ProductAnalysisService {
         details: {
           status: response.status,
           status_text: response.statusText,
-          headers: Object.fromEntries(response.headers.entries())
+          headers: Object.fromEntries(response.headers.entries()),
+          request_duration_ms: requestEnd - requestStart,
+          response_url: response.url,
+          response_type: response.type
         }
       });
 
@@ -206,7 +211,27 @@ export class ProductAnalysisService {
           message: 'Parsing error response from Edge Function'
         });
         
-        const errorData = await response.json().catch(() => ({ error: 'Unknown API error' }));
+        let errorData;
+        try {
+          const errorText = await response.text();
+          diagnostics.push({
+            step: 'error_response_text',
+            status: 'info',
+            message: 'Raw error response from Edge Function',
+            details: {
+              raw_text: errorText,
+              text_length: errorText.length
+            }
+          });
+          
+          errorData = JSON.parse(errorText);
+        } catch (parseError) {
+          errorData = { 
+            error: 'Failed to parse error response',
+            parse_error: parseError instanceof Error ? parseError.message : 'Unknown parse error',
+            raw_response: errorText || 'No response text'
+          };
+        }
         
         diagnostics.push({
           step: 'parse_error_response',
@@ -215,7 +240,7 @@ export class ProductAnalysisService {
           details: {
             status: response.status,
             error_data: errorData,
-            raw_response: errorData
+            parsed_successfully: typeof errorData === 'object'
           }
         });
         
@@ -228,7 +253,63 @@ export class ProductAnalysisService {
         message: 'Parsing successful response from Edge Function'
       });
       
-      const result: AnalysisResult = await response.json();
+      let result: AnalysisResult;
+      try {
+        const responseText = await response.text();
+        diagnostics.push({
+          step: 'success_response_text',
+          status: 'info',
+          message: 'Raw success response from Edge Function',
+          details: {
+            raw_text: responseText.slice(0, 1000) + (responseText.length > 1000 ? '...[truncated]' : ''),
+            full_length: responseText.length,
+            starts_with: responseText.slice(0, 100),
+            ends_with: responseText.slice(-100)
+          }
+        });
+        
+        result = JSON.parse(responseText);
+        
+        diagnostics.push({
+          step: 'response_parsed',
+          status: 'success',
+          message: 'Successfully parsed Edge Function response',
+          details: {
+            response_keys: Object.keys(result),
+            has_diagnostics: !!(result as any).diagnostics,
+            diagnostics_count: (result as any).diagnostics?.length || 0
+          }
+        });
+        
+      } catch (parseError) {
+        diagnostics.push({
+          step: 'parse_success_response',
+          status: 'error',
+          message: 'Failed to parse success response',
+          details: {
+            parse_error: parseError instanceof Error ? parseError.message : 'Unknown error',
+            response_type: typeof responseText,
+            response_preview: responseText?.slice(0, 200)
+          }
+        });
+        throw new Error(`Failed to parse success response: ${parseError instanceof Error ? parseError.message : 'Unknown error'}`);
+      }
+      
+      // Merge Edge Function diagnostics with our own
+      if ((result as any).diagnostics && Array.isArray((result as any).diagnostics)) {
+        diagnostics.push({
+          step: 'merge_diagnostics',
+          status: 'info',
+          message: `Merging ${(result as any).diagnostics.length} diagnostics from Edge Function`,
+          details: {
+            edge_function_diagnostics: (result as any).diagnostics.length,
+            frontend_diagnostics: diagnostics.length
+          }
+        });
+        
+        // Add Edge Function diagnostics to our diagnostics array
+        diagnostics.push(...(result as any).diagnostics);
+      }
       
       diagnostics.push({
         step: 'parse_success_response',
@@ -237,8 +318,7 @@ export class ProductAnalysisService {
         details: {
           success: result.success,
           groups_created: result.groups_created,
-          analysis_confidence: result.analysis_confidence,
-          response_keys: Object.keys(result)
+          analysis_confidence: result.analysis_confidence
         }
       });
       

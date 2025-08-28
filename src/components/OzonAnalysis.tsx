@@ -7,6 +7,10 @@ interface OzonAnalysisProps {
   onBack: () => void;
 }
 
+interface Supplier {
+  name: string;
+  count: number;
+}
 interface DiagnosticInfo {
   step: string;
   status: 'loading' | 'success' | 'error';
@@ -16,6 +20,8 @@ interface DiagnosticInfo {
 
 const OzonAnalysis: React.FC<OzonAnalysisProps> = ({ onBack }) => {
   const [categories, setCategories] = useState<string[]>([]);
+  const [suppliers, setSuppliers] = useState<Supplier[]>([]);
+  const [selectedSupplier, setSelectedSupplier] = useState<string | null>(null);
   const [loadingCategories, setLoadingCategories] = useState(false);
   const [analysisResults, setAnalysisResults] = useState<ProductGroup[]>([]);
   const [analyzingCategory, setAnalyzingCategory] = useState<string | null>(null);
@@ -44,6 +50,7 @@ const OzonAnalysis: React.FC<OzonAnalysisProps> = ({ onBack }) => {
 
       if (testError) {
         addDiagnostic('connection', 'error', 'Database connection failed', {
+          table: 'products',
           error: testError.message,
           code: testError.code
         });
@@ -51,7 +58,7 @@ const OzonAnalysis: React.FC<OzonAnalysisProps> = ({ onBack }) => {
         return;
       }
 
-      addDiagnostic('connection', 'success', 'Database connected successfully');
+      addDiagnostic('connection', 'success', 'Connected to TABLE: products');
       
       addDiagnostic('sample', 'loading', 'Checking sample data...');
       const result = await ProductAnalysisService.getCategories();
@@ -63,15 +70,21 @@ const OzonAnalysis: React.FC<OzonAnalysisProps> = ({ onBack }) => {
       
       if (result.categories.length === 0) {
         addDiagnostic('final_status', 'error', 'No categories available for analysis', {
+          table: 'products',
+          fields_checked: ['category', 'category_name'],
           suggestion: 'Import products with valid category data first'
         });
       } else {
         addDiagnostic('final_status', 'success', `Ready for analysis with ${result.categories.length} categories`, {
+          table: 'products',
           categories: result.categories
         });
       }
       
       setCategories(result.categories);
+      
+      // Load suppliers for filtering
+      await loadSuppliers();
       
       // Auto-hide diagnostics after 3 seconds if successful
       if (result.categories.length > 0) {
@@ -80,6 +93,7 @@ const OzonAnalysis: React.FC<OzonAnalysisProps> = ({ onBack }) => {
 
     } catch (error) {
       addDiagnostic('error', 'error', 'Failed to load categories', {
+        table: 'products',
         error: error instanceof Error ? error.message : 'Unknown error'
       });
     } finally {
@@ -87,6 +101,36 @@ const OzonAnalysis: React.FC<OzonAnalysisProps> = ({ onBack }) => {
     }
   };
 
+  const loadSuppliers = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('products')
+        .select('supplier')
+        .not('supplier', 'is', null)
+        .neq('supplier', '');
+
+      if (error) {
+        console.error('Failed to load suppliers:', error);
+        return;
+      }
+
+      // Count suppliers
+      const supplierCounts: { [key: string]: number } = {};
+      data?.forEach(product => {
+        if (product.supplier) {
+          supplierCounts[product.supplier] = (supplierCounts[product.supplier] || 0) + 1;
+        }
+      });
+
+      const supplierList = Object.entries(supplierCounts)
+        .map(([name, count]) => ({ name, count }))
+        .sort((a, b) => b.count - a.count);
+
+      setSuppliers(supplierList);
+    } catch (error) {
+      console.error('Load suppliers error:', error);
+    }
+  };
   const loadAnalysisResults = async () => {
     try {
       const results = await ProductAnalysisService.getAnalysisResults();
@@ -253,7 +297,7 @@ const OzonAnalysis: React.FC<OzonAnalysisProps> = ({ onBack }) => {
           <div className="flex items-center justify-between mb-6">
             <h2 className="text-xl font-semibold text-gray-800 flex items-center space-x-2">
               <Users className="w-5 h-5 text-blue-600" />
-              <span>Product Categories ({categories.length})</span>
+              <span>TABLE: products | Categories ({categories.length})</span>
             </h2>
             <button
               onClick={loadCategories}
@@ -265,11 +309,43 @@ const OzonAnalysis: React.FC<OzonAnalysisProps> = ({ onBack }) => {
             </button>
           </div>
 
+          {/* Supplier Filter */}
+          {suppliers.length > 0 && (
+            <div className="mb-6 p-4 bg-gray-50 rounded-lg">
+              <h3 className="text-sm font-medium text-gray-700 mb-3">Filter by Supplier ({suppliers.length} suppliers):</h3>
+              <div className="flex flex-wrap gap-2">
+                <button
+                  onClick={() => setSelectedSupplier(null)}
+                  className={`px-3 py-1 text-xs rounded-full transition-colors ${
+                    !selectedSupplier 
+                      ? 'bg-blue-600 text-white' 
+                      : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                  }`}
+                >
+                  All Suppliers
+                </button>
+                {suppliers.slice(0, 10).map(supplier => (
+                  <button
+                    key={supplier.name}
+                    onClick={() => setSelectedSupplier(supplier.name)}
+                    className={`px-3 py-1 text-xs rounded-full transition-colors ${
+                      selectedSupplier === supplier.name
+                        ? 'bg-blue-600 text-white'
+                        : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                    }`}
+                  >
+                    {supplier.name} ({supplier.count})
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
           {categories.length === 0 ? (
             <div className="text-center py-12">
               <AlertCircle className="w-16 h-16 text-gray-400 mx-auto mb-4" />
               <h3 className="text-lg font-medium text-gray-600 mb-2">No Categories Found</h3>
-              <p className="text-gray-500">Import some products first, then refresh to see available categories.</p>
+              <p className="text-gray-500">Import products to TABLE: products with valid category/category_name fields.</p>
             </div>
           ) : (
             <div className="grid gap-4">

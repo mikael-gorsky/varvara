@@ -42,7 +42,7 @@ export class ProductAnalysisService {
       // 1. Get all products for this category
       const { data: products, error: queryError } = await supabase
         .from('products')
-        .select('name, price, external_id, supplier')
+        .select('name, price, supplier, category_name') // Updated column names
         .eq('category', category)
         .eq('is_active', true);
 
@@ -116,20 +116,20 @@ export class ProductAnalysisService {
       diagnostics.push({
         step: 'query_start',
         status: 'info',
-        message: 'Querying products table for sample data...',
+        message: 'Querying TABLE: products | FIELDS: id, name, category, category_name, supplier, price, is_active',
       });
       
       // First, get sample of actual data to diagnose category column
       const { data: sampleData, error: sampleError } = await supabase
         .from('products')
-        .select('id, name, category, is_active, price, supplier')
+        .select('id, name, category, category_name, supplier, price, is_active')
         .limit(10);
 
       if (sampleError) {
         diagnostics.push({
           step: 'sample_error',
           status: 'error',
-          message: 'Failed to get sample data',
+          message: 'Failed to query products table',
           details: { error: sampleError.message, code: sampleError.code }
         });
         return { categories: [], diagnostics };
@@ -138,15 +138,18 @@ export class ProductAnalysisService {
       diagnostics.push({
         step: 'sample_data',
         status: 'success',
-        message: `Retrieved ${sampleData?.length || 0} sample products`,
+        message: `Retrieved ${sampleData?.length || 0} products from TABLE: products`,
         details: {
-          sample_products: sampleData?.map(p => ({
+          table: 'products',
+          fields_queried: ['id', 'name', 'category', 'category_name', 'supplier', 'price', 'is_active'],
+          sample_data: sampleData?.map(p => ({
             id: p.id.slice(0, 8) + '...',
             name: p.name?.slice(0, 30) + (p.name && p.name.length > 30 ? '...' : ''),
             category: p.category,
+            category_name: p.category_name,
+            supplier: p.supplier,
             is_active: p.is_active,
-            price: p.price,
-            supplier: p.supplier?.slice(0, 20) + (p.supplier && p.supplier.length > 20 ? '...' : '')
+            price: p.price
           })) || []
         }
       });

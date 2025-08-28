@@ -117,10 +117,10 @@ const mapRowToProduct = (row: any[], headerMap: Record<string, number>, headers:
     category: String(getValue(1) || 'General').trim(),
     
     // Map all other columns to available database fields
-    external_id: String(getValue(2) || ''),
+    supplier: String(getValue(2) || ''), // external_id is now supplier
     price: parseFloat(String(getValue(3) || '0').replace(',', '.')),
     quantity: parseInt(String(getValue(4) || '0')),
-    supplier: String(getValue(5) || '').trim() || null,
+    category_name: String(getValue(5) || '').trim() || null, // supplier is now category_name
     
     // Extended ERP fields - map remaining columns
     sku: String(getValue(6) || '').trim() || null,

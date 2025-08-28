@@ -207,6 +207,13 @@ const OzonAnalysis: React.FC<OzonAnalysisProps> = ({ onBack }) => {
         }
       }
     } catch (error) {
+      // If there's an error, try to get diagnostics from the error object
+      if (error && typeof error === 'object' && 'diagnostics' in error) {
+        (error as any).diagnostics?.forEach((diag: any) => {
+          addDiagnostic(diag.step, diag.status, diag.message, diag.details);
+        });
+      }
+      
       addDiagnostic('ai_analysis_exception', 'error', 'Analysis threw exception', {
         error: error instanceof Error ? error.message : 'Unknown error',
         category

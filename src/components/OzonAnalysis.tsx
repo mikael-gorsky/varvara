@@ -603,17 +603,6 @@ const OzonAnalysis: React.FC<OzonAnalysisProps> = ({ onBack }) => {
                 {isLoadingCategories ? 'Loading...' : 'Refresh Categories'}
               </button>
             </div>
-        <div className="backdrop-blur-xl bg-white/10 rounded-xl border border-white/20 shadow-xl p-4">
-          <div className="flex items-center justify-center space-x-3">
-            <div className="w-3 h-3 bg-emerald-400 rounded-full animate-pulse shadow-lg shadow-emerald-400/50"></div>
-            <p className="text-white font-medium text-sm">OZON Analysis Module Active • Data Import & AI Analysis Ready</p>
-            <div className="w-3 h-3 bg-emerald-400 rounded-full animate-pulse shadow-lg shadow-emerald-400/50"></div>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-};
 
             {categories.length === 0 ? (
               <div className="text-center py-8">
@@ -712,4 +701,17 @@ const OzonAnalysis: React.FC<OzonAnalysisProps> = ({ onBack }) => {
             )}
           </div>
         </div>
+
+        <div className="backdrop-blur-xl bg-white/10 rounded-xl border border-white/20 shadow-xl p-4">
+          <div className="flex items-center justify-center space-x-3">
+            <div className="w-3 h-3 bg-emerald-400 rounded-full animate-pulse shadow-lg shadow-emerald-400/50"></div>
+            <p className="text-white font-medium text-sm">OZON Analysis Module Active • Data Import & AI Analysis Ready</p>
+            <div className="w-3 h-3 bg-emerald-400 rounded-full animate-pulse shadow-lg shadow-emerald-400/50"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 export default OzonAnalysis;

@@ -88,7 +88,16 @@ export class ProductAnalysisService {
           message: 'VITE_SUPABASE_URL is missing',
           details: { env_vars_checked: ['VITE_SUPABASE_URL'] }
         });
-        throw new Error('VITE_SUPABASE_URL environment variable is not defined. Please check your .env file.');
+        return {
+          success: false,
+          category: category,
+          groups_created: 0,
+          ungrouped_products: 0,
+          analysis_confidence: 0,
+          data: [],
+          error: 'VITE_SUPABASE_URL environment variable is not defined. Please check your .env file.',
+          diagnostics
+        };
       }
 
       if (!supabaseAnonKey) {
@@ -98,7 +107,16 @@ export class ProductAnalysisService {
           message: 'VITE_SUPABASE_ANON_KEY is missing',
           details: { env_vars_checked: ['VITE_SUPABASE_ANON_KEY'] }
         });
-        throw new Error('VITE_SUPABASE_ANON_KEY environment variable is not defined. Please check your .env file.');
+        return {
+          success: false,
+          category: category,
+          groups_created: 0,
+          ungrouped_products: 0,
+          analysis_confidence: 0,
+          data: [],
+          error: 'VITE_SUPABASE_ANON_KEY environment variable is not defined. Please check your .env file.',
+          diagnostics
+        };
       }
 
       // Validate Supabase URL format
@@ -114,7 +132,16 @@ export class ProductAnalysisService {
             url_error: urlError instanceof Error ? urlError.message : 'Invalid URL format'
           }
         });
-        throw new Error(`VITE_SUPABASE_URL is not a valid URL: ${supabaseUrl}`);
+        return {
+          success: false,
+          category: category,
+          groups_created: 0,
+          ungrouped_products: 0,
+          analysis_confidence: 0,
+          data: [],
+          error: `VITE_SUPABASE_URL is not a valid URL: ${supabaseUrl}`,
+          diagnostics
+        };
       }
       
       diagnostics.push({
@@ -217,6 +244,16 @@ export class ProductAnalysisService {
           }
         });
         throw new Error(`Invalid function URL constructed: ${functionUrl}`);
+        return {
+          success: false,
+          category: category,
+          groups_created: 0,
+          ungrouped_products: 0,
+          analysis_confidence: 0,
+          data: [],
+          error: `Invalid function URL constructed: ${functionUrl}`,
+          diagnostics
+        };
       }
       
       const requestPayload = {
@@ -281,7 +318,16 @@ export class ProductAnalysisService {
             }
           }
         });
-        throw new Error(`Calling Supabase Edge Function failed: ${fetchError instanceof Error ? fetchError.message : 'Network error'}`);
+        return {
+          success: false,
+          category: category,
+          groups_created: 0,
+          ungrouped_products: 0,
+          analysis_confidence: 0,
+          data: [],
+          error: `Calling Supabase Edge Function failed: ${fetchError instanceof Error ? fetchError.message : 'Network error'}`,
+          diagnostics
+        };
       }
       
       const requestEnd = Date.now();

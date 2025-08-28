@@ -26,17 +26,41 @@ Deno.serve(async (req: Request) => {
     });
   }
 
+  const diagnostics: any[] = [];
+  
+  const addDiagnostic = (step: string, status: string, message: string, details?: any) => {
+    const diagnostic = {
+      step,
+      status,
+      message,
+      details,
+      timestamp: new Date().toISOString()
+    };
+    diagnostics.push(diagnostic);
+    console.log(`[${step}] ${status}: ${message}`, details ? JSON.stringify(details, null, 2) : '');
+  };
   try {
+    addDiagnostic('edge_function_start', 'info', 'Edge function started');
+    
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const openaiApiKey = Deno.env.get('OPENAI_API_KEY');
 
+    addDiagnostic('env_vars_check', 'info', 'Checking environment variables', {
+      supabase_url_present: !!supabaseUrl,
+      service_key_present: !!supabaseServiceKey,
+      openai_key_present: !!openaiApiKey,
+      openai_key_length: openaiApiKey ? openaiApiKey.length : 0
+    });
     if (!openaiApiKey) {
+      addDiagnostic('openai_key_missing', 'error', 'OpenAI API key not found');
+      
       return new Response(
         JSON.stringify({
           success: false,
           error: 'OpenAI API key not configured',
           details: 'Set OPENAI_API_KEY in Supabase Edge Function environment variables',
+          diagnostics,
           instructions: [
             '1. Go to Supabase Dashboard',
             '2. Navigate to Edge Functions settings',
@@ -58,7 +82,17 @@ Deno.serve(async (req: Request) => {
     
     const { category_name, products }: AIGroupingRequest = await req.json();
 
+    addDiagnostic('request_data', 'info', 'Received request data', {
+      category_name,
+      product_count: products.length,
+      sample_products: products.slice(0, 3).map(p => ({
+        name: p.name?.slice(0, 50),
+        price: p.price,
+        supplier: p.supplier
+      }))
+    });
     if (!category_name || !products || products.length === 0) {
+      addDiagnostic('validation_error', 'error', 'Invalid request data');
       throw new Error('Category_name and products are required');
     }
 
@@ -120,34 +154,61 @@ Return ONLY valid JSON in this exact format:
       body: JSON.stringify({
         model: 'gpt-5-mini',  // Using GPT-5-mini as requested
         messages: [
-          {
+    addDiagnostic('openai_api_call_complete', openaiResponse.ok ? 'success' : 'error', `OpenAI API responded with status ${openaiResponse.status}`, {
             role: 'system',
             content: 'You are an expert product analyst. Analyze product names and group similar products together. Always respond with valid JSON only.'
-          },
+      headers: Object.fromEntries(openaiResponse.headers.entries()),
+      response_ok: openaiResponse.ok
           {
             role: 'user',
             content: prompt
           }
-        ],
+      addDiagnostic('openai_api_error', 'error', 'OpenAI API returned error', {
         temperature: 0.1,
         max_tokens: 2000
-      })
+        error_body: errorText,
+        headers: Object.fromEntries(openaiResponse.headers.entries())
     });
 
     if (!openaiResponse.ok) {
       throw new Error(`OpenAI API error: ${openaiResponse.status} ${openaiResponse.statusText}`);
-    }
-
-    const aiResult = await openaiResponse.json();
-    let parsedGroups;
+    addDiagnostic('openai_response_parsing', 'loading', 'Parsing OpenAI response...');
+      prompt_preview: prompt.slice(0, 500) + '...',
+      full_prompt: prompt
+    addDiagnostic('openai_response_received', 'success', 'OpenAI response received', {
+      usage: aiResult.usage,
+      model: aiResult.model,
+      choices_count: aiResult.choices?.length,
+      first_choice_finish_reason: aiResult.choices?.[0]?.finish_reason,
+      response_length: aiResult.choices?.[0]?.message?.content?.length,
+      raw_response: aiResult.choices?.[0]?.message?.content
 
     try {
       parsedGroups = JSON.parse(aiResult.choices[0].message.content);
     } catch (e) {
       throw new Error(`Failed to parse AI response: ${e.message}`);
+      addDiagnostic('json_parsing', 'loading', 'Parsing AI response JSON...');
     }
+      addDiagnostic('json_parsing', 'success', 'Successfully parsed AI response', {
+        groups_count: parsedGroups.groups?.length,
+        ungrouped_count: parsedGroups.ungrouped?.length,
+        analysis_confidence: parsedGroups.analysis_confidence,
+        parsed_structure: {
+          has_groups: !!parsedGroups.groups,
+          has_ungrouped: !!parsedGroups.ungrouped,
+          has_confidence: !!parsedGroups.analysis_confidence,
+          total_groups: parsedGroups.total_groups
+        }
+      });
 
+      addDiagnostic('json_parsing', 'error', 'Failed to parse AI response as JSON', {
+        parse_error: e.message,
+        raw_content: aiResult.choices[0].message.content,
+        content_length: aiResult.choices[0].message.content?.length
+      });
     // Store results in database
+    addDiagnostic('database_storage', 'loading', 'Storing results in database...');
+    
     const groupRecords = [];
     
     for (const group of parsedGroups.groups) {
@@ -157,7 +218,7 @@ Return ONLY valid JSON in this exact format:
         group_description: group.group_description,
         product_names: group.products,
         price_analysis: group.price_analysis,
-        confidence_score: group.confidence_score,
+      model: 'gpt-4o-mini',
         vendor_analysis: {
           vendor_count: group.vendor_count,
           vendors: group.vendors
@@ -194,7 +255,8 @@ Return ONLY valid JSON in this exact format:
         groups_created: insertedGroups.length,
         ungrouped_products: parsedGroups.ungrouped?.length || 0,
         analysis_confidence: parsedGroups.analysis_confidence,
-        data: insertedGroups
+        data: insertedGroups,
+        diagnostics
       }),
       {
         headers: {
@@ -204,14 +266,37 @@ Return ONLY valid JSON in this exact format:
       }
     );
 
+    addDiagnostic('openai_request_prepared', 'info', 'OpenAI request prepared', {
+      model: openaiRequestBody.model,
+      temperature: openaiRequestBody.temperature,
+      max_tokens: openaiRequestBody.max_tokens,
+      messages_count: openaiRequestBody.messages.length,
+      system_message: openaiRequestBody.messages[0].content,
+      request_size_bytes: JSON.stringify(openaiRequestBody).length
+    });
+
   } catch (error) {
-    console.error('Product analysis error:', error);
+    addDiagnostic('edge_function_error', 'error', 'Edge function failed with error', {
+      error: error.message,
+      error_type: error.constructor.name,
+      stack: error.stack
+    });
+    
+    addDiagnostic('openai_api_call_start', 'loading', 'Making OpenAI API call...', {
+      url: 'https://api.openai.com/v1/chat/completions',
+      method: 'POST',
+      headers: {
+        'Authorization': 'Bearer ' + openaiApiKey.slice(0, 7) + '...',
+        'Content-Type': 'application/json'
+      }
+    });
     
     return new Response(
       JSON.stringify({
         success: false,
         error: error.message,
-        details: 'Check function logs for more information'
+        details: 'Check function logs for more information',
+        diagnostics
       }),
       {
         status: 500,

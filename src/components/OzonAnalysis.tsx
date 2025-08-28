@@ -180,7 +180,11 @@ const OzonAnalysis: React.FC<OzonAnalysisProps> = ({ onBack }) => {
       if (result.diagnostics) {
         // Filter to show only AI-related steps
         const aiSteps = ['start', 'env_check', 'fetch_products', 'prepare_api_call', 'call_edge_function', 
-                        'parse_error_response', 'parse_success_response', 'error'];
+                        'parse_error_response', 'parse_success_response', 'error', 'edge_function_start', 
+                        'env_vars_check', 'openai_key_missing', 'request_data', 'data_preparation', 
+                        'prompt_created', 'openai_request_prepared', 'openai_api_call_start', 'openai_api_call_complete',
+                        'openai_api_error', 'openai_response_parsing', 'openai_response_received', 'json_parsing',
+                        'edge_function_error'];
         
         result.diagnostics
           .filter((diag: any) => aiSteps.includes(diag.step))

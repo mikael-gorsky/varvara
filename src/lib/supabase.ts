@@ -31,7 +31,7 @@ export type Database = {
           id: string;
           external_id: string | null;
           name: string;
-          category: string;
+          link: string;
           price: number | null;
           quantity: number | null;
           supplier: string | null;
@@ -83,7 +83,7 @@ export type Database = {
           id?: string;
           external_id?: string | null;
           name: string;
-          category: string;
+          link: string;
           price?: number | null;
           quantity?: number | null;
           supplier?: string | null;
@@ -128,7 +128,7 @@ export type Database = {
           id?: string;
           external_id?: string | null;
           name?: string;
-          category?: string;
+          link?: string;
           price?: number | null;
           quantity?: number | null;
           supplier?: string | null;

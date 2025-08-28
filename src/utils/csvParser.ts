@@ -114,13 +114,13 @@ const mapRowToProduct = (row: any[], headerMap: Record<string, number>, headers:
   const productData: ProductRow = {
     // Map using actual column positions (0-32 for 33 columns)
     name: String(getValue(0) || '').trim() || `Item_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
-    category: String(getValue(1) || 'General').trim(),
+    link: String(getValue(1) || '').trim(), // This is actually a product listing link, not category
     
     // Map all other columns to available database fields
     supplier: String(getValue(2) || ''), // external_id is now supplier
     price: parseFloat(String(getValue(3) || '0').replace(',', '.')),
     quantity: parseInt(String(getValue(4) || '0')),
-    category_name: String(getValue(5) || '').trim() || null, // supplier is now category_name
+    category_name: String(getValue(5) || '').trim() || null, // This is the actual category
     
     // Extended ERP fields - map remaining columns
     sku: String(getValue(6) || '').trim() || null,
@@ -186,8 +186,8 @@ export const validateProductRow = (row: ProductRow): string[] => {
     errors.push('Product name is required');
   }
   
-  if (!row.category || row.category.trim() === '') {
-    errors.push('Category is required');
+  if (!row.category_name || row.category_name.trim() === '') {
+    errors.push('Category name is required');
   }
   
   if (row.price !== null && row.price < 0) {

@@ -147,15 +147,36 @@ const OzonAnalysis: React.FC<OzonAnalysisProps> = ({ onBack }) => {
 
   const analyzeCategory = async (category: string) => {
     setAnalyzingCategory(category);
+    setDiagnostics([]);
+    setShowDiagnostics(true);
     
     try {
+      addDiagnostic('ai_analysis_start', 'loading', `Starting AI analysis for: ${category}`);
+      
       const result = await ProductAnalysisService.analyzeCategory(category);
       
+      // Add service diagnostics to our diagnostic display
+      if (result.diagnostics) {
+        result.diagnostics.forEach((diag: any) => {
+          addDiagnostic(diag.step, diag.status, diag.message, diag.details);
+        });
+      }
+      
       if (result.success) {
+        addDiagnostic('ai_analysis_complete', 'success', `Analysis completed successfully`, {
+          groups_created: result.groups_created,
+          analysis_confidence: result.analysis_confidence
+        });
+        
         // Refresh analysis results and stats
         await loadAnalysisResults();
         await loadStats();
       } else {
+        addDiagnostic('ai_analysis_failed', 'error', `Analysis failed: ${result.error}`, {
+          error: result.error,
+          category
+        });
+        
         if (result.error?.includes('OpenAI API key')) {
           alert(`⚠️ OpenAI Configuration Required\n\n${result.error}\n\nPlease configure OPENAI_API_KEY in your Supabase Edge Function settings.`);
         } else {
@@ -163,6 +184,11 @@ const OzonAnalysis: React.FC<OzonAnalysisProps> = ({ onBack }) => {
         }
       }
     } catch (error) {
+      addDiagnostic('ai_analysis_exception', 'error', 'Analysis threw exception', {
+        error: error instanceof Error ? error.message : 'Unknown error',
+        category
+      });
+      
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
       if (errorMessage.includes('OpenAI') || errorMessage.includes('API key')) {
         alert(`⚠️ Configuration Required\n\n${errorMessage}\n\nSet up OpenAI API key in Supabase Edge Function environment variables.`);

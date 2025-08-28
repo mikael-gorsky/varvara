@@ -37,21 +37,60 @@ export class ProductAnalysisService {
    * Analyze products in a specific category using AI
    * Processes one category at a time as requested
    */
-  static async analyzeCategory(category: string): Promise<AnalysisResult> {
+  static async analyzeCategory(category: string): Promise<AnalysisResult & { diagnostics?: any[] }> {
+    const diagnostics: any[] = [];
+    
     try {
+      diagnostics.push({
+        step: 'start',
+        status: 'info',
+        message: `Starting AI analysis for category: ${category}`,
+        timestamp: new Date().toISOString()
+      });
+      
       // Check required environment variables
       const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
       const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+      const openaiKey = import.meta.env.VITE_OPENAI_API_KEY;
 
       if (!supabaseUrl) {
+        diagnostics.push({
+          step: 'env_check',
+          status: 'error',
+          message: 'VITE_SUPABASE_URL is missing',
+          details: { env_vars_checked: ['VITE_SUPABASE_URL'] }
+        });
         throw new Error('VITE_SUPABASE_URL environment variable is not defined. Please check your .env file.');
       }
 
       if (!supabaseAnonKey) {
+        diagnostics.push({
+          step: 'env_check',
+          status: 'error',
+          message: 'VITE_SUPABASE_ANON_KEY is missing',
+          details: { env_vars_checked: ['VITE_SUPABASE_ANON_KEY'] }
+        });
         throw new Error('VITE_SUPABASE_ANON_KEY environment variable is not defined. Please check your .env file.');
       }
+      
+      diagnostics.push({
+        step: 'env_check',
+        status: 'success',
+        message: 'Environment variables validated',
+        details: {
+          supabase_url: supabaseUrl?.slice(0, 30) + '...',
+          anon_key_present: !!supabaseAnonKey,
+          openai_key_present: !!openaiKey
+        }
+      });
 
       // 1. Get all products for this category
+      diagnostics.push({
+        step: 'fetch_products',
+        status: 'loading',
+        message: `Fetching products for category: ${category}`
+      });
+      
       const { data: products, error: queryError } = await supabaseAdmin
         .from('products')
         .select('name, price, supplier, category_name')
@@ -59,10 +98,29 @@ export class ProductAnalysisService {
         .eq('is_active', true);
 
       if (queryError) {
+        diagnostics.push({
+          step: 'fetch_products',
+          status: 'error',
+          message: 'Failed to fetch products from database',
+          details: {
+            category,
+            error: queryError.message,
+            code: queryError.code
+          }
+        });
         throw new Error(`Failed to fetch products: ${queryError.message}`);
       }
 
       if (!products || products.length === 0) {
+        diagnostics.push({
+          step: 'fetch_products',
+          status: 'error',
+          message: 'No products found for category',
+          details: {
+            category,
+            product_count: 0
+          }
+        });
         return {
           success: false,
           category,
@@ -70,12 +128,56 @@ export class ProductAnalysisService {
           ungrouped_products: 0,
           analysis_confidence: 0,
           data: [],
-          error: `No active products found in category: ${category}`
+          error: `No active products found in category: ${category}`,
+          diagnostics
         };
       }
+      
+      diagnostics.push({
+        step: 'fetch_products',
+        status: 'success',
+        message: `Successfully fetched ${products.length} products`,
+        details: {
+          category,
+          product_count: products.length,
+          sample_products: products.slice(0, 3).map(p => ({
+            name: p.name?.slice(0, 50) + '...',
+            price: p.price,
+            supplier: p.supplier
+          }))
+        }
+      });
 
       // 2. Call edge function for AI analysis
+      diagnostics.push({
+        step: 'prepare_api_call',
+        status: 'loading',
+        message: 'Preparing Edge Function API call'
+      });
+      
       const functionUrl = `${supabaseUrl}/functions/v1/analyze-products`;
+      
+      const requestPayload = {
+        category_name: category,
+        products
+      };
+      
+      diagnostics.push({
+        step: 'prepare_api_call',
+        status: 'success',
+        message: 'API call prepared',
+        details: {
+          function_url: functionUrl,
+          payload_size: JSON.stringify(requestPayload).length,
+          products_count: products.length
+        }
+      });
+      
+      diagnostics.push({
+        step: 'call_edge_function',
+        status: 'loading',
+        message: 'Calling Supabase Edge Function...'
+      });
       
       const response = await fetch(functionUrl, {
         method: 'POST',
@@ -83,21 +185,79 @@ export class ProductAnalysisService {
           'Authorization': `Bearer ${supabaseAnonKey}`,
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({
-          category_name: category,
-          products
-        })
+        body: JSON.stringify(requestPayload)
+      });
+      
+      diagnostics.push({
+        step: 'call_edge_function',
+        status: response.ok ? 'success' : 'error',
+        message: `Edge Function responded with status ${response.status}`,
+        details: {
+          status: response.status,
+          status_text: response.statusText,
+          headers: Object.fromEntries(response.headers.entries())
+        }
       });
 
       if (!response.ok) {
+        diagnostics.push({
+          step: 'parse_error_response',
+          status: 'loading',
+          message: 'Parsing error response from Edge Function'
+        });
+        
         const errorData = await response.json().catch(() => ({ error: 'Unknown API error' }));
+        
+        diagnostics.push({
+          step: 'parse_error_response',
+          status: 'error',
+          message: 'Edge Function returned error',
+          details: {
+            status: response.status,
+            error_data: errorData,
+            raw_response: errorData
+          }
+        });
+        
         throw new Error(errorData.error || `Analysis API error: ${response.status} ${response.statusText}`);
       }
 
+      diagnostics.push({
+        step: 'parse_success_response',
+        status: 'loading',
+        message: 'Parsing successful response from Edge Function'
+      });
+      
       const result: AnalysisResult = await response.json();
+      
+      diagnostics.push({
+        step: 'parse_success_response',
+        status: 'success',
+        message: 'Successfully parsed Edge Function response',
+        details: {
+          success: result.success,
+          groups_created: result.groups_created,
+          analysis_confidence: result.analysis_confidence,
+          response_keys: Object.keys(result)
+        }
+      });
+      
+      // Add diagnostics to result
+      result.diagnostics = diagnostics;
       return result;
 
     } catch (error) {
+      diagnostics.push({
+        step: 'error',
+        status: 'error',
+        message: 'Analysis failed with exception',
+        details: {
+          error: error instanceof Error ? error.message : 'Unknown error',
+          error_type: error instanceof Error ? error.constructor.name : typeof error,
+          stack: error instanceof Error ? error.stack : undefined
+        }
+      });
+      
       console.error('Product analysis service error:', error);
       return {
         success: false,
@@ -106,7 +266,8 @@ export class ProductAnalysisService {
         ungrouped_products: 0,
         analysis_confidence: 0,
         data: [],
-        error: error instanceof Error ? error.message : 'Unknown error'
+        error: error instanceof Error ? error.message : 'Unknown error',
+        diagnostics
       };
     }
   }

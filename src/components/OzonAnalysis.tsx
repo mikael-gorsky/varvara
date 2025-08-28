@@ -54,24 +54,27 @@ const OzonAnalysis: React.FC<OzonAnalysisProps> = ({ onBack }) => {
       addDiagnostic('connection', 'success', 'Database connected successfully');
       
       addDiagnostic('sample', 'loading', 'Checking sample data...');
-      const fetchedCategories = await ProductAnalysisService.getCategories();
+      const result = await ProductAnalysisService.getCategories();
       
-      if (fetchedCategories.length === 0) {
-        addDiagnostic('categories', 'error', 'No valid categories found', {
-          issue: 'Category column appears to be NULL or empty in all products',
-          suggestion: 'Check your import data - category column should have values like "Office Equipment", "Packaging", etc.',
-          next_step: 'Open browser console (F12) to see detailed category diagnosis'
+      // Add all service diagnostics to our diagnostic display
+      result.diagnostics.forEach(diag => {
+        addDiagnostic(diag.step, diag.status as any, diag.message, diag.details);
+      });
+      
+      if (result.categories.length === 0) {
+        addDiagnostic('final_status', 'error', 'No categories available for analysis', {
+          suggestion: 'Import products with valid category data first'
         });
       } else {
-        addDiagnostic('categories', 'success', `Found ${fetchedCategories.length} categories`, {
-          categories: fetchedCategories
+        addDiagnostic('final_status', 'success', `Ready for analysis with ${result.categories.length} categories`, {
+          categories: result.categories
         });
       }
       
-      setCategories(fetchedCategories);
+      setCategories(result.categories);
       
       // Auto-hide diagnostics after 3 seconds if successful
-      if (fetchedCategories.length > 0) {
+      if (result.categories.length > 0) {
         setTimeout(() => setShowDiagnostics(false), 3000);
       }
 
@@ -148,6 +151,8 @@ const OzonAnalysis: React.FC<OzonAnalysisProps> = ({ onBack }) => {
         return '🟢';
       case 'error':
         return '🔴';
+      default:
+        return '🔵';
     }
   };
 

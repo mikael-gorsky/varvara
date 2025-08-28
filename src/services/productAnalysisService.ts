@@ -101,43 +101,92 @@ export class ProductAnalysisService {
   /**
    * Get all available product categories for analysis
    */
-  static async getCategories(): Promise<string[]> {
+  static async getCategories(): Promise<{
+    categories: string[];
+    diagnostics: Array<{
+      step: string;
+      status: 'success' | 'error' | 'info';
+      message: string;
+      details?: any;
+    }>;
+  }> {
+    const diagnostics: Array<{ step: string; status: 'success' | 'error' | 'info'; message: string; details?: any }> = [];
+    
     try {
-      console.log('🔍 Fetching categories from products table...');
+      diagnostics.push({
+        step: 'query_start',
+        status: 'info',
+        message: 'Querying products table for sample data...',
+      });
       
       // First, get sample of actual data to diagnose category column
       const { data: sampleData, error: sampleError } = await supabase
         .from('products')
-        .select('id, name, category, is_active')
+        .select('id, name, category, is_active, price, supplier')
         .limit(10);
 
       if (sampleError) {
-        console.error('❌ Failed to get sample data:', sampleError);
-        return [];
+        diagnostics.push({
+          step: 'sample_error',
+          status: 'error',
+          message: 'Failed to get sample data',
+          details: { error: sampleError.message, code: sampleError.code }
+        });
+        return { categories: [], diagnostics };
       }
 
-      console.log(`📊 Sample products:`, sampleData);
+      diagnostics.push({
+        step: 'sample_data',
+        status: 'success',
+        message: `Retrieved ${sampleData?.length || 0} sample products`,
+        details: {
+          sample_products: sampleData?.map(p => ({
+            id: p.id.slice(0, 8) + '...',
+            name: p.name?.slice(0, 30) + (p.name && p.name.length > 30 ? '...' : ''),
+            category: p.category,
+            is_active: p.is_active,
+            price: p.price,
+            supplier: p.supplier?.slice(0, 20) + (p.supplier && p.supplier.length > 20 ? '...' : '')
+          })) || []
+        }
+      });
       
       if (!sampleData || sampleData.length === 0) {
-        console.warn('⚠️ No products found in database.');
-        return [];
+        diagnostics.push({
+          step: 'no_products',
+          status: 'error',
+          message: 'No products found in database',
+          details: { suggestion: 'Import some products first' }
+        });
+        return { categories: [], diagnostics };
       }
 
-      // Check what category values look like
-      const categoryValues = sampleData.map(p => ({ 
-        id: p.id.slice(0, 8), 
-        name: p.name?.slice(0, 20) + '...', 
-        category: p.category,
-        is_active: p.is_active
-      }));
-      console.log(`🔍 Category values sample:`, categoryValues);
+      // Analyze category values
+      const categoryAnalysis = {
+        total_sample: sampleData.length,
+        null_categories: sampleData.filter(p => p.category === null).length,
+        empty_categories: sampleData.filter(p => p.category === '').length,
+        valid_categories: sampleData.filter(p => p.category && p.category.trim() !== '').length,
+        unique_category_values: [...new Set(sampleData.map(p => p.category).filter(c => c && c.trim() !== ''))]
+      };
+      
+      diagnostics.push({
+        step: 'category_analysis',
+        status: 'info',
+        message: 'Category column analysis completed',
+        details: categoryAnalysis
+      });
 
       // Count total products and categories
       const { count: totalCount, error: countError } = await supabase
         .from('products')
         .select('*', { count: 'exact', head: true });
 
-      console.log(`📊 Total products in database: ${totalCount || 0}`);
+      diagnostics.push({
+        step: 'total_count',
+        status: 'success',
+        message: `Total products in database: ${totalCount || 0}`,
+      });
 
       // Get all categories
       const { data, error } = await supabase
@@ -146,34 +195,92 @@ export class ProductAnalysisService {
         .not('category', 'is', null);
 
       if (error) {
-        console.error('❌ Failed to fetch categories:', error);
-        return [];
+        diagnostics.push({
+          step: 'category_query_error',
+          status: 'error',
+          message: 'Failed to fetch categories',
+          details: { error: error.message, code: error.code }
+        });
+        return { categories: [], diagnostics };
       }
       
-      console.log(`📊 Found ${data?.length || 0} products with valid categories`);
+      diagnostics.push({
+        step: 'category_query',
+        status: 'success',
+        message: `Found ${data?.length || 0} products with non-null categories`,
+      });
       
       if (!data || data.length === 0) {
-        console.warn('⚠️ No products with non-null categories found.');
-        return [];
+        diagnostics.push({
+          step: 'no_valid_categories',
+          status: 'error',
+          message: 'No products with non-null categories found',
+          details: { 
+            issue: 'All category values appear to be NULL',
+            suggestion: 'Check your import process - category column should contain values like "Office Equipment", "Packaging", etc.'
+          }
+        });
+        return { categories: [], diagnostics };
       }
 
-      // Log all category values before filtering
       const allCategories = data.map(p => p.category);
-      console.log(`📋 All category values (first 20):`, allCategories.slice(0, 20));
+      
+      diagnostics.push({
+        step: 'raw_categories',
+        status: 'info',
+        message: `Raw category values (first 20 of ${allCategories.length})`,
+        details: { 
+          raw_values: allCategories.slice(0, 20),
+          total_raw: allCategories.length
+        }
+      });
       
       // Get unique categories and filter empties
       const uniqueCategories = [...new Set(allCategories)];
       const filteredCategories = uniqueCategories.filter(cat => cat && cat.trim() !== '');
       
-      console.log(`📋 Unique categories before filtering:`, uniqueCategories);
-      console.log(`📋 Valid categories after filtering:`, filteredCategories);
-      console.log(`✅ Returning ${filteredCategories.length} unique categories`);
+      diagnostics.push({
+        step: 'category_filtering',
+        status: 'info',
+        message: 'Category filtering completed',
+        details: {
+          unique_before_filter: uniqueCategories,
+          valid_after_filter: filteredCategories,
+          total_unique: uniqueCategories.length,
+          total_valid: filteredCategories.length
+        }
+      });
       
-      return filteredCategories;
+      if (filteredCategories.length === 0) {
+        diagnostics.push({
+          step: 'final_result',
+          status: 'error',
+          message: 'No valid categories after filtering',
+          details: { 
+            issue: 'All categories are either NULL, empty strings, or whitespace only',
+            found_values: uniqueCategories,
+            suggestion: 'Your import data needs to have proper category values'
+          }
+        });
+      } else {
+        diagnostics.push({
+          step: 'final_result',
+          status: 'success',
+          message: `Successfully found ${filteredCategories.length} valid categories`,
+          details: { categories: filteredCategories }
+        });
+      }
+      
+      return { categories: filteredCategories, diagnostics };
 
     } catch (error) {
-      console.error('❌ Get categories error:', error);
-      return [];
+      diagnostics.push({
+        step: 'exception',
+        status: 'error',
+        message: 'Exception occurred during category retrieval',
+        details: { error: error instanceof Error ? error.message : 'Unknown error' }
+      });
+      return { categories: [], diagnostics };
     }
   }
 

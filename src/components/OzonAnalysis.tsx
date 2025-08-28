@@ -36,11 +36,17 @@ const OzonAnalysis: React.FC<OzonAnalysisProps> = ({ onBack }) => {
 
   const loadCategories = async () => {
     setLoadingCategories(true);
-    setDiagnostics([]);
-    setShowDiagnostics(true);
+    // Only show diagnostics during category loading if not analyzing
+    if (!analyzingCategory) {
+      setDiagnostics([]);
+      setShowDiagnostics(true);
+    }
 
     try {
-      addDiagnostic('connect', 'loading', 'Connecting to database...');
+      // Only add category loading diagnostics if not doing AI analysis
+      if (!analyzingCategory) {
+        addDiagnostic('connect', 'loading', 'Connecting to database...');
+      }
       
       // First check if we can connect at all
       const { data: testData, error: testError } = await supabase
@@ -49,36 +55,48 @@ const OzonAnalysis: React.FC<OzonAnalysisProps> = ({ onBack }) => {
         .limit(1);
 
       if (testError) {
-        addDiagnostic('connection', 'error', 'Database connection failed', {
-          table: 'products',
-          error: testError.message,
-          code: testError.code
-        });
+        if (!analyzingCategory) {
+          addDiagnostic('connection', 'error', 'Database connection failed', {
+            table: 'products',
+            error: testError.message,
+            code: testError.code
+          });
+        }
         setCategories([]);
         return;
       }
 
-      addDiagnostic('connection', 'success', 'Connected to TABLE: products');
+      if (!analyzingCategory) {
+        addDiagnostic('connection', 'success', 'Connected to TABLE: products');
+      }
       
-      addDiagnostic('sample', 'loading', 'Checking sample data...');
+      if (!analyzingCategory) {
+        addDiagnostic('sample', 'loading', 'Checking sample data...');
+      }
       const result = await ProductAnalysisService.getCategories();
       
-      // Add all service diagnostics to our diagnostic display
-      result.diagnostics.forEach(diag => {
-        addDiagnostic(diag.step, diag.status as any, diag.message, diag.details);
-      });
+      // Add service diagnostics only if not doing AI analysis
+      if (!analyzingCategory) {
+        result.diagnostics.forEach(diag => {
+          addDiagnostic(diag.step, diag.status as any, diag.message, diag.details);
+        });
+      }
       
       if (result.categories.length === 0) {
-        addDiagnostic('final_status', 'error', 'No categories available for analysis', {
-          table: 'products',
-          fields_checked: ['category', 'category_name'],
-          suggestion: 'Import products with valid category data first'
-        });
+        if (!analyzingCategory) {
+          addDiagnostic('final_status', 'error', 'No categories available for analysis', {
+            table: 'products',
+            fields_checked: ['category', 'category_name'],
+            suggestion: 'Import products with valid category data first'
+          });
+        }
       } else {
-        addDiagnostic('final_status', 'success', `Ready for analysis with ${result.categories.length} categories`, {
-          table: 'products',
-          categories: result.categories
-        });
+        if (!analyzingCategory) {
+          addDiagnostic('final_status', 'success', `Ready for analysis with ${result.categories.length} categories`, {
+            table: 'products',
+            categories: result.categories
+          });
+        }
       }
       
       setCategories(result.categories);
@@ -87,10 +105,12 @@ const OzonAnalysis: React.FC<OzonAnalysisProps> = ({ onBack }) => {
       await loadSuppliers();
 
     } catch (error) {
-      addDiagnostic('error', 'error', 'Failed to load categories', {
-        table: 'products',
-        error: error instanceof Error ? error.message : 'Unknown error'
-      });
+      if (!analyzingCategory) {
+        addDiagnostic('error', 'error', 'Failed to load categories', {
+          table: 'products',
+          error: error instanceof Error ? error.message : 'Unknown error'
+        });
+      }
     } finally {
       setLoadingCategories(false);
     }
@@ -147,6 +167,7 @@ const OzonAnalysis: React.FC<OzonAnalysisProps> = ({ onBack }) => {
 
   const analyzeCategory = async (category: string) => {
     setAnalyzingCategory(category);
+    // Clear all diagnostics and show only AI-related ones
     setDiagnostics([]);
     setShowDiagnostics(true);
     
@@ -155,11 +176,17 @@ const OzonAnalysis: React.FC<OzonAnalysisProps> = ({ onBack }) => {
       
       const result = await ProductAnalysisService.analyzeCategory(category);
       
-      // Add service diagnostics to our diagnostic display
+      // Add only AI analysis diagnostics to our diagnostic display
       if (result.diagnostics) {
-        result.diagnostics.forEach((diag: any) => {
-          addDiagnostic(diag.step, diag.status, diag.message, diag.details);
-        });
+        // Filter to show only AI-related steps
+        const aiSteps = ['start', 'env_check', 'fetch_products', 'prepare_api_call', 'call_edge_function', 
+                        'parse_error_response', 'parse_success_response', 'error'];
+        
+        result.diagnostics
+          .filter((diag: any) => aiSteps.includes(diag.step))
+          .forEach((diag: any) => {
+            addDiagnostic(diag.step, diag.status, diag.message, diag.details);
+          });
       }
       
       if (result.success) {

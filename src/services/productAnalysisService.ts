@@ -78,7 +78,8 @@ export class ProductAnalysisService {
       });
 
       if (!response.ok) {
-        throw new Error(`Analysis API error: ${response.status} ${response.statusText}`);
+        const errorData = await response.json().catch(() => ({ error: 'Unknown API error' }));
+        throw new Error(errorData.error || `Analysis API error: ${response.status} ${response.statusText}`);
       }
 
       const result: AnalysisResult = await response.json();

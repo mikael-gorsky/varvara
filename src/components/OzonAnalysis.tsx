@@ -160,10 +160,19 @@ const OzonAnalysis: React.FC<OzonAnalysisProps> = ({ onBack }) => {
         await loadAnalysisResults();
         await loadStats();
       } else {
-        alert(`Analysis failed: ${result.error}`);
+        if (result.error?.includes('OpenAI API key')) {
+          alert(`⚠️ OpenAI Configuration Required\n\n${result.error}\n\nPlease configure OPENAI_API_KEY in your Supabase Edge Function settings.`);
+        } else {
+          alert(`Analysis failed: ${result.error}`);
+        }
       }
     } catch (error) {
-      alert(`Analysis error: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      if (errorMessage.includes('OpenAI') || errorMessage.includes('API key')) {
+        alert(`⚠️ Configuration Required\n\n${errorMessage}\n\nSet up OpenAI API key in Supabase Edge Function environment variables.`);
+      } else {
+        alert(`Analysis error: ${errorMessage}`);
+      }
     } finally {
       setAnalyzingCategory(null);
     }

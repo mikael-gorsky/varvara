@@ -1,7 +1,7 @@
 import React, { useState, useCallback } from 'react';
 import { ArrowLeft, FileSpreadsheet, Upload, AlertTriangle, CheckCircle, Database, Download, Trash2 } from 'lucide-react';
 import { parseCSVFile, parseExcelFile, ParsedData, ProductRow } from '../utils/csvParser';
-import { ImportService, ImportResult } from '../services/importService';</parameter>
+import { ImportService, ImportResult } from '../services/importService';
 
 interface OzonAnalysisProps {
   onBack: () => void;

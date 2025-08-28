@@ -158,6 +158,7 @@ export class ProductAnalysisService {
         return { categories: [], diagnostics };
       }
       
+      const allCategoryValues = data?.map(p => p.category_name).filter(c => c && c.trim() !== '') || [];
       const uniqueCategories = [...new Set(allCategoryValues)];
       
       diagnostics.push({

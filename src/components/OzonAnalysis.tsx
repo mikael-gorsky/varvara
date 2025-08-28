@@ -85,11 +85,6 @@ const OzonAnalysis: React.FC<OzonAnalysisProps> = ({ onBack }) => {
       
       // Load suppliers for filtering
       await loadSuppliers();
-      
-      // Auto-hide diagnostics after 3 seconds if successful
-      if (result.categories.length > 0) {
-        setTimeout(() => setShowDiagnostics(false), 3000);
-      }
 
     } catch (error) {
       addDiagnostic('error', 'error', 'Failed to load categories', {

@@ -42,8 +42,8 @@ export class ProductAnalysisService {
       // 1. Get all products for this category
       const { data: products, error: queryError } = await supabaseAdmin
         .from('products')
-        .select('name, price, supplier, category_name') // Updated column names
-        .eq('category', category)
+        .select('name, price, supplier, category_name')
+        .eq('category_name', category)
         .eq('is_active', true);
 
       if (queryError) {
@@ -72,7 +72,7 @@ export class ProductAnalysisService {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          category,
+          category_name: category,
           products
         })
       });
@@ -89,7 +89,7 @@ export class ProductAnalysisService {
       console.error('Product analysis service error:', error);
       return {
         success: false,
-        category,
+        category_name: category,
         groups_created: 0,
         ungrouped_products: 0,
         analysis_confidence: 0,
@@ -333,7 +333,7 @@ export class ProductAnalysisService {
       // 5. Get all categories from both columns
       const { data, error } = await supabaseAdmin
         .from('products')
-        .select('category, category_name');
+        .select('category_name');
 
       if (error) {
         diagnostics.push({
@@ -345,21 +345,17 @@ export class ProductAnalysisService {
         return { categories: [], diagnostics };
       }
       
-      // Combine categories from both columns
-      const allCategoryValues = [
-        ...data?.map(p => p.category).filter(c => c && c.trim() !== '') || [],
-        ...data?.map(p => p.category_name).filter(c => c && c.trim() !== '') || []
-      ];
+      // Get categories from category_name column only
+      const allCategoryValues = data?.map(p => p.category_name).filter(c => c && c.trim() !== '') || [];
       
       const uniqueCategories = [...new Set(allCategoryValues)];
       
       diagnostics.push({
         step: 'final_categories',
         status: 'success',
-        message: `Found ${uniqueCategories.length} unique categories from both columns`,
+        message: `Found ${uniqueCategories.length} unique categories from category_name column`,
         details: {
-          from_category_column: [...new Set(data?.map(p => p.category).filter(c => c && c.trim() !== '') || [])],
-          from_category_name_column: [...new Set(data?.map(p => p.category_name).filter(c => c && c.trim() !== '') || [])],
+          from_category_name_column: uniqueCategories,
           final_categories: uniqueCategories
         }
       });
@@ -462,7 +458,7 @@ export class ProductAnalysisService {
         .order('created_at', { ascending: false });
 
       if (category) {
-        query = query.eq('category', category);
+        query = query.eq('category_name', category);
       }
 
       const { data, error } = await query;
@@ -488,7 +484,7 @@ export class ProductAnalysisService {
       const { error } = await supabase
         .from('ai_product_groups')
         .delete()
-        .eq('category', category);
+        .eq('category_name', category);
 
       if (error) {
         console.error('Failed to clear category analysis:', error);
@@ -509,7 +505,7 @@ export class ProductAnalysisService {
     try {
       const { data, error } = await supabase
         .from('ai_product_groups')
-        .select('category, confidence_score, created_at');
+        .select('category_name, confidence_score, created_at');
 
       if (error) {
         console.error('Failed to fetch analysis stats:', error);
@@ -518,7 +514,7 @@ export class ProductAnalysisService {
 
       const stats = {
         total_groups: data?.length || 0,
-        categories_analyzed: new Set(data?.map(g => g.category)).size,
+        categories_analyzed: new Set(data?.map(g => g.category_name)).size,
         avg_confidence: data?.length > 0 
           ? (data.reduce((sum, g) => sum + (g.confidence_score || 0), 0) / data.length).toFixed(2)
           : 0,

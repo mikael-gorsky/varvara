@@ -210,11 +210,11 @@ const OzonAnalysis: React.FC<OzonAnalysisProps> = ({ onBack }) => {
   };
 
   const isCategoryAnalyzed = (category: string) => {
-    return analysisResults.some(result => result.category === category);
+    return analysisResults.some(result => result.category_name === category);
   };
 
   const getCategoryResults = (category: string) => {
-    return analysisResults.filter(result => result.category === category);
+    return analysisResults.filter(result => result.category_name === category);
   };
 
   return (

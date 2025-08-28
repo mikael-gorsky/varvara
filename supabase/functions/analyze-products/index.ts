@@ -14,7 +14,7 @@ interface ProductData {
 }
 
 interface AIGroupingRequest {
-  category: string;
+  category_name: string;
   products: ProductData[];
 }
 
@@ -56,10 +56,10 @@ Deno.serve(async (req: Request) => {
 
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
     
-    const { category, products }: AIGroupingRequest = await req.json();
+    const { category_name, products }: AIGroupingRequest = await req.json();
 
-    if (!category || !products || products.length === 0) {
-      throw new Error('Category and products are required');
+    if (!category_name || !products || products.length === 0) {
+      throw new Error('Category_name and products are required');
     }
 
     // Prepare data for AI analysis
@@ -72,7 +72,7 @@ Deno.serve(async (req: Request) => {
 
     // Create AI prompt with price analysis context
     const prompt = `
-Analyze these products from category "${category}" and group similar/identical products together.
+Analyze these products from category "${category_name}" and group similar/identical products together.</anoltAction>
 
 Products to analyze:
 ${productAnalysis.map((p, i) => 
@@ -152,7 +152,7 @@ Return ONLY valid JSON in this exact format:
     
     for (const group of parsedGroups.groups) {
       const record = {
-        category,
+        category_name,
         group_name: group.group_name,
         group_description: group.group_description,
         product_names: group.products,
@@ -175,7 +175,7 @@ Return ONLY valid JSON in this exact format:
     await supabase
       .from('ai_product_groups')
       .delete()
-      .eq('category', category);
+      .eq('category_name', category_name);
 
     // Insert new groups
     const { data: insertedGroups, error: insertError } = await supabase
@@ -190,7 +190,7 @@ Return ONLY valid JSON in this exact format:
     return new Response(
       JSON.stringify({
         success: true,
-        category,
+        category_name,
         groups_created: insertedGroups.length,
         ungrouped_products: parsedGroups.ungrouped?.length || 0,
         analysis_confidence: parsedGroups.analysis_confidence,

@@ -1,7 +1,7 @@
 import React, { useState, useCallback } from 'react';
 import { ArrowLeft, FileSpreadsheet, Upload, AlertTriangle, CheckCircle, Database, Download, Trash2 } from 'lucide-react';
 import { parseCSVFile, parseExcelFile, ParsedData, ProductRow } from '../utils/csvParser';
-import { supabase, supabaseAdmin } from '../lib/supabase';
+import { ImportService, ImportResult } from '../services/importService';</parameter>
 
 interface OzonAnalysisProps {
   onBack: () => void;
@@ -65,20 +65,24 @@ const OzonAnalysis: React.FC<OzonAnalysisProps> = ({ onBack }) => {
     setIsImporting(true);
     
     try {
-      const { data: insertedData, error } = await supabaseAdmin
-        .from('products')
-        .insert(data.rows)
-        .select();
+      // Use protected import service
+      const result: ImportResult = await ImportService.importToProducts(data, {
+        validateBeforeImport: true,
+        onProgress: (progress, message) => {
+          // Could add progress UI here later
+          console.log(`Import progress: ${progress}% - ${message}`);
+        }
+      });
 
-      if (error) {
-        console.error('Import error:', error);
-        alert(`Import failed: ${error.message}`);
+      if (result.success) {
+        alert(`✅ ${result.message}`);
       } else {
-        alert(`Successfully imported ${insertedData?.length || 0} products to database!`);
+        console.error('Import failed:', result.errors);
+        alert(`❌ ${result.message}\n\nErrors: ${result.errors.join(', ')}`);
       }
     } catch (error) {
       console.error('Import error:', error);
-      alert('Import failed. Please try again.');
+      alert('❌ Import failed. Please check console for details.');
     }
     
     setIsImporting(false);

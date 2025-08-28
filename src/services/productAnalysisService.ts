@@ -72,6 +72,22 @@ export class ProductAnalysisService {
         });
         throw new Error('VITE_SUPABASE_ANON_KEY environment variable is not defined. Please check your .env file.');
       }
+
+      // Validate Supabase URL format
+      try {
+        new URL(supabaseUrl);
+      } catch (urlError) {
+        diagnostics.push({
+          step: 'env_check',
+          status: 'error',
+          message: 'VITE_SUPABASE_URL is not a valid URL',
+          details: { 
+            provided_url: supabaseUrl,
+            url_error: urlError instanceof Error ? urlError.message : 'Invalid URL format'
+          }
+        });
+        throw new Error(`VITE_SUPABASE_URL is not a valid URL: ${supabaseUrl}`);
+      }
       
       diagnostics.push({
         step: 'env_check',
@@ -79,6 +95,7 @@ export class ProductAnalysisService {
         message: 'Environment variables validated',
         details: {
           supabase_url: supabaseUrl?.slice(0, 30) + '...',
+          full_supabase_url: supabaseUrl,
           anon_key_present: !!supabaseAnonKey,
           openai_key_present: !!openaiKey
         }
@@ -157,6 +174,23 @@ export class ProductAnalysisService {
       
       const functionUrl = `${supabaseUrl}/functions/v1/analyze-products`;
       
+      // Validate the constructed function URL
+      try {
+        new URL(functionUrl);
+      } catch (urlError) {
+        diagnostics.push({
+          step: 'prepare_api_call',
+          status: 'error',
+          message: 'Constructed function URL is invalid',
+          details: {
+            constructed_url: functionUrl,
+            supabase_url: supabaseUrl,
+            url_error: urlError instanceof Error ? urlError.message : 'Invalid URL'
+          }
+        });
+        throw new Error(`Invalid function URL constructed: ${functionUrl}`);
+      }
+      
       const requestPayload = {
         category_name: category,
         products
@@ -168,6 +202,7 @@ export class ProductAnalysisService {
         message: 'API call prepared',
         details: {
           function_url: functionUrl,
+          supabase_url: supabaseUrl,
           payload_size: JSON.stringify(requestPayload).length,
           products_count: products.length
         }
@@ -176,18 +211,51 @@ export class ProductAnalysisService {
       diagnostics.push({
         step: 'call_edge_function',
         status: 'loading',
-        message: 'Calling Supabase Edge Function...'
+        message: 'Calling Supabase Edge Function...',
+        details: {
+          url: functionUrl,
+          method: 'POST',
+          headers: {
+            'Authorization': 'Bearer ' + supabaseAnonKey?.slice(0, 10) + '...',
+            'Content-Type': 'application/json'
+          }
+        }
       });
       
       const requestStart = Date.now();
-      const response = await fetch(functionUrl, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${supabaseAnonKey}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(requestPayload)
-      });
+      let response: Response;
+      
+      try {
+        response = await fetch(functionUrl, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${supabaseAnonKey}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(requestPayload)
+        });
+      } catch (fetchError) {
+        const requestEnd = Date.now();
+        diagnostics.push({
+          step: 'call_edge_function',
+          status: 'error',
+          message: 'Failed to fetch Edge Function',
+          details: {
+            fetch_error: fetchError instanceof Error ? fetchError.message : 'Unknown fetch error',
+            error_type: fetchError instanceof Error ? fetchError.constructor.name : typeof fetchError,
+            function_url: functionUrl,
+            supabase_url: supabaseUrl,
+            request_duration_ms: requestEnd - requestStart,
+            troubleshooting: {
+              check_url: 'Verify VITE_SUPABASE_URL in .env file',
+              expected_format: 'https://your-project-ref.supabase.co',
+              current_url: supabaseUrl
+            }
+          }
+        });
+        throw new Error(`Calling Supabase Edge Function failed: ${fetchError instanceof Error ? fetchError.message : 'Network error'}`);
+      }
+      
       const requestEnd = Date.now();
       
       diagnostics.push({

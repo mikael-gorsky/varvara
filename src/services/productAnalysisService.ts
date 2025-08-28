@@ -309,12 +309,6 @@ export class ProductAnalysisService {
       // 4. Analyze category columns
       const categoryAnalysis = {
         sample_size: sampleData.length,
-        category_field: {
-          null_count: sampleData.filter(p => p.category === null).length,
-          empty_count: sampleData.filter(p => p.category === '').length,
-          valid_count: sampleData.filter(p => p.category && p.category.trim() !== '').length,
-          unique_values: [...new Set(sampleData.map(p => p.category).filter(c => c && c.trim() !== ''))]
-        },
         category_name_field: {
           null_count: sampleData.filter(p => p.category_name === null).length,
           empty_count: sampleData.filter(p => p.category_name === '').length,

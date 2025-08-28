@@ -184,21 +184,93 @@ export class ProductAnalysisService {
         message: 'Querying sample products with SELECT...',
       });
       
-      const { data: sampleData, error: sampleError } = await supabase
+      // Try different SELECT approaches to diagnose the exact issue
+      let sampleData = null;
+      let sampleError = null;
+      
+      // Test 1: Simple SELECT with just ID
+      diagnostics.push({
+        step: 'test_simple_select',
+        status: 'info',
+        message: 'Testing simple SELECT id only...'
+      });
+      
+      const { data: idTest, error: idError } = await supabaseAdmin
         .from('products')
-        .select('id, name, category, category_name, supplier, price, is_active')
-        .limit(5);
+        .select('id')
+        .limit(3);
+
+      if (idError) {
+        diagnostics.push({
+          step: 'simple_select_error',
+          status: 'error', 
+          message: 'Even simple SELECT id failed',
+          details: {
+            error_message: idError.message,
+            error_code: idError.code,
+            error_hint: idError.hint,
+            error_details: idError.details
+          }
+        });
+        sampleError = idError;
+      } else {
+        diagnostics.push({
+          step: 'simple_select_result',
+          status: idTest?.length > 0 ? 'success' : 'error',
+          message: `Simple SELECT returned ${idTest?.length || 0} IDs`,
+          details: { ids: idTest?.map(p => p.id.slice(0, 8) + '...') }
+        });
+        
+        if (idTest?.length > 0) {
+          // Test 2: Full field SELECT if simple works
+          diagnostics.push({
+            step: 'test_full_select',
+            status: 'info',
+            message: 'Testing full field SELECT...'
+          });
+          
+          const { data: fullData, error: fullError } = await supabaseAdmin
+            .from('products')
+            .select('id, name, category, category_name, supplier, price, is_active')
+            .limit(3);
+            
+          if (fullError) {
+            diagnostics.push({
+              step: 'full_select_error',
+              status: 'error',
+              message: 'Full field SELECT failed',
+              details: {
+                error_message: fullError.message,
+                error_code: fullError.code,
+                issue: 'Specific column access blocked by RLS policy'
+              }
+            });
+            sampleError = fullError;
+          } else {
+            sampleData = fullData;
+            diagnostics.push({
+              step: 'full_select_success',
+              status: 'success',
+              message: `Full SELECT returned ${fullData?.length || 0} products`
+            });
+          }
+        } else {
+          sampleError = { message: 'Simple SELECT returned empty despite COUNT > 0' };
+        }
+      }
 
       if (sampleError) {
         diagnostics.push({
           step: 'sample_error',
           status: 'error',
-          message: 'SELECT query failed even with admin client',
+          message: 'All SELECT queries failed with admin client',
           details: { 
             error_message: sampleError.message, 
             code: sampleError.code,
             hint: sampleError.hint,
-            diagnosis: sampleError.code === '42501' ? 'RLS blocking admin access (configuration issue)' : 'Other database error'
+            count_works_but_select_fails: true,
+            diagnosis: sampleError.code === '42501' ? 'RLS policy specifically blocking SELECT operations for service role' : 'Service role misconfiguration or RLS policy issue',
+            solution: 'Check RLS policies on products table - they may be blocking service role SELECT operations'
           }
         });
         return { categories: [], diagnostics };
@@ -207,7 +279,7 @@ export class ProductAnalysisService {
       diagnostics.push({
         step: 'sample_data',
         status: sampleData?.length > 0 ? 'success' : 'error',
-        message: `Retrieved ${sampleData?.length || 0} products from TABLE: products`,
+        message: `Final result: Retrieved ${sampleData?.length || 0} products from TABLE: products`,
         details: {
           sample_data: sampleData?.map(p => ({
             id: p.id.slice(0, 8) + '...',

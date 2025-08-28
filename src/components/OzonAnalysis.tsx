@@ -120,7 +120,6 @@ export class ProductAnalysisService {
       const uniqueCategories = [...new Set(data?.map(p => p.category) || [])];
       const filteredCategories = uniqueCategories.filter(cat => cat && cat.trim());
       console.log(`✅ Returning ${filteredCategories.length} unique categories`);
-      });
       
       return filteredCategories;
 

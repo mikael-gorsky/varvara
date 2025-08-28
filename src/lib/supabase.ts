@@ -165,5 +165,55 @@ export type Database = {
         };
       };
     };
+    ai_product_groups: {
+      Row: {
+        id: string;
+        category: string;
+        group_name: string;
+        group_description: string | null;
+        product_names: string[];
+        price_analysis: {
+          min_price: number;
+          max_price: number;
+          avg_price: number;
+          price_variance: string;
+          outliers: string[];
+        };
+        confidence_score: number | null;
+        vendor_analysis: {
+          vendor_count: number;
+          vendors: string[];
+        };
+        ai_response: any;
+        created_at: string;
+        updated_at: string;
+      };
+      Insert: {
+        id?: string;
+        category: string;
+        group_name: string;
+        group_description?: string | null;
+        product_names: string[];
+        price_analysis?: any;
+        confidence_score?: number | null;
+        vendor_analysis?: any;
+        ai_response?: any;
+        created_at?: string;
+        updated_at?: string;
+      };
+      Update: {
+        id?: string;
+        category?: string;
+        group_name?: string;
+        group_description?: string | null;
+        product_names?: string[];
+        price_analysis?: any;
+        confidence_score?: number | null;
+        vendor_analysis?: any;
+        ai_response?: any;
+        created_at?: string;
+        updated_at?: string;
+      };
+    };
   };
 };

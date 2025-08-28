@@ -135,13 +135,42 @@ export class ProductAnalysisService {
         message: `TABLE: products contains ${count} total rows`,
       });
 
+      // 2. Test query - get sample data first
+      const { data: sampleData, error: sampleError } = await supabaseAdmin
+        .from('products')
+        .select('id, category_name, supplier')
+        .limit(10);
+
+      if (sampleError) {
+        diagnostics.push({
+          step: 'sample_query_error',
+          status: 'error',
+          message: 'Failed to fetch sample data',
+          details: { error: sampleError.message }
+        });
+        return { categories: [], diagnostics };
+      }
+
+      diagnostics.push({
+        step: 'sample_data',
+        status: 'success',
+        message: `Sample data retrieved: ${sampleData?.length || 0} rows`,
+        details: {
+          sample: sampleData?.map(row => ({
+            id: row.id?.slice(0, 8),
+            category_name: row.category_name,
+            supplier: row.supplier
+          }))
+        }
+      });
+
       if (count === 0) {
         diagnostics.push({
           step: 'no_data',
         }
         )
       }
-      // 2. Get all unique categories
+      // 3. Get all category_name values
       const { data, error } = await supabaseAdmin
         .from('products')
         .select('category_name')
@@ -158,16 +187,35 @@ export class ProductAnalysisService {
         return { categories: [], diagnostics };
       }
       
+      diagnostics.push({
+        step: 'raw_query_result',
+        status: 'info',
+        message: `Query returned ${data?.length || 0} rows`,
+        details: {
+          first_10_results: data?.slice(0, 10).map(row => row.category_name)
+        }
+      });
+      
       const allCategoryValues = data?.map(p => p.category_name).filter(c => c && c.trim() !== '') || [];
       const uniqueCategories = [...new Set(allCategoryValues)];
       
       diagnostics.push({
-        step: 'final_result',
+        step: 'processing_result',
+        status: 'info',
+        message: `Processed ${allCategoryValues.length} category values into ${uniqueCategories.length} unique categories`,
+        details: {
+          all_values_count: allCategoryValues.length,
+          unique_categories: uniqueCategories,
+          sample_raw_values: allCategoryValues.slice(0, 10)
+        }
+      });
+
+      diagnostics.push({
+        step: 'final_categories',
         step: 'success',
         message: `Found ${uniqueCategories.length} unique categories`,
         details: {
-          categories: uniqueCategories,
-          total_category_records: allCategoryValues.length
+          categories: uniqueCategories
         }
       });
       

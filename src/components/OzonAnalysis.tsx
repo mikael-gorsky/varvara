@@ -23,6 +23,10 @@ const OzonAnalysis: React.FC<OzonAnalysisProps> = ({ onBack }) => {
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [analyzingCategory, setAnalyzingCategory] = useState<string | null>(null);
   const [analysisStats, setAnalysisStats] = useState<any>(null);
+  
+  // Diagnostic states
+  const [diagnosticData, setDiagnosticData] = useState<any>(null);
+  const [showDiagnostic, setShowDiagnostic] = useState(false);
 
   // Load categories and existing analysis on component mount
   React.useEffect(() => {
@@ -33,13 +37,32 @@ const OzonAnalysis: React.FC<OzonAnalysisProps> = ({ onBack }) => {
 
   const loadCategories = async () => {
     setIsLoadingCategories(true);
+    setShowDiagnostic(true);
+    setDiagnosticData({ status: 'Loading...', step: 'Connecting to database' });
     console.log('🔄 Loading categories...');
     try {
+      setDiagnosticData({ status: 'Connected', step: 'Querying products table' });
       const availableCategories = await ProductAnalysisService.getCategories();
       console.log('📋 Received categories:', availableCategories);
+      setDiagnosticData({ 
+        status: 'Complete', 
+        step: 'Categories loaded',
+        categories: availableCategories,
+        count: availableCategories.length 
+      });
       setCategories(availableCategories);
+      
+      // Hide diagnostic after 3 seconds if successful
+      if (availableCategories.length > 0) {
+        setTimeout(() => setShowDiagnostic(false), 3000);
+      }
     } catch (error) {
       console.error('❌ Failed to load categories:', error);
+      setDiagnosticData({ 
+        status: 'Error', 
+        step: 'Failed to load categories',
+        error: error instanceof Error ? error.message : 'Unknown error'
+      });
       alert('Failed to load categories. Check console for details.');
     }
     setIsLoadingCategories(false);
@@ -535,6 +558,60 @@ const OzonAnalysis: React.FC<OzonAnalysisProps> = ({ onBack }) => {
                   <p className="text-blue-200">Status</p>
                   <p className="text-emerald-400 font-bold">Ready to Import</p>
                 </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Diagnostic Overlay */}
+        {showDiagnostic && (
+          <div className="fixed inset-0 bg-black/30 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+            <div className="bg-slate-900/90 border border-white/20 rounded-xl p-6 max-w-md w-full shadow-2xl">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-white font-semibold flex items-center gap-2">
+                  <Database className="w-5 h-5 text-blue-400" />
+                  Category Detection Diagnostic
+                </h3>
+                <button
+                  onClick={() => setShowDiagnostic(false)}
+                  className="text-white/60 hover:text-white transition-colors"
+                >
+                  ✕
+                </button>
+              </div>
+              
+              <div className="space-y-3">
+                <div className="flex items-center gap-2">
+                  <div className={`w-2 h-2 rounded-full ${
+                    diagnosticData?.status === 'Loading...' ? 'bg-yellow-400 animate-pulse' :
+                    diagnosticData?.status === 'Complete' ? 'bg-emerald-400' :
+                    diagnosticData?.status === 'Error' ? 'bg-red-400' : 'bg-blue-400'
+                  }`} />
+                  <span className="text-white text-sm">Status: {diagnosticData?.status}</span>
+                </div>
+                
+                <div className="text-blue-200 text-sm">
+                  Step: {diagnosticData?.step}
+                </div>
+                
+                {diagnosticData?.error && (
+                  <div className="bg-red-500/20 border border-red-500/30 rounded p-3">
+                    <p className="text-red-300 text-sm">Error: {diagnosticData.error}</p>
+                  </div>
+                )}
+                
+                {diagnosticData?.categories && (
+                  <div className="bg-emerald-500/20 border border-emerald-500/30 rounded p-3">
+                    <p className="text-emerald-300 text-sm font-medium mb-2">
+                      Found {diagnosticData.count} categories:
+                    </p>
+                    <div className="max-h-32 overflow-y-auto">
+                      {diagnosticData.categories.map((cat: string, idx: number) => (
+                        <p key={idx} className="text-emerald-200 text-xs">• {cat}</p>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
           </div>

@@ -138,6 +138,9 @@ export class ProductAnalysisService {
       if (count === 0) {
         diagnostics.push({
           step: 'no_data',
+        }
+        )
+      }
       // 2. Get all unique categories
       const { data, error } = await supabaseAdmin
         .from('products')

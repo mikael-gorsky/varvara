@@ -89,7 +89,7 @@ export class ProductAnalysisService {
       console.error('Product analysis service error:', error);
       return {
         success: false,
-        category_name: category,
+        category: category,
         groups_created: 0,
         ungrouped_products: 0,
         analysis_confidence: 0,
@@ -347,8 +347,14 @@ export class ProductAnalysisService {
         return { categories: [], diagnostics };
       }
       
-        message: `Found ${uniqueCategories.length} unique categories from category_name column`,
       const allCategoryValues = data?.map(p => p.category_name).filter(c => c && c.trim() !== '') || [];
+      const uniqueCategories = [...new Set(allCategoryValues)];
+      
+      diagnostics.push({
+        step: 'final_result',
+        status: 'success',
+        message: `Found ${uniqueCategories.length} unique categories from category_name column`,
+        details: {
           final_categories: uniqueCategories
         }
       });
@@ -360,80 +366,6 @@ export class ProductAnalysisService {
         step: 'exception',
         status: 'error',
         message: 'Unexpected error during category retrieval',
-        details: { error: error instanceof Error ? error.message : 'Unknown error' }
-      });
-      return { categories: [], diagnostics };
-    }
-  }
-
-  /**</action>
-        diagnostics.push({
-          step: 'no_valid_categories',
-          status: 'error',
-          message: 'No products with non-null categories found',
-          details: { 
-            issue: 'All category values appear to be NULL',
-            suggestion: 'Check your import process - category column should contain values like "Office Equipment", "Packaging", etc.'
-          }
-        });
-        return { categories: [], diagnostics };
-      }
-
-      const allCategories = data.map(p => p.category);
-      
-      diagnostics.push({
-        step: 'raw_categories',
-        status: 'info',
-        message: `Raw category values (first 20 of ${allCategories.length})`,
-        details: { 
-          raw_values: allCategories.slice(0, 20),
-          total_raw: allCategories.length
-        }
-      });
-      
-      // Get unique categories and filter empties
-      const uniqueCategories = [...new Set(allCategories)];
-      const filteredCategories = uniqueCategories.filter(cat => cat && cat.trim() !== '');
-      
-      diagnostics.push({
-        step: 'category_filtering',
-        status: 'info',
-        message: 'Category filtering completed',
-        details: {
-          unique_before_filter: uniqueCategories,
-          valid_after_filter: filteredCategories,
-          total_unique: uniqueCategories.length,
-          total_valid: filteredCategories.length
-        }
-      });
-      
-      if (filteredCategories.length === 0) {
-        diagnostics.push({
-          step: 'final_result',
-          status: 'error',
-          message: 'No valid categories after filtering',
-          details: { 
-            issue: 'All categories are either NULL, empty strings, or whitespace only',
-            found_values: uniqueCategories,
-            suggestion: 'Your import data needs to have proper category values'
-          }
-        });
-      } else {
-        diagnostics.push({
-          step: 'final_result',
-          status: 'success',
-          message: `Successfully found ${filteredCategories.length} valid categories`,
-          details: { categories: filteredCategories }
-        });
-      }
-      
-      return { categories: filteredCategories, diagnostics };
-
-    } catch (error) {
-      diagnostics.push({
-        step: 'exception',
-        status: 'error',
-        message: 'Exception occurred during category retrieval',
         details: { error: error instanceof Error ? error.message : 'Unknown error' }
       });
       return { categories: [], diagnostics };

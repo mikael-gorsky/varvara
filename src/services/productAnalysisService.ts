@@ -113,10 +113,28 @@ export class ProductAnalysisService {
     const diagnostics: Array<{ step: string; status: 'success' | 'error' | 'info'; message: string; details?: any }> = [];
     
     try {
+      // Check admin client configuration first
+      diagnostics.push({
+        step: 'admin_check',
+        status: 'info',
+        message: 'Checking admin client configuration...',
+        details: {
+          service_role_available: !!import.meta.env.VITE_SUPABASE_SERVICE_ROLE_KEY,
+          using_client: import.meta.env.VITE_SUPABASE_SERVICE_ROLE_KEY ? 'admin' : 'regular'
+        }
+      });
+
       diagnostics.push({
         step: 'query_start',
         status: 'info',
         message: 'Querying TABLE: products | FIELDS: id, name, category, category_name, supplier, price, is_active',
+      });
+      
+      // Test admin access specifically
+      diagnostics.push({
+        step: 'admin_test',
+        status: 'info',
+        message: 'Testing admin access bypass RLS...',
       });
       
       // First, get sample of actual data to diagnose category column
@@ -129,8 +147,14 @@ export class ProductAnalysisService {
         diagnostics.push({
           step: 'sample_error',
           status: 'error',
-          message: 'Failed to query products table',
-          details: { error: sampleError.message, code: sampleError.code }
+          message: 'Failed to query products table with admin client',
+          details: { 
+            error: sampleError.message, 
+            code: sampleError.code,
+            hint: sampleError.hint,
+            client_type: import.meta.env.VITE_SUPABASE_SERVICE_ROLE_KEY ? 'admin' : 'regular',
+            rls_issue: sampleError.code === '42501' || sampleError.message.includes('RLS')
+          }
         });
         return { categories: [], diagnostics };
       }

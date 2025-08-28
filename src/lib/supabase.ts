@@ -12,10 +12,16 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey);
 // Admin client for server operations (imports, etc.)
 const supabaseServiceKey = import.meta.env.VITE_SUPABASE_SERVICE_ROLE_KEY;
 if (!supabaseServiceKey) {
-  console.warn('VITE_SUPABASE_SERVICE_ROLE_KEY not found - admin operations will fail');
+  console.error('❌ VITE_SUPABASE_SERVICE_ROLE_KEY not found - admin operations will fail');
+  console.error('💡 Set VITE_SUPABASE_SERVICE_ROLE_KEY in your .env file');
 }
 
-export const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey || supabaseAnonKey);
+export const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey || supabaseAnonKey, {
+  auth: {
+    autoRefreshToken: false,
+    persistSession: false
+  }
+});
 
 export type Database = {
   public: {

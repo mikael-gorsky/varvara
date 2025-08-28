@@ -1,214 +1,316 @@
-import { supabase } from '../lib/supabase';
+import React, { useState, useEffect } from 'react';
+import { ArrowLeft, RefreshCw, BarChart3, TrendingUp, Users, AlertCircle, X } from 'lucide-react';
+import { ProductAnalysisService, ProductGroup, AnalysisResult } from '../services/productAnalysisService';
 
-export interface ProductGroup {
-  id: string;
-  category: string;
-  group_name: string;
-  group_description: string;
-  product_names: string[];
-  price_analysis: {
-    min_price: number;
-    max_price: number;
-    avg_price: number;
-    price_variance: string;
-    outliers: string[];
-  };
-  confidence_score: number;
-  vendor_analysis: {
-    vendor_count: number;
-    vendors: string[];
-  };
-  created_at: string;
+interface OzonAnalysisProps {
+  onBack: () => void;
 }
 
-export interface AnalysisResult {
-  success: boolean;
-  category: string;
-  groups_created: number;
-  ungrouped_products: number;
-  analysis_confidence: number;
-  data: ProductGroup[];
-  error?: string;
+interface DiagnosticInfo {
+  step: string;
+  status: 'loading' | 'success' | 'error';
+  message: string;
+  details?: any;
 }
 
-export class ProductAnalysisService {
-  
-  /**
-   * Analyze products in a specific category using AI
-   * Processes one category at a time as requested
-   */
-  static async analyzeCategory(category: string): Promise<AnalysisResult> {
+const OzonAnalysis: React.FC<OzonAnalysisProps> = ({ onBack }) => {
+  const [categories, setCategories] = useState<string[]>([]);
+  const [loadingCategories, setLoadingCategories] = useState(false);
+  const [analysisResults, setAnalysisResults] = useState<ProductGroup[]>([]);
+  const [analyzingCategory, setAnalyzingCategory] = useState<string | null>(null);
+  const [stats, setStats] = useState<any>(null);
+  const [diagnostics, setDiagnostics] = useState<DiagnosticInfo[]>([]);
+  const [showDiagnostics, setShowDiagnostics] = useState(false);
+
+  const addDiagnostic = (step: string, status: 'loading' | 'success' | 'error', message: string, details?: any) => {
+    const newDiagnostic = { step, status, message, details };
+    setDiagnostics(prev => [...prev, newDiagnostic]);
+  };
+
+  const loadCategories = async () => {
+    setLoadingCategories(true);
+    setDiagnostics([]);
+    setShowDiagnostics(true);
+
     try {
-      // 1. Get all products for this category
-      const { data: products, error: queryError } = await supabase
-        .from('products')
-        .select('name, price, external_id, supplier')
-        .eq('category', category)
-        .eq('is_active', true);
-
-      if (queryError) {
-        throw new Error(`Failed to fetch products: ${queryError.message}`);
-      }
-
-      if (!products || products.length === 0) {
-        return {
-          success: false,
-          category,
-          groups_created: 0,
-          ungrouped_products: 0,
-          analysis_confidence: 0,
-          data: [],
-          error: `No active products found in category: ${category}`
-        };
-      }
-
-      // 2. Call edge function for AI analysis
-      const functionUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/analyze-products`;
+      addDiagnostic('connect', 'loading', 'Connecting to database...');
       
-      const response = await fetch(functionUrl, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          category,
-          products
-        })
-      });
-
-      if (!response.ok) {
-        throw new Error(`Analysis API error: ${response.status} ${response.statusText}`);
+      const fetchedCategories = await ProductAnalysisService.getCategories();
+      
+      if (fetchedCategories.length === 0) {
+        addDiagnostic('query', 'error', 'No categories found', {
+          suggestion: 'Import some products first or check if products have valid category values'
+        });
+      } else {
+        addDiagnostic('query', 'success', `Found ${fetchedCategories.length} categories`, {
+          categories: fetchedCategories
+        });
       }
-
-      const result: AnalysisResult = await response.json();
-      return result;
+      
+      setCategories(fetchedCategories);
+      
+      // Auto-hide diagnostics after 3 seconds if successful
+      if (fetchedCategories.length > 0) {
+        setTimeout(() => setShowDiagnostics(false), 3000);
+      }
 
     } catch (error) {
-      console.error('Product analysis service error:', error);
-      return {
-        success: false,
-        category,
-        groups_created: 0,
-        ungrouped_products: 0,
-        analysis_confidence: 0,
-        data: [],
+      addDiagnostic('error', 'error', 'Failed to load categories', {
         error: error instanceof Error ? error.message : 'Unknown error'
-      };
+      });
+    } finally {
+      setLoadingCategories(false);
     }
-  }
+  };
 
-  /**
-   * Get all available product categories for analysis
-   */
-  static async getCategories(): Promise<string[]> {
+  const loadAnalysisResults = async () => {
     try {
-      const { data, error } = await supabase
-        .from('products')
-        .select('category, is_active')
-        .limit(1000);
+      const results = await ProductAnalysisService.getAnalysisResults();
+      setAnalysisResults(results);
+    } catch (error) {
+      console.error('Failed to load analysis results:', error);
+    }
+  };
 
-      if (error) {
-        throw new Error(`Database query failed: ${error.message}`);
-      }
+  const loadStats = async () => {
+    try {
+      const statsData = await ProductAnalysisService.getAnalysisStats();
+      setStats(statsData);
+    } catch (error) {
+      console.error('Failed to load stats:', error);
+    }
+  };
 
-      if (!data || data.length === 0) {
-        throw new Error('No products found in database. Import some data first.');
-      }
-
-      // Get unique categories
-      const uniqueCategories = [...new Set(data?.map(p => p.category) || [])];
-      const filteredCategories = uniqueCategories.filter(cat => cat && cat.trim());
-      console.log(`✅ Returning ${filteredCategories.length} unique categories`);
+  const analyzeCategory = async (category: string) => {
+    setAnalyzingCategory(category);
+    
+    try {
+      const result = await ProductAnalysisService.analyzeCategory(category);
       
-      return filteredCategories;
-
-    } catch (error) {
-      console.error('❌ Get categories error:', error);
-      return [];
-    }
-  }
-
-  /**
-   * Get existing AI analysis results for a category
-   */
-  static async getAnalysisResults(category?: string): Promise<ProductGroup[]> {
-    try {
-      let query = supabase
-        .from('ai_product_groups')
-        .select('*')
-        .order('created_at', { ascending: false });
-
-      if (category) {
-        query = query.eq('category', category);
+      if (result.success) {
+        // Refresh analysis results and stats
+        await loadAnalysisResults();
+        await loadStats();
+      } else {
+        alert(`Analysis failed: ${result.error}`);
       }
-
-      const { data, error } = await query;
-
-      if (error) {
-        console.error('Failed to fetch analysis results:', error);
-        return [];
-      }
-
-      return data || [];
-
     } catch (error) {
-      console.error('Get analysis results error:', error);
-      return [];
+      alert(`Analysis error: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    } finally {
+      setAnalyzingCategory(null);
     }
-  }
+  };
 
-  /**
-   * Delete analysis results for a category (to re-run analysis)
-   */
-  static async clearCategoryAnalysis(category: string): Promise<boolean> {
-    try {
-      const { error } = await supabase
-        .from('ai_product_groups')
-        .delete()
-        .eq('category', category);
-
-      if (error) {
-        console.error('Failed to clear category analysis:', error);
-        return false;
+  const clearCategoryAnalysis = async (category: string) => {
+    if (confirm(`Clear AI analysis for category "${category}"?`)) {
+      try {
+        await ProductAnalysisService.clearCategoryAnalysis(category);
+        await loadAnalysisResults();
+        await loadStats();
+      } catch (error) {
+        alert(`Failed to clear analysis: ${error instanceof Error ? error.message : 'Unknown error'}`);
       }
-
-      return true;
-    } catch (error) {
-      console.error('Clear analysis error:', error);
-      return false;
     }
-  }
+  };
 
-  /**
-   * Get analysis statistics across all categories
-   */
-  static async getAnalysisStats() {
-    try {
-      const { data, error } = await supabase
-        .from('ai_product_groups')
-        .select('category, confidence_score, created_at');
+  useEffect(() => {
+    loadCategories();
+    loadAnalysisResults();
+    loadStats();
+  }, []);
 
-      if (error) {
-        console.error('Failed to fetch analysis stats:', error);
-        return null;
-      }
-
-      const stats = {
-        total_groups: data?.length || 0,
-        categories_analyzed: new Set(data?.map(g => g.category)).size,
-        avg_confidence: data?.length > 0 
-          ? (data.reduce((sum, g) => sum + (g.confidence_score || 0), 0) / data.length).toFixed(2)
-          : 0,
-        last_analysis: data?.length > 0 
-          ? new Date(Math.max(...data.map(g => new Date(g.created_at).getTime()))).toLocaleDateString()
-          : 'Never'
-      };
-
-      return stats;
-    } catch (error) {
-      console.error('Get analysis stats error:', error);
-      return null;
+  const getStatusIcon = (status: 'loading' | 'success' | 'error') => {
+    switch (status) {
+      case 'loading':
+        return '🟡';
+      case 'success':
+        return '🟢';
+      case 'error':
+        return '🔴';
     }
-  }
-}
+  };
+
+  const isCategoryAnalyzed = (category: string) => {
+    return analysisResults.some(result => result.category === category);
+  };
+
+  const getCategoryResults = (category: string) => {
+    return analysisResults.filter(result => result.category === category);
+  };
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-8">
+      {/* Diagnostic Overlay */}
+      {showDiagnostics && (
+        <div className="fixed inset-0 bg-black bg-opacity-30 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg shadow-xl p-6 max-w-md w-full mx-4">
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="text-lg font-semibold">Diagnostic Information</h3>
+              <button 
+                onClick={() => setShowDiagnostics(false)}
+                className="text-gray-500 hover:text-gray-700"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            
+            <div className="space-y-2 max-h-64 overflow-y-auto">
+              {diagnostics.map((diag, index) => (
+                <div key={index} className="flex items-start space-x-2">
+                  <span className="text-sm">{getStatusIcon(diag.status)}</span>
+                  <div className="flex-1">
+                    <p className="text-sm font-medium">{diag.message}</p>
+                    {diag.details && (
+                      <pre className="text-xs text-gray-600 mt-1 whitespace-pre-wrap">
+                        {typeof diag.details === 'object' 
+                          ? JSON.stringify(diag.details, null, 2)
+                          : diag.details}
+                      </pre>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+
+      <div className="max-w-6xl mx-auto">
+        {/* Header */}
+        <div className="flex items-center justify-between mb-8">
+          <div className="flex items-center space-x-4">
+            <button
+              onClick={onBack}
+              className="flex items-center space-x-2 text-gray-600 hover:text-gray-800 transition-colors"
+            >
+              <ArrowLeft className="w-5 h-5" />
+              <span>Back to Analytics</span>
+            </button>
+            <div className="h-6 border-l border-gray-300"></div>
+            <h1 className="text-3xl font-bold text-gray-800 flex items-center space-x-3">
+              <BarChart3 className="w-8 h-8 text-blue-600" />
+              <span>OZON Data Analytics</span>
+            </h1>
+          </div>
+        </div>
+
+        {/* Stats Overview */}
+        {stats && (
+          <div className="bg-white rounded-lg shadow-md p-6 mb-8">
+            <h2 className="text-xl font-semibold text-gray-800 mb-4 flex items-center space-x-2">
+              <TrendingUp className="w-5 h-5 text-green-600" />
+              <span>Analysis Overview</span>
+            </h2>
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+              <div className="bg-blue-50 p-4 rounded-lg">
+                <p className="text-sm text-blue-600 font-medium">Total Groups</p>
+                <p className="text-2xl font-bold text-blue-800">{stats.total_groups}</p>
+              </div>
+              <div className="bg-green-50 p-4 rounded-lg">
+                <p className="text-sm text-green-600 font-medium">Categories Analyzed</p>
+                <p className="text-2xl font-bold text-green-800">{stats.categories_analyzed}</p>
+              </div>
+              <div className="bg-purple-50 p-4 rounded-lg">
+                <p className="text-sm text-purple-600 font-medium">Avg Confidence</p>
+                <p className="text-2xl font-bold text-purple-800">{stats.avg_confidence}%</p>
+              </div>
+              <div className="bg-orange-50 p-4 rounded-lg">
+                <p className="text-sm text-orange-600 font-medium">Last Analysis</p>
+                <p className="text-lg font-bold text-orange-800">{stats.last_analysis}</p>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Categories Section */}
+        <div className="bg-white rounded-lg shadow-md p-6">
+          <div className="flex items-center justify-between mb-6">
+            <h2 className="text-xl font-semibold text-gray-800 flex items-center space-x-2">
+              <Users className="w-5 h-5 text-blue-600" />
+              <span>Product Categories ({categories.length})</span>
+            </h2>
+            <button
+              onClick={loadCategories}
+              disabled={loadingCategories}
+              className="flex items-center space-x-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50"
+            >
+              <RefreshCw className={`w-4 h-4 ${loadingCategories ? 'animate-spin' : ''}`} />
+              <span>Refresh Categories</span>
+            </button>
+          </div>
+
+          {categories.length === 0 ? (
+            <div className="text-center py-12">
+              <AlertCircle className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+              <h3 className="text-lg font-medium text-gray-600 mb-2">No Categories Found</h3>
+              <p className="text-gray-500">Import some products first, then refresh to see available categories.</p>
+            </div>
+          ) : (
+            <div className="grid gap-4">
+              {categories.map((category) => {
+                const isAnalyzed = isCategoryAnalyzed(category);
+                const categoryResults = getCategoryResults(category);
+                const isAnalyzing = analyzingCategory === category;
+
+                return (
+                  <div key={category} className="border rounded-lg p-4 hover:shadow-md transition-shadow">
+                    <div className="flex items-center justify-between mb-2">
+                      <div className="flex items-center space-x-3">
+                        <span className={`w-3 h-3 rounded-full ${isAnalyzed ? 'bg-green-500' : 'bg-gray-300'}`}></span>
+                        <h3 className="font-medium text-gray-800">{category}</h3>
+                        <span className={`px-2 py-1 text-xs rounded-full ${
+                          isAnalyzed ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-600'
+                        }`}>
+                          {isAnalyzed ? '✅ Analyzed' : '⚠️ Not Analyzed'}
+                        </span>
+                      </div>
+                      
+                      <div className="flex items-center space-x-2">
+                        {isAnalyzing ? (
+                          <div className="flex items-center space-x-2 text-blue-600">
+                            <RefreshCw className="w-4 h-4 animate-spin" />
+                            <span className="text-sm">Analyzing...</span>
+                          </div>
+                        ) : (
+                          <>
+                            <button
+                              onClick={() => analyzeCategory(category)}
+                              className="px-3 py-1 bg-blue-600 text-white text-sm rounded hover:bg-blue-700 transition-colors"
+                            >
+                              {isAnalyzed ? 'Re-analyze' : 'Analyze'}
+                            </button>
+                            {isAnalyzed && (
+                              <button
+                                onClick={() => clearCategoryAnalysis(category)}
+                                className="px-3 py-1 bg-red-100 text-red-600 text-sm rounded hover:bg-red-200 transition-colors"
+                              >
+                                Clear
+                              </button>
+                            )}
+                          </>
+                        )}
+                      </div>
+                    </div>
+                    
+                    {categoryResults.length > 0 && (
+                      <div className="mt-3 p-3 bg-gray-50 rounded text-sm">
+                        <p className="font-medium text-gray-700 mb-1">Analysis Results:</p>
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-2 text-xs text-gray-600">
+                          <span>Groups: {categoryResults.length}</span>
+                          <span>Confidence: {(categoryResults.reduce((sum, r) => sum + (r.confidence_score || 0), 0) / categoryResults.length).toFixed(1)}%</span>
+                          <span>Products: {categoryResults.reduce((sum, r) => sum + r.product_names.length, 0)}</span>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default OzonAnalysis;

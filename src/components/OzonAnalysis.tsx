@@ -1,7 +1,8 @@
 import React, { useState, useCallback } from 'react';
-import { ArrowLeft, FileSpreadsheet, Upload, AlertTriangle, CheckCircle, Database, Download, Trash2 } from 'lucide-react';
+import { ArrowLeft, FileSpreadsheet, Upload, AlertTriangle, CheckCircle, Database, Download, Trash2, Brain, TrendingUp, Users, Package } from 'lucide-react';
 import { parseCSVFile, parseExcelFile, ParsedData, ProductRow } from '../utils/csvParser';
 import { ImportService, ImportResult } from '../services/importService';
+import { ProductAnalysisService, ProductGroup, AnalysisResult } from '../services/productAnalysisService';
 
 interface OzonAnalysisProps {
   onBack: () => void;
@@ -14,6 +15,92 @@ const OzonAnalysis: React.FC<OzonAnalysisProps> = ({ onBack }) => {
   const [isImporting, setIsImporting] = useState(false);
   const [selectedFile, setSelectedFile] = useState<string | null>(null);
   const [showPreview, setShowPreview] = useState<Record<string, boolean>>({});
+  
+  // AI Analysis states
+  const [categories, setCategories] = useState<string[]>([]);
+  const [isLoadingCategories, setIsLoadingCategories] = useState(false);
+  const [analysisResults, setAnalysisResults] = useState<ProductGroup[]>([]);
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [analyzingCategory, setAnalyzingCategory] = useState<string | null>(null);
+  const [analysisStats, setAnalysisStats] = useState<any>(null);
+
+  // Load categories and existing analysis on component mount
+  React.useEffect(() => {
+    loadCategories();
+    loadAnalysisResults();
+    loadAnalysisStats();
+  }, []);
+
+  const loadCategories = async () => {
+    setIsLoadingCategories(true);
+    try {
+      const availableCategories = await ProductAnalysisService.getCategories();
+      setCategories(availableCategories);
+    } catch (error) {
+      console.error('Failed to load categories:', error);
+    }
+    setIsLoadingCategories(false);
+  };
+
+  const loadAnalysisResults = async () => {
+    try {
+      const results = await ProductAnalysisService.getAnalysisResults();
+      setAnalysisResults(results);
+    } catch (error) {
+      console.error('Failed to load analysis results:', error);
+    }
+  };
+
+  const loadAnalysisStats = async () => {
+    try {
+      const stats = await ProductAnalysisService.getAnalysisStats();
+      setAnalysisStats(stats);
+    } catch (error) {
+      console.error('Failed to load analysis stats:', error);
+    }
+  };
+
+  const analyzeCategory = async (category: string) => {
+    setIsAnalyzing(true);
+    setAnalyzingCategory(category);
+    
+    try {
+      const result: AnalysisResult = await ProductAnalysisService.analyzeCategory(category);
+      
+      if (result.success) {
+        alert(`✅ ${result.category} Analysis Complete!\n\n${result.groups_created} groups created\n${result.ungrouped_products} products ungrouped\nConfidence: ${(result.analysis_confidence * 100).toFixed(1)}%`);
+        // Refresh results
+        await loadAnalysisResults();
+        await loadAnalysisStats();
+      } else {
+        alert(`❌ Analysis Failed: ${result.error}`);
+      }
+    } catch (error) {
+      console.error('Analysis error:', error);
+      alert('❌ Analysis failed. Please check console for details.');
+    }
+    
+    setIsAnalyzing(false);
+    setAnalyzingCategory(null);
+  };
+
+  const clearCategoryAnalysis = async (category: string) => {
+    if (!confirm(`Clear all AI analysis results for "${category}"?`)) return;
+    
+    try {
+      const success = await ProductAnalysisService.clearCategoryAnalysis(category);
+      if (success) {
+        alert(`✅ Cleared analysis for ${category}`);
+        await loadAnalysisResults();
+        await loadAnalysisStats();
+      } else {
+        alert('❌ Failed to clear analysis');
+      }
+    } catch (error) {
+      console.error('Clear analysis error:', error);
+      alert('❌ Failed to clear analysis');
+    }
+  };
 
   const handleDrop = useCallback(async (e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();
@@ -450,10 +537,76 @@ const OzonAnalysis: React.FC<OzonAnalysisProps> = ({ onBack }) => {
           </div>
         )}
 
+        {/* AI Product Analysis Section */}
+        <div className="space-y-6">
+          {/* AI Analysis Stats */}
+          {analysisStats && (
+            <div className="backdrop-blur-xl bg-white/10 rounded-xl border border-white/20 shadow-2xl p-6">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="w-10 h-10 bg-gradient-to-br from-purple-400 to-pink-500 rounded-lg flex items-center justify-center shadow-lg">
+                  <Brain className="w-5 h-5 text-white" />
+                </div>
+                <h2 className="text-xl font-bold text-white">AI Analysis Overview</h2>
+              </div>
+              
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <div className="bg-white/5 rounded-lg p-4">
+                  <div className="flex items-center gap-2 mb-2">
+                    <Package className="w-4 h-4 text-purple-400" />
+                    <p className="text-blue-200 text-sm">Product Groups</p>
+                  </div>
+                  <p className="text-white font-bold text-lg">{analysisStats.total_groups}</p>
+                </div>
+                <div className="bg-white/5 rounded-lg p-4">
+                  <div className="flex items-center gap-2 mb-2">
+                    <Users className="w-4 h-4 text-emerald-400" />
+                    <p className="text-blue-200 text-sm">Categories</p>
+                  </div>
+                  <p className="text-white font-bold text-lg">{analysisStats.categories_analyzed}</p>
+                </div>
+                <div className="bg-white/5 rounded-lg p-4">
+                  <div className="flex items-center gap-2 mb-2">
+                    <TrendingUp className="w-4 h-4 text-blue-400" />
+                    <p className="text-blue-200 text-sm">Avg Confidence</p>
+                  </div>
+                  <p className="text-white font-bold text-lg">{analysisStats.avg_confidence}%</p>
+                </div>
+                <div className="bg-white/5 rounded-lg p-4">
+                  <div className="flex items-center gap-2 mb-2">
+                    <Brain className="w-4 h-4 text-indigo-400" />
+                    <p className="text-blue-200 text-sm">Last Analysis</p>
+                  </div>
+                  <p className="text-white font-bold text-sm">{analysisStats.last_analysis}</p>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Category Analysis */}
+          <div className="backdrop-blur-xl bg-white/10 rounded-xl border border-white/20 shadow-2xl p-6">
+            <div className="flex items-center justify-between mb-6">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 bg-gradient-to-br from-indigo-400 to-purple-500 rounded-lg flex items-center justify-center shadow-lg">
+                  <Brain className="w-5 h-5 text-white" />
+                </div>
+                <div>
+                  <h2 className="text-xl font-bold text-white">AI Product Grouping</h2>
+                  <p className="text-blue-200 text-sm">Analyze product categories with GPT-5-mini</p>
+                </div>
+              </div>
+              <button
+                onClick={loadCategories}
+                disabled={isLoadingCategories}
+                className="flex items-center gap-2 px-3 py-2 bg-blue-500 hover:bg-blue-600 disabled:bg-gray-500 text-white rounded-lg transition-colors text-sm"
+              >
+                <Database className="w-4 h-4" />
+                {isLoadingCategories ? 'Loading...' : 'Refresh Categories'}
+              </button>
+            </div>
         <div className="backdrop-blur-xl bg-white/10 rounded-xl border border-white/20 shadow-xl p-4">
           <div className="flex items-center justify-center space-x-3">
             <div className="w-3 h-3 bg-emerald-400 rounded-full animate-pulse shadow-lg shadow-emerald-400/50"></div>
-            <p className="text-white font-medium text-sm">OZON Analysis Module Active • Ready for Data Import</p>
+            <p className="text-white font-medium text-sm">OZON Analysis Module Active • Data Import & AI Analysis Ready</p>
             <div className="w-3 h-3 bg-emerald-400 rounded-full animate-pulse shadow-lg shadow-emerald-400/50"></div>
           </div>
         </div>
@@ -462,4 +615,101 @@ const OzonAnalysis: React.FC<OzonAnalysisProps> = ({ onBack }) => {
   );
 };
 
+            {categories.length === 0 ? (
+              <div className="text-center py-8">
+                <Package className="w-12 h-12 text-white/40 mx-auto mb-4" />
+                <p className="text-white/60">No product categories found</p>
+                <p className="text-blue-300 text-sm mt-2">Import some product data first</p>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                <p className="text-blue-200 text-sm mb-4">Available categories ({categories.length}):</p>
+                {categories.map((category) => {
+                  const hasAnalysis = analysisResults.some(result => result.category === category);
+                  const categoryResults = analysisResults.filter(result => result.category === category);
+                  const isAnalyzingThis = analyzingCategory === category;
+                  
+                  return (
+                    <div
+                      key={category}
+                      className="p-4 rounded-lg bg-white/5 border border-white/10 hover:bg-white/10 transition-all duration-200"
+                    >
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-3 flex-1 min-w-0">
+                          <Package className="w-5 h-5 text-indigo-400 flex-shrink-0" />
+                          <div className="min-w-0 flex-1">
+                            <h3 className="font-medium text-white text-sm truncate">{category}</h3>
+                            <div className="flex items-center gap-4 text-xs text-blue-300 mt-1">
+                              {hasAnalysis ? (
+                                <>
+                                  <span className="text-emerald-400">✅ {categoryResults.length} groups</span>
+                                  <span>•</span>
+                                  <span>Last analyzed: {new Date(categoryResults[0]?.created_at).toLocaleDateString()}</span>
+                                </>
+                              ) : (
+                                <span className="text-yellow-400">⚠️ Not analyzed yet</span>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                        
+                        <div className="flex items-center gap-2">
+                          <button
+                            onClick={() => analyzeCategory(category)}
+                            disabled={isAnalyzing}
+                            className="px-3 py-1 bg-purple-500 hover:bg-purple-600 disabled:bg-gray-500 text-white rounded text-xs transition-colors"
+                          >
+                            {isAnalyzingThis ? 'Analyzing...' : hasAnalysis ? 'Re-analyze' : 'Analyze'}
+                          </button>
+                          
+                          {hasAnalysis && (
+                            <button
+                              onClick={() => clearCategoryAnalysis(category)}
+                              disabled={isAnalyzing}
+                              className="px-3 py-1 bg-red-500 hover:bg-red-600 disabled:bg-gray-500 text-white rounded text-xs transition-colors"
+                            >
+                              Clear
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                      
+                      {/* Show analysis results preview */}
+                      {hasAnalysis && (
+                        <div className="mt-4 pt-4 border-t border-white/10">
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                            {categoryResults.slice(0, 2).map((result) => (
+                              <div key={result.id} className="bg-white/5 rounded p-3">
+                                <h4 className="text-white text-xs font-medium mb-1 truncate">
+                                  {result.group_name}
+                                </h4>
+                                <p className="text-blue-300 text-xs mb-2 truncate">
+                                  {result.group_description}
+                                </p>
+                                <div className="flex items-center justify-between text-xs">
+                                  <span className="text-emerald-400">
+                                    {result.product_names.length} products
+                                  </span>
+                                  <span className="text-blue-400">
+                                    {(result.confidence_score * 100).toFixed(0)}% confidence
+                                  </span>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                          
+                          {categoryResults.length > 2 && (
+                            <p className="text-blue-300 text-xs mt-3 text-center">
+                              ...and {categoryResults.length - 2} more groups
+                            </p>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        </div>
 export default OzonAnalysis;

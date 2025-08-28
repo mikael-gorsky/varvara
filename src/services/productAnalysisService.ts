@@ -39,6 +39,18 @@ export class ProductAnalysisService {
    */
   static async analyzeCategory(category: string): Promise<AnalysisResult> {
     try {
+      // Check required environment variables
+      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+      const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+
+      if (!supabaseUrl) {
+        throw new Error('VITE_SUPABASE_URL environment variable is not defined. Please check your .env file.');
+      }
+
+      if (!supabaseAnonKey) {
+        throw new Error('VITE_SUPABASE_ANON_KEY environment variable is not defined. Please check your .env file.');
+      }
+
       // 1. Get all products for this category
       const { data: products, error: queryError } = await supabaseAdmin
         .from('products')
@@ -63,12 +75,12 @@ export class ProductAnalysisService {
       }
 
       // 2. Call edge function for AI analysis
-      const functionUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/analyze-products`;
+      const functionUrl = `${supabaseUrl}/functions/v1/analyze-products`;
       
       const response = await fetch(functionUrl, {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
+          'Authorization': `Bearer ${supabaseAnonKey}`,
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({

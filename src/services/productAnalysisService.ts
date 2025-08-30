@@ -163,11 +163,33 @@ export class ProductAnalysisService {
         message: `Fetching products for category: ${category}`
       });
       
+      // First get total count for this category (including inactive products)
+      const { count: totalCount, error: countError } = await supabaseAdmin
+        .from('products')
+        .select('*', { count: 'exact', head: true })
+        .eq('category_name', category);
+
+      if (countError) {
+        diagnostics.push({
+          step: 'count_check',
+          status: 'error',
+          message: 'Failed to count products in category',
+          details: { category, error: countError.message }
+        });
+      } else {
+        diagnostics.push({
+          step: 'count_check',
+          status: 'success',
+          message: `Found ${totalCount} total products in category`,
+          details: { category, total_count: totalCount }
+        });
+      }
+
+      // Get ALL products for this category (remove is_active filter)
       const { data: products, error: queryError } = await supabaseAdmin
         .from('products')
-        .select('name, price, supplier, category_name')
-        .eq('category_name', category)
-        .eq('is_active', true);
+        .select('name, price, supplier, category_name, is_active')
+        .eq('category_name', category);
 
       if (queryError) {
         diagnostics.push({
@@ -212,12 +234,16 @@ export class ProductAnalysisService {
         details: {
           category,
           product_count: products.length,
+          active_products: products.filter(p => p.is_active === true).length,
+          inactive_products: products.filter(p => p.is_active === false).length,
+          null_active_status: products.filter(p => p.is_active === null).length,
           unique_suppliers: [...new Set(products.map(p => p.supplier).filter(Boolean))].length,
           suppliers_list: [...new Set(products.map(p => p.supplier).filter(Boolean))],
           sample_products: products.slice(0, 3).map(p => ({
             name: p.name?.slice(0, 50) + '...',
             price: p.price,
-            supplier: p.supplier
+            supplier: p.supplier,
+            is_active: p.is_active
           }))
         }
       });

@@ -468,14 +468,8 @@ const OzonAnalysis: React.FC<OzonAnalysisProps> = ({ onBack }) => {
                         <div className="mt-2 p-2 bg-blue-50 rounded text-xs">
                           <p className="text-blue-800 font-medium mb-1">Analysis Scope:</p>
                           <div className="grid grid-cols-2 gap-2 text-blue-700">
-                            <span>📦 Total Products: {(() => {
-                              const analysisData = categoryResults[0]?.ai_response?.full_response;
-                              return analysisData?.total_products_analyzed || 'Loading...';
-                            })()}</span>
-                            <span>🏪 Total Suppliers: {(() => {
-                              const analysisData = categoryResults[0]?.ai_response?.full_response;
-                              return analysisData?.total_suppliers_analyzed || 'Loading...';
-                            })()}</span>
+                            <span>📦 Products: {categoryResults[0]?.ai_response?.total_products_analyzed || 'N/A'}</span>
+                            <span>🏪 Suppliers: {categoryResults[0]?.ai_response?.total_suppliers_analyzed || 'N/A'}</span>
                           </div>
                         </div>
                         

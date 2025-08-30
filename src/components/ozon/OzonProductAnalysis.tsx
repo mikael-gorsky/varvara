@@ -427,7 +427,7 @@ const OzonProductAnalysis: React.FC<OzonProductAnalysisProps> = ({ onBack }) => 
           {suppliers.length > 0 && (
             <div className="mb-6 p-4 bg-gray-800/30 border border-cyan-400/20 rounded-lg">
               <h3 className="text-sm font-mono text-cyan-400 mb-3 uppercase tracking-wider">
-                Filter by Supplier ({suppliers.length} suppliers):
+                Filter by Trade Partner ({suppliers.length} entities):
               </h3>
               <div className="flex flex-wrap gap-2">
                 <button

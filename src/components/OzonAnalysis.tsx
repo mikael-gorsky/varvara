@@ -477,7 +477,7 @@ const OzonAnalysis: React.FC<OzonAnalysisProps> = ({ onBack }) => {
                               return analysisData?.total_suppliers_analyzed || 'Loading...';
                             })()}</span>
                           </div>
-                        </div></parameter>
+                        </div>
                         
                         {/* Detailed Group Breakdown */}
                         <div className="mt-4 space-y-3">

@@ -238,7 +238,22 @@ Return ONLY valid JSON in this exact format:
     addDiagnostic('json_parsing', 'loading', 'Parsing AI response JSON...');
     
     try {
-      parsedGroups = JSON.parse(aiResult.choices[0].message.content);
+      let content = aiResult.choices[0].message.content;
+      
+      // Check if content is wrapped in markdown code blocks
+      if (content.includes('```json')) {
+        // Extract JSON from markdown code blocks
+        const jsonStart = content.indexOf('```json') + 7;
+        const jsonEnd = content.lastIndexOf('```');
+        content = content.substring(jsonStart, jsonEnd).trim();
+      } else if (content.includes('```')) {
+        // Handle plain ``` code blocks
+        const jsonStart = content.indexOf('```') + 3;
+        const jsonEnd = content.lastIndexOf('```');
+        content = content.substring(jsonStart, jsonEnd).trim();
+      }
+      
+      parsedGroups = JSON.parse(content);
       addDiagnostic('json_parsing', 'success', 'Successfully parsed AI response', {
         groups_count: parsedGroups.groups?.length,
         ungrouped_count: parsedGroups.ungrouped?.length,

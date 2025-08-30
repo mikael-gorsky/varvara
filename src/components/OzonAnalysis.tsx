@@ -463,6 +463,52 @@ const OzonAnalysis: React.FC<OzonAnalysisProps> = ({ onBack }) => {
                           <span>Confidence: {(categoryResults.reduce((sum, r) => sum + (r.confidence_score || 0), 0) / categoryResults.length).toFixed(1)}%</span>
                           <span>Products: {categoryResults.reduce((sum, r) => sum + r.product_names.length, 0)}</span>
                         </div>
+                        
+                        {/* Detailed Group Breakdown */}
+                        <div className="mt-4 space-y-3">
+                          <p className="font-medium text-gray-800 text-sm">Detailed Groups:</p>
+                          {categoryResults.map((group, index) => (
+                            <div key={group.id} className="bg-white p-3 rounded border border-gray-200">
+                              <div className="flex items-start justify-between mb-2">
+                                <h4 className="font-semibold text-gray-800 text-sm">
+                                  {index + 1}. {group.group_name}
+                                </h4>
+                                <span className="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded">
+                                  {(group.confidence_score * 100).toFixed(1)}% confidence
+                                </span>
+                              </div>
+                              {group.group_description && (
+                                <p className="text-xs text-gray-600 mb-2 italic">
+                                  {group.group_description}
+                                </p>
+                              )}
+                              <div className="space-y-1">
+                                <p className="text-xs font-medium text-gray-700">
+                                  Products ({group.product_names.length}):
+                                </p>
+                                <div className="pl-3 space-y-1">
+                                  {group.product_names.slice(0, 10).map((product, pIndex) => (
+                                    <p key={pIndex} className="text-xs text-gray-600">
+                                      • {product}
+                                    </p>
+                                  ))}
+                                  {group.product_names.length > 10 && (
+                                    <p className="text-xs text-gray-500 italic">
+                                      ... and {group.product_names.length - 10} more products
+                                    </p>
+                                  )}
+                                </div>
+                              </div>
+                              {group.vendor_analysis && (
+                                <div className="mt-2 pt-2 border-t border-gray-100">
+                                  <p className="text-xs text-gray-600">
+                                    <span className="font-medium">Suppliers:</span> {group.vendor_analysis.vendors?.join(', ') || 'N/A'}
+                                  </p>
+                                </div>
+                              )}
+                            </div>
+                          ))}
+                        </div>
                       </div>
                     )}
                   </div>

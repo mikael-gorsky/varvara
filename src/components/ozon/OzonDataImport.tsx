@@ -251,6 +251,19 @@ const OzonDataImport: React.FC<OzonDataImportProps> = ({ onBack }) => {
                   </div>
                 )}
               </div>
+
+              {importResult.success && (
+                <div className="mt-6 p-4 bg-blue-50 rounded-lg border border-blue-200">
+                  <p className="text-blue-800 font-medium mb-2">Next Steps:</p>
+                  <button
+                    onClick={() => handleSelectComponent('product-analysis')}
+                    className="flex items-center space-x-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                  >
+                    <BarChart3 className="w-4 h-4" />
+                    <span>Analyze Imported Data</span>
+                  </button>
+                </div>
+              )}
             </div>
           )}
         </div>

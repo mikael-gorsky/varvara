@@ -9,7 +9,6 @@ const corsHeaders = {
 interface ProductData {
   name: string;
   price: number | null;
-  external_id: string | null;
   supplier: string | null;
 }
 
@@ -19,6 +18,7 @@ interface AIGroupingRequest {
 }
 
 Deno.serve(async (req: Request) => {
+  // ALWAYS handle OPTIONS first with CORS headers
   if (req.method === "OPTIONS") {
     return new Response(null, {
       status: 200,
@@ -39,6 +39,8 @@ Deno.serve(async (req: Request) => {
     diagnostics.push(diagnostic);
     console.log(`[${step}] ${status}: ${message}`, details ? JSON.stringify(details, null, 2) : '');
   };
+
+  // Wrap EVERYTHING in try-catch to ensure CORS headers are always returned
   try {
     addDiagnostic('edge_function_start', 'info', 'Edge function started');
     
@@ -52,6 +54,7 @@ Deno.serve(async (req: Request) => {
       openai_key_present: !!openaiApiKey,
       openai_key_length: openaiApiKey ? openaiApiKey.length : 0
     });
+
     if (!openaiApiKey) {
       addDiagnostic('openai_key_missing', 'error', 'OpenAI API key not found');
       
@@ -91,17 +94,30 @@ Deno.serve(async (req: Request) => {
         supplier: p.supplier
       }))
     });
+
     if (!category_name || !products || products.length === 0) {
       addDiagnostic('validation_error', 'error', 'Invalid request data');
-      throw new Error('Category_name and products are required');
+      return new Response(
+        JSON.stringify({
+          success: false,
+          error: 'Category_name and products are required',
+          diagnostics
+        }),
+        {
+          status: 400,
+          headers: {
+            'Content-Type': 'application/json',
+            ...corsHeaders,
+          },
+        }
+      );
     }
 
     // Prepare data for AI analysis
     const productAnalysis = products.map(p => ({
       name: p.name,
       price: p.price,
-      supplier: p.supplier,
-      external_id: p.external_id
+      supplier: p.supplier
     }));
 
     // Create AI prompt with price analysis context
@@ -110,7 +126,7 @@ Analyze these products from category "${category_name}" and group similar/identi
 
 Products to analyze:
 ${productAnalysis.map((p, i) => 
-  `${i + 1}. "${p.name}" - Price: ${p.price || 'N/A'} - Supplier: ${p.supplier || 'Unknown'} - ID: ${p.external_id || 'N/A'}`
+  `${i + 1}. "${p.name}" - Price: ${p.price || 'N/A'} - Supplier: ${p.supplier || 'Unknown'}`
 ).join('\n')}
 
 Instructions:
@@ -149,18 +165,10 @@ Return ONLY valid JSON in this exact format:
       temperature: 0.1,
       max_tokens: 2000,
       messages_count: 2,
-      prompt_preview: prompt.slice(0, 500) + '...',
-      full_prompt: prompt
+      prompt_preview: prompt.slice(0, 500) + '...'
     });
 
-    addDiagnostic('openai_api_call_start', 'loading', 'Making OpenAI API call...', {
-      url: 'https://api.openai.com/v1/chat/completions',
-      method: 'POST',
-      headers: {
-        'Authorization': 'Bearer ' + openaiApiKey.slice(0, 7) + '...',
-        'Content-Type': 'application/json'
-      }
-    });
+    addDiagnostic('openai_api_call_start', 'loading', 'Making OpenAI API call...');
 
     // Call OpenAI GPT-4o-mini API
     const openaiResponse = await fetch('https://api.openai.com/v1/chat/completions', {
@@ -188,7 +196,6 @@ Return ONLY valid JSON in this exact format:
 
     addDiagnostic('openai_api_call_complete', openaiResponse.ok ? 'success' : 'error', `OpenAI API responded with status ${openaiResponse.status}`, {
       status: openaiResponse.status,
-      headers: Object.fromEntries(openaiResponse.headers.entries()),
       response_ok: openaiResponse.ok
     });
 
@@ -196,10 +203,23 @@ Return ONLY valid JSON in this exact format:
       const errorText = await openaiResponse.text();
       addDiagnostic('openai_api_error', 'error', 'OpenAI API returned error', {
         status: openaiResponse.status,
-        error_body: errorText,
-        headers: Object.fromEntries(openaiResponse.headers.entries())
+        error_body: errorText
       });
-      throw new Error(`OpenAI API error: ${openaiResponse.status} ${openaiResponse.statusText}`);
+      
+      return new Response(
+        JSON.stringify({
+          success: false,
+          error: `OpenAI API error: ${openaiResponse.status} ${openaiResponse.statusText}`,
+          diagnostics
+        }),
+        {
+          status: 500,
+          headers: {
+            'Content-Type': 'application/json',
+            ...corsHeaders,
+          },
+        }
+      );
     }
 
     addDiagnostic('openai_response_parsing', 'loading', 'Parsing OpenAI response...');
@@ -211,8 +231,7 @@ Return ONLY valid JSON in this exact format:
       model: aiResult.model,
       choices_count: aiResult.choices?.length,
       first_choice_finish_reason: aiResult.choices?.[0]?.finish_reason,
-      response_length: aiResult.choices?.[0]?.message?.content?.length,
-      raw_response: aiResult.choices?.[0]?.message?.content
+      response_length: aiResult.choices?.[0]?.message?.content?.length
     });
 
     let parsedGroups;
@@ -223,21 +242,28 @@ Return ONLY valid JSON in this exact format:
       addDiagnostic('json_parsing', 'success', 'Successfully parsed AI response', {
         groups_count: parsedGroups.groups?.length,
         ungrouped_count: parsedGroups.ungrouped?.length,
-        analysis_confidence: parsedGroups.analysis_confidence,
-        parsed_structure: {
-          has_groups: !!parsedGroups.groups,
-          has_ungrouped: !!parsedGroups.ungrouped,
-          has_confidence: !!parsedGroups.analysis_confidence,
-          total_groups: parsedGroups.total_groups
-        }
+        analysis_confidence: parsedGroups.analysis_confidence
       });
     } catch (e) {
       addDiagnostic('json_parsing', 'error', 'Failed to parse AI response as JSON', {
         parse_error: e.message,
-        raw_content: aiResult.choices[0].message.content,
-        content_length: aiResult.choices[0].message.content?.length
+        raw_content: aiResult.choices[0].message.content?.slice(0, 500)
       });
-      throw new Error(`Failed to parse AI response: ${e.message}`);
+      
+      return new Response(
+        JSON.stringify({
+          success: false,
+          error: `Failed to parse AI response: ${e.message}`,
+          diagnostics
+        }),
+        {
+          status: 500,
+          headers: {
+            'Content-Type': 'application/json',
+            ...corsHeaders,
+          },
+        }
+      );
     }
 
     // Store results in database
@@ -279,8 +305,30 @@ Return ONLY valid JSON in this exact format:
       .select();
 
     if (insertError) {
-      throw new Error(`Database error: ${insertError.message}`);
+      addDiagnostic('database_error', 'error', 'Database error', {
+        error: insertError.message
+      });
+      
+      return new Response(
+        JSON.stringify({
+          success: false,
+          error: `Database error: ${insertError.message}`,
+          diagnostics
+        }),
+        {
+          status: 500,
+          headers: {
+            'Content-Type': 'application/json',
+            ...corsHeaders,
+          },
+        }
+      );
     }
+
+    addDiagnostic('success', 'success', 'Analysis completed successfully', {
+      groups_created: insertedGroups.length,
+      analysis_confidence: parsedGroups.analysis_confidence
+    });
 
     return new Response(
       JSON.stringify({
@@ -301,6 +349,7 @@ Return ONLY valid JSON in this exact format:
     );
 
   } catch (error) {
+    // CRITICAL: Always add CORS headers even when there's an error
     addDiagnostic('error_occurred', 'error', 'Function error', {
       error_message: error.message,
       error_stack: error.stack
@@ -317,7 +366,7 @@ Return ONLY valid JSON in this exact format:
         status: 500,
         headers: {
           'Content-Type': 'application/json',
-          ...corsHeaders,
+          ...corsHeaders, // ALWAYS include CORS headers
         },
       }
     );

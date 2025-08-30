@@ -648,7 +648,7 @@ export class ProductAnalysisService {
    */
   static async getAnalysisResults(category?: string): Promise<ProductGroup[]> {
     try {
-      let query = supabase
+      let query = supabaseAdmin
         .from('ai_product_groups')
         .select('*')
         .order('created_at', { ascending: false });
@@ -677,7 +677,7 @@ export class ProductAnalysisService {
    */
   static async clearCategoryAnalysis(category: string): Promise<boolean> {
     try {
-      const { error } = await supabase
+      const { error } = await supabaseAdmin
         .from('ai_product_groups')
         .delete()
         .eq('category', category);
@@ -699,7 +699,7 @@ export class ProductAnalysisService {
    */
   static async getAnalysisStats() {
     try {
-      const { data, error } = await supabase
+      const { data, error } = await supabaseAdmin
         .from('ai_product_groups')
         .select('category, confidence_score, created_at');
 

@@ -460,52 +460,103 @@ const OzonAnalysis: React.FC<OzonAnalysisProps> = ({ onBack }) => {
                         <p className="font-medium text-gray-700 mb-1">Analysis Results:</p>
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-2 text-xs text-gray-600">
                           <span>Groups: {categoryResults.length}</span>
-                          <span>Confidence: {(categoryResults.reduce((sum, r) => sum + (r.confidence_score || 0), 0) / categoryResults.length).toFixed(1)}%</span>
-                          <span>Products: {categoryResults.reduce((sum, r) => sum + r.product_names.length, 0)}</span>
+                          <span>Confidence: {(categoryResults.reduce((sum, r) => sum + (r.confidence_score || 0), 0) / categoryResults.length * 100).toFixed(1)}%</span>
+                          <span>Analyzed Products: {categoryResults.reduce((sum, r) => sum + r.product_names.length, 0)}</span>
                         </div>
+                        
+                        {/* Show analysis scope */}
+                        <div className="mt-2 p-2 bg-blue-50 rounded text-xs">
+                          <p className="text-blue-800 font-medium mb-1">Analysis Scope:</p>
+                          <div className="grid grid-cols-2 gap-2 text-blue-700">
+                            <span>📦 Total Products: {(() => {
+                              const analysisData = categoryResults[0]?.ai_response?.full_response;
+                              return analysisData?.total_products_analyzed || 'Loading...';
+                            })()}</span>
+                            <span>🏪 Total Suppliers: {(() => {
+                              const analysisData = categoryResults[0]?.ai_response?.full_response;
+                              return analysisData?.total_suppliers_analyzed || 'Loading...';
+                            })()}</span>
+                          </div>
+                        </div></parameter>
                         
                         {/* Detailed Group Breakdown */}
                         <div className="mt-4 space-y-3">
-                          <p className="font-medium text-gray-800 text-sm">Detailed Groups:</p>
+                          <div className="flex items-center justify-between mb-3">
+                            <p className="font-medium text-gray-800 text-sm">Detailed Groups:</p>
+                            <button
+                              onClick={() => {
+                                const groups = categoryResults.map((group, i) => 
+                                  `Group ${i+1}: ${group.group_name}\n` +
+                                  `Description: ${group.group_description || 'N/A'}\n` +
+                                  `Products (${group.product_names.length}):\n` +
+                                  group.product_names.map(p => `  • ${p}`).join('\n') +
+                                  `\nSuppliers: ${group.vendor_analysis?.vendors?.join(', ') || 'N/A'}\n\n`
+                                ).join('');
+                                
+                                navigator.clipboard.writeText(groups);
+                                alert('Analysis results copied to clipboard!');
+                              }}
+                              className="text-xs bg-blue-600 text-white px-2 py-1 rounded hover:bg-blue-700"
+                            >
+                              Copy All Groups
+                            </button>
+                          </div>
                           {categoryResults.map((group, index) => (
-                            <div key={group.id} className="bg-white p-3 rounded border border-gray-200">
+                            <div key={group.id} className="bg-white p-4 rounded border border-gray-200 shadow-sm">
                               <div className="flex items-start justify-between mb-2">
                                 <h4 className="font-semibold text-gray-800 text-sm">
-                                  {index + 1}. {group.group_name}
+                                  Group {index + 1}: {group.group_name}
                                 </h4>
-                                <span className="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded">
+                                <span className="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded font-medium">
                                   {(group.confidence_score * 100).toFixed(1)}% confidence
                                 </span>
                               </div>
                               {group.group_description && (
-                                <p className="text-xs text-gray-600 mb-2 italic">
+                                <p className="text-sm text-gray-600 mb-3 italic bg-gray-50 p-2 rounded">
                                   {group.group_description}
                                 </p>
                               )}
                               <div className="space-y-1">
-                                <p className="text-xs font-medium text-gray-700">
+                                <p className="text-sm font-medium text-gray-700">
                                   Products ({group.product_names.length}):
                                 </p>
-                                <div className="pl-3 space-y-1">
-                                  {group.product_names.slice(0, 10).map((product, pIndex) => (
-                                    <p key={pIndex} className="text-xs text-gray-600">
+                                <div className="pl-3 space-y-1 max-h-32 overflow-y-auto bg-gray-50 p-2 rounded">
+                                  {group.product_names.map((product, pIndex) => (
+                                    <p key={pIndex} className="text-xs text-gray-600 leading-relaxed">
                                       • {product}
                                     </p>
                                   ))}
-                                  {group.product_names.length > 10 && (
-                                    <p className="text-xs text-gray-500 italic">
-                                      ... and {group.product_names.length - 10} more products
-                                    </p>
-                                  )}
                                 </div>
                               </div>
                               {group.vendor_analysis && (
-                                <div className="mt-2 pt-2 border-t border-gray-100">
-                                  <p className="text-xs text-gray-600">
-                                    <span className="font-medium">Suppliers:</span> {group.vendor_analysis.vendors?.join(', ') || 'N/A'}
+                                <div className="mt-3 pt-3 border-t border-gray-200">
+                                  <p className="text-sm font-medium text-gray-700 mb-1">
+                                    Suppliers ({group.vendor_analysis.vendor_count || 0}):
+                                  </p>
+                                  <p className="text-xs text-gray-600 bg-gray-50 p-2 rounded">
+                                    {group.vendor_analysis.vendors?.join(', ') || 'N/A'}
                                   </p>
                                 </div>
                               )}
+                              
+                              {/* Copy individual group button */}
+                              <div className="mt-3 pt-3 border-t border-gray-200">
+                                <button
+                                  onClick={() => {
+                                    const groupText = `Group: ${group.group_name}\n` +
+                                      `Description: ${group.group_description || 'N/A'}\n` +
+                                      `Products (${group.product_names.length}):\n` +
+                                      group.product_names.map(p => `  • ${p}`).join('\n') +
+                                      `\nSuppliers: ${group.vendor_analysis?.vendors?.join(', ') || 'N/A'}`;
+                                    
+                                    navigator.clipboard.writeText(groupText);
+                                    alert('Group details copied to clipboard!');
+                                  }}
+                                  className="text-xs bg-gray-600 text-white px-3 py-1 rounded hover:bg-gray-700 transition-colors"
+                                >
+                                  Copy Group Details
+                                </button>
+                              </div>
                             </div>
                           ))}
                         </div>

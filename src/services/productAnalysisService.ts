@@ -212,6 +212,8 @@ export class ProductAnalysisService {
         details: {
           category,
           product_count: products.length,
+          unique_suppliers: [...new Set(products.map(p => p.supplier).filter(Boolean))].length,
+          suppliers_list: [...new Set(products.map(p => p.supplier).filter(Boolean))],
           sample_products: products.slice(0, 3).map(p => ({
             name: p.name?.slice(0, 50) + '...',
             price: p.price,
@@ -224,7 +226,7 @@ export class ProductAnalysisService {
       diagnostics.push({
         step: 'prepare_api_call',
         status: 'loading',
-        message: 'Preparing Edge Function API call'
+        message: `Preparing Edge Function API call for ${products.length} products from ${[...new Set(products.map(p => p.supplier).filter(Boolean))].length} suppliers`
       });
       
       const functionUrl = `${supabaseUrl}/functions/v1/analyze-products`;

@@ -88,6 +88,8 @@ Deno.serve(async (req: Request) => {
     addDiagnostic('request_data', 'info', 'Received request data', {
       category_name,
       product_count: products.length,
+      unique_suppliers_count: [...new Set(products.map(p => p.supplier).filter(Boolean))].length,
+      suppliers_list: [...new Set(products.map(p => p.supplier).filter(Boolean))],
       sample_products: products.slice(0, 3).map(p => ({
         name: p.name?.slice(0, 50),
         price: p.price,
@@ -317,7 +319,9 @@ Return ONLY valid JSON in this exact format:
         ai_response: {
           full_response: parsedGroups,
           ungrouped: parsedGroups.ungrouped,
-          analysis_confidence: parsedGroups.analysis_confidence
+          analysis_confidence: parsedGroups.analysis_confidence,
+          total_products_analyzed: products.length,
+          total_suppliers_analyzed: [...new Set(products.map(p => p.supplier).filter(Boolean))].length
         }
       };
       groupRecords.push(record);

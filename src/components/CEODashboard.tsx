@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { TrendingUp, Users, Package, DollarSign, BarChart3, Activity, Eye, ChevronRight, ArrowLeft } from 'lucide-react';
+import { TrendingUp, Users, Package, DollarSign, BarChart3, Activity, Eye, ChevronRight, ArrowLeft, Crown, Zap } from 'lucide-react';
 
 interface Client {
   id: string;
@@ -90,35 +90,49 @@ const CEODashboard: React.FC<CEODashboardProps> = ({ onBack }) => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-indigo-900 p-4">
-      <div className="max-w-4xl mx-auto space-y-6">
+    <div className="min-h-screen bg-black p-6" style={{
+      backgroundImage: `radial-gradient(circle at 20% 50%, rgba(0, 255, 255, 0.03) 0%, transparent 50%), 
+                       radial-gradient(circle at 80% 20%, rgba(0, 255, 255, 0.02) 0%, transparent 50%), 
+                       radial-gradient(circle at 40% 80%, rgba(0, 255, 255, 0.01) 0%, transparent 50%)`
+    }}>
+      <div className="max-w-7xl mx-auto space-y-6">
         
-        {/* Header with Back Button */}
-        <div className="backdrop-blur-xl bg-white/10 rounded-2xl border border-white/20 shadow-2xl p-6">
-          <div className="flex items-start gap-4">
-            <button
-              onClick={onBack}
-              className="w-10 h-10 bg-white/10 hover:bg-white/20 rounded-lg flex items-center justify-center transition-colors border border-white/20"
-            >
-              <ArrowLeft className="w-5 h-5 text-white" />
-            </button>
-            
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 flex-1">
+        {/* Imperial Command Header */}
+        <div className="bg-gradient-to-r from-gray-900 to-gray-800 rounded-lg border border-cyan-400/30 shadow-lg shadow-cyan-400/10 p-6 relative overflow-hidden">
+          <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-blue-400 to-indigo-400"></div>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-4">
+              <button
+                onClick={onBack}
+                className="flex items-center space-x-2 px-4 py-2 bg-gray-800 border border-cyan-400/50 rounded text-cyan-300 hover:bg-gray-700 hover:border-cyan-400 transition-all duration-200 font-mono text-sm"
+              >
+                <ArrowLeft className="w-4 h-4" />
+                <span>RETURN TO COMMAND</span>
+              </button>
+              <div className="h-6 border-l border-cyan-400/30"></div>
               <div className="flex items-center space-x-3">
-                <div className="w-12 h-12 bg-gradient-to-br from-blue-400 to-indigo-500 rounded-xl flex items-center justify-center shadow-lg">
-                  <Eye className="w-6 h-6 text-white" />
+                <div className="w-12 h-12 bg-gradient-to-br from-blue-400 to-indigo-500 rounded-lg flex items-center justify-center shadow-lg border border-blue-300 relative">
+                  <Crown className="w-6 h-6 text-black" />
+                  <div className="absolute -top-1 -right-1 w-3 h-3 bg-emerald-400 rounded-full border border-black"></div>
                 </div>
                 <div>
-                  <h1 className="text-2xl font-bold text-white">CEO Dashboard</h1>
-                  <p className="text-blue-200">Real-time Analytics</p>
-                  <p className="text-blue-300 text-sm">Company: Офис-Кит</p>
+                  <h1 className="text-2xl font-bold text-cyan-300 font-mono tracking-wider">
+                    IMPERIAL COMMAND CENTER
+                  </h1>
+                  <p className="text-cyan-400/80 text-sm font-mono">
+                    Real-time Strategic Overview
+                  </p>
+                  <p className="text-teal-300 text-sm font-mono">EMPIRE: ОФИС-КИТ</p>
                 </div>
               </div>
-              <div className="text-left sm:text-right">
-                <p className="text-xl font-bold text-white">
+            </div>
+            
+            <div className="text-center">
+              <div className="bg-gray-800/50 border border-cyan-400/30 rounded-lg px-4 py-2">
+                <p className="text-xl font-bold text-cyan-300 font-mono">
                   {currentTime.toLocaleTimeString()}
                 </p>
-                <p className="text-blue-200">
+                <p className="text-cyan-400/80 font-mono text-sm">
                   {currentTime.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
                 </p>
               </div>
@@ -126,100 +140,117 @@ const CEODashboard: React.FC<CEODashboardProps> = ({ onBack }) => {
           </div>
         </div>
 
-        {/* KPI Cards */}
+        {/* Strategic Resource Indicators */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-          <div className="backdrop-blur-xl bg-white/10 rounded-xl border border-white/20 shadow-xl p-4 hover:bg-white/15 transition-all duration-300">
+          <div className="bg-gradient-to-br from-gray-900 to-gray-800 rounded-xl border border-cyan-400/30 shadow-xl p-4 hover:border-cyan-400/50 transition-all duration-300 relative overflow-hidden">
+            <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-emerald-400 to-teal-400"></div>
             <div className="flex items-center justify-between mb-3">
-              <div className="w-8 h-8 bg-gradient-to-br from-emerald-400 to-teal-500 rounded-lg flex items-center justify-center shadow-lg">
-                <DollarSign className="w-4 h-4 text-white" />
+              <div className="w-8 h-8 bg-gradient-to-br from-emerald-400 to-teal-500 rounded-lg flex items-center justify-center shadow-lg border border-emerald-300">
+                <DollarSign className="w-4 h-4 text-black" />
               </div>
               <TrendingUp className="w-4 h-4 text-emerald-400" />
             </div>
-            <h3 className="text-xs font-medium text-blue-200 mb-1">Total Revenue</h3>
-            <p className="text-lg font-bold text-white">{formatCurrency(kpiData.totalRevenue)}</p>
+            <h3 className="text-xs font-mono text-cyan-400 mb-1 uppercase tracking-wider">Imperial Treasury</h3>
+            <p className="text-lg font-bold text-emerald-300 font-mono">{formatCurrency(kpiData.totalRevenue)}</p>
+            <p className="text-emerald-400/60 text-xs font-mono">Credits Generated</p>
           </div>
 
-          <div className="backdrop-blur-xl bg-white/10 rounded-xl border border-white/20 shadow-xl p-4 hover:bg-white/15 transition-all duration-300">
+          <div className="bg-gradient-to-br from-gray-900 to-gray-800 rounded-xl border border-cyan-400/30 shadow-xl p-4 hover:border-cyan-400/50 transition-all duration-300 relative overflow-hidden">
+            <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-emerald-400 to-teal-400"></div>
             <div className="flex items-center justify-between mb-3">
-              <div className="w-8 h-8 bg-gradient-to-br from-emerald-400 to-teal-500 rounded-lg flex items-center justify-center shadow-lg">
-                <Package className="w-4 h-4 text-white" />
+              <div className="w-8 h-8 bg-gradient-to-br from-emerald-400 to-teal-500 rounded-lg flex items-center justify-center shadow-lg border border-emerald-300">
+                <Package className="w-4 h-4 text-black" />
               </div>
               <BarChart3 className="w-4 h-4 text-emerald-400" />
             </div>
-            <h3 className="text-xs font-medium text-blue-200 mb-1">Top 7 Products</h3>
-            <p className="text-lg font-bold text-white">{kpiData.topProductsShare}%</p>
-            <p className="text-xs text-blue-300">of Revenue</p>
+            <h3 className="text-xs font-mono text-cyan-400 mb-1 uppercase tracking-wider">Top 7 Resources</h3>
+            <p className="text-lg font-bold text-emerald-300 font-mono">{kpiData.topProductsShare}%</p>
+            <p className="text-emerald-400/60 text-xs font-mono">Revenue Share</p>
           </div>
 
-          <div className="backdrop-blur-xl bg-white/10 rounded-xl border border-white/20 shadow-xl p-4 hover:bg-white/15 transition-all duration-300">
+          <div className="bg-gradient-to-br from-gray-900 to-gray-800 rounded-xl border border-cyan-400/30 shadow-xl p-4 hover:border-cyan-400/50 transition-all duration-300 relative overflow-hidden">
+            <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-purple-400 to-pink-400"></div>
             <div className="flex items-center justify-between mb-3">
-              <div className="w-8 h-8 bg-gradient-to-br from-purple-400 to-pink-500 rounded-lg flex items-center justify-center shadow-lg">
-                <Users className="w-4 h-4 text-white" />
+              <div className="w-8 h-8 bg-gradient-to-br from-purple-400 to-pink-500 rounded-lg flex items-center justify-center shadow-lg border border-purple-300">
+                <Users className="w-4 h-4 text-black" />
               </div>
               <TrendingUp className="w-4 h-4 text-purple-400" />
             </div>
-            <h3 className="text-xs font-medium text-blue-200 mb-1">Major 14 Clients</h3>
-            <p className="text-lg font-bold text-white">{kpiData.majorClientsShare}%</p>
-            <p className="text-xs text-blue-300">of Revenue</p>
+            <h3 className="text-xs font-mono text-cyan-400 mb-1 uppercase tracking-wider">Major 14 Factions</h3>
+            <p className="text-lg font-bold text-purple-300 font-mono">{kpiData.majorClientsShare}%</p>
+            <p className="text-purple-400/60 text-xs font-mono">Trade Influence</p>
           </div>
 
-          <div className="backdrop-blur-xl bg-white/10 rounded-xl border border-white/20 shadow-xl p-4 hover:bg-white/15 transition-all duration-300">
+          <div className="bg-gradient-to-br from-gray-900 to-gray-800 rounded-xl border border-cyan-400/30 shadow-xl p-4 hover:border-cyan-400/50 transition-all duration-300 relative overflow-hidden">
+            <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-blue-400 to-indigo-400"></div>
             <div className="flex items-center justify-between mb-3">
-              <div className="w-8 h-8 bg-gradient-to-br from-blue-400 to-indigo-500 rounded-lg flex items-center justify-center shadow-lg">
-                <Activity className="w-4 h-4 text-white" />
+              <div className="w-8 h-8 bg-gradient-to-br from-blue-400 to-indigo-500 rounded-lg flex items-center justify-center shadow-lg border border-blue-300">
+                <Activity className="w-4 h-4 text-black" />
               </div>
               <TrendingUp className="w-4 h-4 text-blue-400" />
             </div>
-            <h3 className="text-xs font-medium text-blue-200 mb-1">Avg Margin</h3>
-            <p className="text-lg font-bold text-white">{kpiData.averageProductMargin}%</p>
-            <p className="text-xs text-blue-300">Products</p>
+            <h3 className="text-xs font-mono text-cyan-400 mb-1 uppercase tracking-wider">Avg Efficiency</h3>
+            <p className="text-lg font-bold text-blue-300 font-mono">{kpiData.averageProductMargin}%</p>
+            <p className="text-blue-400/60 text-xs font-mono">Resource Yield</p>
           </div>
         </div>
 
-        {/* Top Clients & Products */}
+        {/* Strategic Intelligence Panels */}
         <div className="space-y-6 lg:grid lg:grid-cols-2 lg:gap-6 lg:space-y-0">
           
-          {/* Top Clients */}
-          <div className="backdrop-blur-xl bg-white/10 rounded-xl border border-white/20 shadow-2xl p-6">
+          {/* Major Trade Factions */}
+          <div className="bg-gradient-to-br from-gray-900 to-gray-800 rounded-xl border border-cyan-400/30 shadow-xl p-6 relative overflow-hidden">
+            <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-blue-400 to-indigo-400"></div>
+            <div className="absolute top-4 right-4">
+              <span className="bg-gray-800/60 border border-blue-400/30 text-blue-400 text-xs px-2 py-1 rounded font-mono">
+                TRADE-01
+              </span>
+            </div>
+            
             <div className="flex items-center gap-3 mb-6">
-              <div className="w-10 h-10 bg-gradient-to-br from-blue-400 to-indigo-500 rounded-lg flex items-center justify-center shadow-lg">
-                <Users className="w-5 h-5 text-white" />
+              <div className="w-10 h-10 bg-gradient-to-br from-blue-400 to-indigo-500 rounded-lg flex items-center justify-center shadow-lg border border-blue-300">
+                <Users className="w-5 h-5 text-black" />
               </div>
               <div>
-                <h2 className="text-xl font-bold text-white">Major Clients</h2>
+                <h2 className="text-xl font-bold text-cyan-300 font-mono tracking-wide">MAJOR TRADE FACTIONS</h2>
+                <p className="text-cyan-400/80 text-sm font-mono">Strategic Partnership Analysis</p>
               </div>
             </div>
             
-            <div className="space-y-4">
+            <div className="space-y-3">
               {topClients.map((client, index) => (
                 <div
                   key={client.id}
-                  className="p-4 rounded-lg bg-white/5 border border-white/10 hover:bg-white/10 transition-all duration-200"
+                  className="bg-gray-800/40 border border-cyan-400/20 rounded-lg p-4 hover:border-cyan-400/40 hover:bg-gray-800/60 transition-all duration-200 relative"
                 >
-                  <div className="flex items-start gap-3">
-                    <div className="w-6 h-6 bg-gradient-to-br from-indigo-400 to-purple-500 rounded-lg flex items-center justify-center text-white font-bold text-xs shadow-lg flex-shrink-0">
+                  <div className="absolute left-0 top-0 w-1 h-full bg-gradient-to-b from-indigo-400 to-purple-500 rounded-l-lg"></div>
+                  
+                  <div className="flex items-start gap-3 ml-2">
+                    <div className="w-6 h-6 bg-gradient-to-br from-indigo-400 to-purple-500 rounded-lg flex items-center justify-center text-black font-bold text-xs shadow-lg flex-shrink-0 border border-indigo-300">
                       {index + 1}
                     </div>
                     <div className="flex-1 min-w-0 space-y-2">
-                      <h3 className="font-semibold text-white text-sm leading-tight">
+                      <h3 className="font-semibold text-cyan-300 text-sm leading-tight font-mono">
                         {client.name}
                       </h3>
                       
                       <div className="flex flex-wrap items-center gap-2 text-xs">
-                        <span className="text-blue-200">{client.industry}</span>
-                        <span className="text-blue-400">•</span>
-                        <span className="text-blue-300">{formatPercentage(client.sales, kpiData.totalRevenue)}%</span>
+                        <span className="bg-gray-700/50 border border-cyan-400/30 text-cyan-400 px-2 py-1 rounded font-mono">
+                          {client.industry}
+                        </span>
+                        <span className="text-cyan-400/60 font-mono">•</span>
+                        <span className="text-cyan-300 font-mono">{formatPercentage(client.sales, kpiData.totalRevenue)}%</span>
                       </div>
                       
                       <div className="flex items-center justify-between">
-                        <div className="font-bold text-white text-sm">
+                        <div className="font-bold text-cyan-300 text-sm font-mono">
                           {formatCurrency(client.sales)}
                         </div>
                         <div className="flex items-center gap-2">
-                          <span className="text-xs font-medium text-emerald-400">
+                          <span className="text-xs font-mono text-emerald-400 bg-emerald-400/10 border border-emerald-400/30 px-2 py-1 rounded">
                             +{client.growth}%
                           </span>
-                          <ChevronRight className="w-3 h-3 text-blue-400" />
+                          <ChevronRight className="w-3 h-3 text-cyan-400" />
                         </div>
                       </div>
                     </div>
@@ -229,47 +260,59 @@ const CEODashboard: React.FC<CEODashboardProps> = ({ onBack }) => {
             </div>
           </div>
 
-          {/* Top Products */}
-          <div className="backdrop-blur-xl bg-white/10 rounded-xl border border-white/20 shadow-2xl p-6">
+          {/* Strategic Resources */}
+          <div className="bg-gradient-to-br from-gray-900 to-gray-800 rounded-xl border border-cyan-400/30 shadow-xl p-6 relative overflow-hidden">
+            <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-emerald-400 to-teal-400"></div>
+            <div className="absolute top-4 right-4">
+              <span className="bg-gray-800/60 border border-emerald-400/30 text-emerald-400 text-xs px-2 py-1 rounded font-mono">
+                RES-01
+              </span>
+            </div>
+            
             <div className="flex items-center gap-3 mb-6">
-              <div className="w-10 h-10 bg-gradient-to-br from-emerald-400 to-teal-500 rounded-lg flex items-center justify-center shadow-lg">
-                <Package className="w-5 h-5 text-white" />
+              <div className="w-10 h-10 bg-gradient-to-br from-emerald-400 to-teal-500 rounded-lg flex items-center justify-center shadow-lg border border-emerald-300">
+                <Package className="w-5 h-5 text-black" />
               </div>
               <div>
-                <h2 className="text-xl font-bold text-white">Top Products</h2>
+                <h2 className="text-xl font-bold text-cyan-300 font-mono tracking-wide">STRATEGIC RESOURCES</h2>
+                <p className="text-cyan-400/80 text-sm font-mono">Top Performing Assets</p>
               </div>
             </div>
             
-            <div className="space-y-4">
+            <div className="space-y-3">
               {topProducts.map((product, index) => (
                 <div
                   key={product.id}
-                  className="p-4 rounded-lg bg-white/5 border border-white/10 hover:bg-white/10 transition-all duration-200"
+                  className="bg-gray-800/40 border border-cyan-400/20 rounded-lg p-4 hover:border-cyan-400/40 hover:bg-gray-800/60 transition-all duration-200 relative"
                 >
-                  <div className="flex items-start gap-3">
-                    <div className="w-6 h-6 bg-gradient-to-br from-emerald-400 to-teal-500 rounded-lg flex items-center justify-center text-white font-bold text-xs shadow-lg flex-shrink-0">
+                  <div className="absolute left-0 top-0 w-1 h-full bg-gradient-to-b from-emerald-400 to-teal-500 rounded-l-lg"></div>
+                  
+                  <div className="flex items-start gap-3 ml-2">
+                    <div className="w-6 h-6 bg-gradient-to-br from-emerald-400 to-teal-500 rounded-lg flex items-center justify-center text-black font-bold text-xs shadow-lg flex-shrink-0 border border-emerald-300">
                       {index + 1}
                     </div>
                     <div className="flex-1 min-w-0 space-y-2">
-                      <h3 className="font-semibold text-white text-sm leading-tight">
+                      <h3 className="font-semibold text-cyan-300 text-sm leading-tight font-mono">
                         {product.name}
                       </h3>
                       
                       <div className="flex flex-wrap items-center gap-2 text-xs">
-                        <span className="text-blue-200">{product.category}</span>
-                        <span className="text-blue-400">•</span>
-                        <span className="text-blue-300">{formatPercentage(product.sales, kpiData.totalRevenue)}%</span>
+                        <span className="bg-gray-700/50 border border-cyan-400/30 text-cyan-400 px-2 py-1 rounded font-mono">
+                          {product.category}
+                        </span>
+                        <span className="text-cyan-400/60 font-mono">•</span>
+                        <span className="text-cyan-300 font-mono">{formatPercentage(product.sales, kpiData.totalRevenue)}%</span>
                       </div>
                       
                       <div className="flex items-center justify-between">
-                        <div className="font-bold text-white text-sm">
+                        <div className="font-bold text-cyan-300 text-sm font-mono">
                           {formatCurrency(product.sales)}
                         </div>
                         <div className="flex items-center gap-2">
-                          <span className="text-xs font-medium text-emerald-400">
+                          <span className="text-xs font-mono text-emerald-400 bg-emerald-400/10 border border-emerald-400/30 px-2 py-1 rounded">
                             +{product.growth.toFixed(1)}%
                           </span>
-                          <ChevronRight className="w-3 h-3 text-blue-400" />
+                          <ChevronRight className="w-3 h-3 text-cyan-400" />
                         </div>
                       </div>
                     </div>
@@ -280,12 +323,24 @@ const CEODashboard: React.FC<CEODashboardProps> = ({ onBack }) => {
           </div>
         </div>
 
-        {/* Agent Status */}
-        <div className="backdrop-blur-xl bg-white/10 rounded-xl border border-white/20 shadow-xl p-4">
-          <div className="flex items-center justify-center space-x-3">
-            <div className="w-3 h-3 bg-emerald-400 rounded-full animate-pulse shadow-lg shadow-emerald-400/50"></div>
-            <p className="text-white font-medium text-sm text-center">CEO Dashboard Active • Real-time Data</p>
-            <div className="w-3 h-3 bg-emerald-400 rounded-full animate-pulse shadow-lg shadow-emerald-400/50"></div>
+        {/* Command Status */}
+        <div className="bg-gradient-to-r from-gray-900 to-gray-800 border border-cyan-400/30 rounded-lg p-4 relative overflow-hidden">
+          <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-emerald-400 to-cyan-400"></div>
+          <div className="flex items-center justify-center space-x-6">
+            <div className="flex items-center space-x-2">
+              <div className="w-3 h-3 bg-emerald-400 rounded-full animate-pulse shadow-lg shadow-emerald-400/50"></div>
+              <span className="text-emerald-300 font-mono font-bold text-sm">IMPERIAL COMMAND CENTER ACTIVE</span>
+            </div>
+            <div className="text-cyan-400/60 font-mono text-sm">|</div>
+            <div className="flex items-center space-x-2">
+              <Zap className="w-4 h-4 text-cyan-400" />
+              <span className="text-cyan-400/80 font-mono text-sm">REAL-TIME INTELLIGENCE</span>
+            </div>
+            <div className="text-cyan-400/60 font-mono text-sm">|</div>
+            <div className="flex items-center space-x-2">
+              <div className="w-3 h-3 bg-emerald-400 rounded-full animate-pulse shadow-lg shadow-emerald-400/50"></div>
+              <span className="text-emerald-400 font-mono text-sm">EMPIRE: ОФИС-КИТ</span>
+            </div>
           </div>
         </div>
       </div>

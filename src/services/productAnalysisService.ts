@@ -562,6 +562,8 @@ export class ProductAnalysisService {
       if (count === 0) {
         diagnostics.push({
           step: 'no_data',
+          status: 'error',
+          message: 'No products found in database'
         }
         )
       }
@@ -588,6 +590,7 @@ export class ProductAnalysisService {
           message: 'Failed to fetch categories',
           details: { error: finalError?.message || error.message }
         });
+        return { categories: [], diagnostics };
         return { categories: [], diagnostics };
       }
       
@@ -620,7 +623,7 @@ export class ProductAnalysisService {
 
       diagnostics.push({
         step: 'final_categories',
-        step: 'success',
+        status: 'success',
         message: `Found ${uniqueCategories.length} unique categories`,
         details: {
           categories: uniqueCategories

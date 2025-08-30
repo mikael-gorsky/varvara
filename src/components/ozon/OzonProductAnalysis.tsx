@@ -363,7 +363,7 @@ const OzonProductAnalysis: React.FC<OzonProductAnalysisProps> = ({ onBack }) => 
                   <BarChart3 className="w-4 h-4 text-blue-400" />
                 </div>
                 <p className="text-2xl font-bold text-blue-300 font-mono">{stats.total_groups}</p>
-                <p className="text-blue-400/60 text-xs font-mono">Product Groups</p>
+                <p className="text-blue-400/60 text-xs font-mono">AI Classifications</p>
               </div>
               
               <div className="bg-gray-800/50 border border-emerald-400/30 rounded-lg p-4 relative overflow-hidden">
@@ -373,7 +373,7 @@ const OzonProductAnalysis: React.FC<OzonProductAnalysisProps> = ({ onBack }) => 
                   <Database className="w-4 h-4 text-emerald-400" />
                 </div>
                 <p className="text-2xl font-bold text-emerald-300 font-mono">{stats.categories_analyzed}</p>
-                <p className="text-emerald-400/60 text-xs font-mono">Product Categories</p>
+                <p className="text-emerald-400/60 text-xs font-mono">Strategic Assets</p>
               </div>
               
               <div className="bg-gray-800/50 border border-purple-400/30 rounded-lg p-4 relative overflow-hidden">
@@ -411,7 +411,7 @@ const OzonProductAnalysis: React.FC<OzonProductAnalysisProps> = ({ onBack }) => 
           <div className="flex items-center justify-between mb-6">
             <h2 className="text-xl font-bold text-cyan-300 flex items-center space-x-3 font-mono tracking-wide">
               <Database className="w-6 h-6 text-cyan-400" />
-              <span>PRODUCT DATABASE | CATEGORIES ({categories.length})</span>
+              <span>PRODUCTS DATABASE | STRATEGIC CATEGORIES ({categories.length})</span>
             </h2>
             <button
               onClick={loadCategories}
@@ -427,7 +427,7 @@ const OzonProductAnalysis: React.FC<OzonProductAnalysisProps> = ({ onBack }) => 
           {suppliers.length > 0 && (
             <div className="mb-6 p-4 bg-gray-800/30 border border-cyan-400/20 rounded-lg">
               <h3 className="text-sm font-mono text-cyan-400 mb-3 uppercase tracking-wider">
-                Filter by Supplier ({suppliers.length} suppliers):
+                Filter by Trade Partner ({suppliers.length} entities):
               </h3>
               <div className="flex flex-wrap gap-2">
                 <button
@@ -643,32 +643,32 @@ const OzonProductAnalysis: React.FC<OzonProductAnalysisProps> = ({ onBack }) => 
                             ))}
                           </div>
                         </div>
-                      )}
-                    </div>
-                  );
-                })}
-              </div>
-            )}
-          </div>
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
 
-          {/* System Status Footer */}
-          <div className="bg-gradient-to-r from-gray-900 to-gray-800 border border-cyan-400/30 rounded-lg p-4 relative overflow-hidden">
-            <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-purple-400 to-cyan-400"></div>
-            <div className="flex items-center justify-center space-x-6">
-              <div className="flex items-center space-x-2">
-                <div className="w-3 h-3 bg-purple-400 rounded-full animate-pulse shadow-lg shadow-purple-400/50"></div>
-                <span className="text-purple-300 font-mono font-bold text-sm">AI PATTERN RECOGNITION ACTIVE</span>
-              </div>
-              <div className="text-cyan-400/60 font-mono text-sm">|</div>
-              <div className="flex items-center space-x-2">
-                <Brain className="w-4 h-4 text-cyan-400" />
-                <span className="text-cyan-400/80 font-mono text-sm">NEURAL NETWORKS: OPERATIONAL</span>
-              </div>
-              <div className="text-cyan-400/60 font-mono text-sm">|</div>
-              <div className="flex items-center space-x-2">
-                <div className="w-3 h-3 bg-emerald-400 rounded-full animate-pulse shadow-lg shadow-emerald-400/50"></div>
-                <span className="text-emerald-400 font-mono text-sm">EMPIRE: ОФИС-КИТ</span>
-              </div>
+        {/* System Status Footer */}
+        <div className="bg-gradient-to-r from-gray-900 to-gray-800 border border-cyan-400/30 rounded-lg p-4 relative overflow-hidden">
+          <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-purple-400 to-cyan-400"></div>
+          <div className="flex items-center justify-center space-x-6">
+            <div className="flex items-center space-x-2">
+              <div className="w-3 h-3 bg-purple-400 rounded-full animate-pulse shadow-lg shadow-purple-400/50"></div>
+              <span className="text-purple-300 font-mono font-bold text-sm">AI PATTERN RECOGNITION ACTIVE</span>
+            </div>
+            <div className="text-cyan-400/60 font-mono text-sm">|</div>
+            <div className="flex items-center space-x-2">
+              <Brain className="w-4 h-4 text-cyan-400" />
+              <span className="text-cyan-400/80 font-mono text-sm">NEURAL NETWORKS: OPERATIONAL</span>
+            </div>
+            <div className="text-cyan-400/60 font-mono text-sm">|</div>
+            <div className="flex items-center space-x-2">
+              <div className="w-3 h-3 bg-emerald-400 rounded-full animate-pulse shadow-lg shadow-emerald-400/50"></div>
+              <span className="text-emerald-400 font-mono text-sm">EMPIRE: ОФИС-КИТ</span>
             </div>
           </div>
         </div>

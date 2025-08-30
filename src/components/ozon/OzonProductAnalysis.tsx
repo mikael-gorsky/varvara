@@ -503,8 +503,8 @@ const OzonProductAnalysis: React.FC<OzonProductAnalysisProps> = ({ onBack }) => 
                             <span className="text-sm font-mono">AI PROCESSING...</span>
                           </div>
                         ) : (
-                            <p className="font-mono text-cyan-300 font-bold text-sm">PRODUCT GROUPS:</p>
-                                alert('Product group data copied to clipboard!');
+                          <>
+                            <button
                               onClick={() => analyzeCategory(category)}
                               className="flex items-center space-x-2 px-4 py-2 bg-gradient-to-r from-purple-600 to-pink-600 border border-purple-400 text-black rounded hover:from-purple-500 hover:to-pink-500 transition-all duration-200 font-mono font-bold text-sm"
                             >

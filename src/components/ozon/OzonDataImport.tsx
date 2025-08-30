@@ -374,7 +374,7 @@ const OzonDataImport: React.FC<OzonDataImportProps> = ({ onBack }) => {
                   ) : (
                     <>
                       <Upload className="w-5 h-5" />
-                      <span>INITIATE UPLOAD</span>
+                      <span>START IMPORT</span>
                     </>
                   )}
                 </button>

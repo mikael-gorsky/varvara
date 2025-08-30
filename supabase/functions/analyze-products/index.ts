@@ -238,22 +238,37 @@ Return ONLY valid JSON in this exact format:
     addDiagnostic('json_parsing', 'loading', 'Parsing AI response JSON...');
     
     try {
-      let content = aiResult.choices[0].message.content;
+      let aiContent = aiResult.choices[0].message.content;
       
-      // Check if content is wrapped in markdown code blocks
-      if (content.includes('```json')) {
-        // Extract JSON from markdown code blocks
-        const jsonStart = content.indexOf('```json') + 7;
-        const jsonEnd = content.lastIndexOf('```');
-        content = content.substring(jsonStart, jsonEnd).trim();
-      } else if (content.includes('```')) {
-        // Handle plain ``` code blocks
-        const jsonStart = content.indexOf('```') + 3;
-        const jsonEnd = content.lastIndexOf('```');
-        content = content.substring(jsonStart, jsonEnd).trim();
+      addDiagnostic('raw_ai_content', 'info', 'Raw AI response content', {
+        content_preview: aiContent?.slice(0, 200),
+        content_length: aiContent?.length,
+        starts_with_backticks: aiContent?.startsWith('```'),
+        includes_json_marker: aiContent?.includes('```json')
+      });
+      
+      // Remove markdown code blocks if present
+      if (aiContent.includes('```json')) {
+        const startIndex = aiContent.indexOf('```json') + 7; // 7 = length of '```json'
+        const endIndex = aiContent.lastIndexOf('```');
+        if (startIndex > 6 && endIndex > startIndex) {
+          aiContent = aiContent.substring(startIndex, endIndex).trim();
+          addDiagnostic('markdown_extraction', 'success', 'Extracted JSON from ```json blocks', {
+            extracted_content_preview: aiContent.slice(0, 200)
+          });
+        }
+      } else if (aiContent.includes('```')) {
+        const startIndex = aiContent.indexOf('```') + 3;
+        const endIndex = aiContent.lastIndexOf('```');
+        if (startIndex > 2 && endIndex > startIndex) {
+          aiContent = aiContent.substring(startIndex, endIndex).trim();
+          addDiagnostic('markdown_extraction', 'success', 'Extracted JSON from ``` blocks', {
+            extracted_content_preview: aiContent.slice(0, 200)
+          });
+        }
       }
       
-      parsedGroups = JSON.parse(content);
+      parsedGroups = JSON.parse(aiContent);
       addDiagnostic('json_parsing', 'success', 'Successfully parsed AI response', {
         groups_count: parsedGroups.groups?.length,
         ungrouped_count: parsedGroups.ungrouped?.length,
@@ -262,7 +277,8 @@ Return ONLY valid JSON in this exact format:
     } catch (e) {
       addDiagnostic('json_parsing', 'error', 'Failed to parse AI response as JSON', {
         parse_error: e.message,
-        raw_content: aiResult.choices[0].message.content?.slice(0, 500)
+        raw_content: aiResult.choices[0].message.content?.slice(0, 500),
+        cleaned_content: aiContent?.slice(0, 500)
       });
       
       return new Response(
@@ -366,14 +382,16 @@ Return ONLY valid JSON in this exact format:
   } catch (error) {
     // CRITICAL: Always add CORS headers even when there's an error
     addDiagnostic('error_occurred', 'error', 'Function error', {
-      error_message: error.message,
-      error_stack: error.stack
+      error_message: error instanceof Error ? error.message : 'Unknown error',
+      error_stack: error instanceof Error ? error.stack : undefined
     });
+    
+    console.error('Edge function error:', error);
     
     return new Response(
       JSON.stringify({
         success: false,
-        error: error.message,
+        error: error instanceof Error ? error.message : 'Unknown error',
         details: 'Check function logs for more information',
         diagnostics
       }),

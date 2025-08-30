@@ -150,7 +150,7 @@ const OzonDataImport: React.FC<OzonDataImportProps> = ({ onBack }) => {
                 </div>
                 <div>
                   <h1 className="text-2xl font-bold text-cyan-300 font-mono">OZON Data Integration</h1>
-                  <p className="text-cyan-400/80 text-sm font-mono">Marketplace Intelligence Module</p>
+                  <p className="text-cyan-400/80 text-sm font-mono">Marketplace Analytics Module</p>
                 </div>
               </div>
             </div>
@@ -253,7 +253,7 @@ const OzonDataImport: React.FC<OzonDataImportProps> = ({ onBack }) => {
             <div className="space-y-2 text-sm text-yellow-300/90 font-mono">
               <p className="flex items-center space-x-2">
                 <span className="w-2 h-2 bg-yellow-400 rounded-full"></span>
-                <span>Data stream: <strong>Row 6+ contains records</strong></span>
+                <span>Data rows: <strong>Row 6+ contains records</strong></span>
               </p>
               <p className="flex items-center space-x-2">
                 <span className="w-2 h-2 bg-yellow-400 rounded-full"></span>
@@ -277,8 +277,8 @@ const OzonDataImport: React.FC<OzonDataImportProps> = ({ onBack }) => {
                 <FileSpreadsheet className="w-4 h-4 text-black" />
               </div>
               <div>
-                <h2 className="text-xl font-bold text-cyan-300 font-mono">Data Stream Upload Terminal</h2>
-                <p className="text-cyan-400/80 text-sm font-mono">OZON Marketplace Intelligence Import</p>
+                <h2 className="text-xl font-bold text-cyan-300 font-mono">Data Upload Interface</h2>
+                <p className="text-cyan-400/80 text-sm font-mono">OZON Marketplace Data Import</p>
               </div>
             </div>
           </div>
@@ -312,7 +312,7 @@ const OzonDataImport: React.FC<OzonDataImportProps> = ({ onBack }) => {
                     </div>
                     <div>
                       <p className="text-xl font-bold text-cyan-300 font-mono mb-2">
-                        Initiate Data Stream Upload
+                        Upload OZON Data File
                       </p>
                       <p className="text-cyan-400/80 font-mono text-sm">
                         Compatible formats: .xlsx | .xls | OZON Standard Export
@@ -334,7 +334,7 @@ const OzonDataImport: React.FC<OzonDataImportProps> = ({ onBack }) => {
                             <span className="text-cyan-400/80 font-mono">
                               Size: {(selectedFile.size / 1024 / 1024).toFixed(2)} MB
                             </span>
-                            <span className="text-emerald-400 font-mono">◉ FILE READY</span>
+                            <span className="text-emerald-400 font-mono">READY</span>
                           </div>
                         </div>
                       </div>
@@ -354,8 +354,8 @@ const OzonDataImport: React.FC<OzonDataImportProps> = ({ onBack }) => {
             <div className="bg-gray-800/30 border border-cyan-400/30 rounded-lg p-6 mb-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <h3 className="text-lg font-bold text-cyan-300 font-mono">Database Integration Protocol</h3>
-                  <p className="text-cyan-400/80 font-mono text-sm">Target: OZON_DATA table • Galactic Database Core</p>
+                  <h3 className="text-lg font-bold text-cyan-300 font-mono">Database Import Process</h3>
+                  <p className="text-cyan-400/80 font-mono text-sm">Target: OZON_DATA table • Database Server</p>
                 </div>
                 <button
                   onClick={handleImport}
@@ -387,7 +387,7 @@ const OzonDataImport: React.FC<OzonDataImportProps> = ({ onBack }) => {
                 <div className="flex items-center justify-between mb-4">
                   <div className="flex items-center space-x-3">
                     <Loader className="w-5 h-5 text-cyan-400 animate-spin" />
-                    <span className="text-cyan-300 font-mono font-bold">Data Integration In Progress</span>
+                    <span className="text-cyan-300 font-mono font-bold">Import In Progress</span>
                   </div>
                   <span className="text-cyan-400 font-mono font-bold">{Math.round(progress)}%</span>
                 </div>
@@ -434,7 +434,7 @@ const OzonDataImport: React.FC<OzonDataImportProps> = ({ onBack }) => {
                     <h3 className={`text-xl font-bold font-mono ${
                       importResult.success ? 'text-emerald-300' : 'text-red-300'
                     }`}>
-                      {importResult.success ? 'INTEGRATION SUCCESSFUL' : 'INTEGRATION FAILED'}
+                      {importResult.success ? 'IMPORT SUCCESSFUL' : 'IMPORT FAILED'}
                     </h3>
                     <p className={`font-mono text-sm ${
                       importResult.success ? 'text-emerald-400/80' : 'text-red-400/80'
@@ -446,7 +446,7 @@ const OzonDataImport: React.FC<OzonDataImportProps> = ({ onBack }) => {
                 
                 {importResult.recordsImported > 0 && (
                   <div className="bg-gray-800/50 border border-emerald-400/30 rounded-lg p-4 mb-4">
-                    <h4 className="font-bold text-emerald-300 font-mono mb-3">OPERATION SUMMARY</h4>
+                    <h4 className="font-bold text-emerald-300 font-mono mb-3">IMPORT SUMMARY</h4>
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm font-mono">
                       <div className="flex items-center space-x-2">
                         <span className="w-2 h-2 bg-emerald-400 rounded-full"></span>
@@ -486,7 +486,7 @@ const OzonDataImport: React.FC<OzonDataImportProps> = ({ onBack }) => {
                       <h4 className={`font-bold font-mono ${
                         importResult.headerValidation.isValid ? 'text-emerald-300' : 'text-red-300'
                       }`}>
-                        Header Protocol Validation: {importResult.headerValidation.isValid ? 'VALID' : 'INVALID'}
+                        Header Validation: {importResult.headerValidation.isValid ? 'VALID' : 'INVALID'}
                       </h4>
                     </div>
                     
@@ -522,7 +522,7 @@ const OzonDataImport: React.FC<OzonDataImportProps> = ({ onBack }) => {
                 
                 {importResult.errors && importResult.errors.length > 0 && (
                   <div className="bg-red-900/20 border border-red-400/30 rounded-lg p-4">
-                    <h4 className="font-bold text-red-300 font-mono mb-3">SYSTEM DIAGNOSTICS:</h4>
+                    <h4 className="font-bold text-red-300 font-mono mb-3">ERROR DETAILS:</h4>
                     <div className="max-h-32 overflow-y-auto space-y-1">
                       {importResult.errors.map((error: string, index: number) => (
                         <div key={index} className="flex items-start space-x-2">
@@ -538,7 +538,7 @@ const OzonDataImport: React.FC<OzonDataImportProps> = ({ onBack }) => {
                   <div className="bg-gradient-to-r from-cyan-900/20 to-teal-900/20 border border-cyan-400/30 rounded-lg p-4">
                     <div className="flex items-center space-x-3 mb-4">
                       <Zap className="w-5 h-5 text-cyan-400" />
-                      <h4 className="font-bold text-cyan-300 font-mono">NEXT PROTOCOL PHASE:</h4>
+                      <h4 className="font-bold text-cyan-300 font-mono">NEXT STEPS:</h4>
                     </div>
                     <div className="space-y-3">
                       <button
@@ -549,8 +549,8 @@ const OzonDataImport: React.FC<OzonDataImportProps> = ({ onBack }) => {
                         <span>REFRESH DATABASE STATUS</span>
                       </button>
                       <p className="text-cyan-400/90 text-sm font-mono leading-relaxed">
-                        Data integration completed. OZON intelligence data is now available for AI analysis protocols.
-                        Navigate to Product Analysis module to initiate advanced pattern recognition algorithms.
+                        Data import completed. OZON marketplace data is now available for AI analysis.
+                        Navigate to Product Analysis module to begin automated product grouping.
                       </p>
                     </div>
                   </div>
@@ -564,9 +564,9 @@ const OzonDataImport: React.FC<OzonDataImportProps> = ({ onBack }) => {
         <div className="mt-6 bg-gradient-to-r from-gray-900 to-gray-800 border border-cyan-400/30 rounded-lg p-4">
           <div className="flex items-center justify-center space-x-4">
             <div className="w-3 h-3 bg-cyan-400 rounded-full animate-pulse shadow-lg shadow-cyan-400/50"></div>
-            <span className="text-cyan-300 font-mono font-bold text-sm">OZON DATA INTEGRATION MODULE</span>
+            <span className="text-cyan-300 font-mono font-bold text-sm">OZON DATA IMPORT MODULE</span>
             <div className="text-cyan-400/60 font-mono text-xs">|</div>
-            <span className="text-cyan-400/80 font-mono text-sm">STATUS: OPERATIONAL</span>
+            <span className="text-cyan-400/80 font-mono text-sm">STATUS: ONLINE</span>
             <div className="w-3 h-3 bg-cyan-400 rounded-full animate-pulse shadow-lg shadow-cyan-400/50"></div>
           </div>
         </div>

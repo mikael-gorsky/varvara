@@ -322,10 +322,10 @@ const OzonProductAnalysis: React.FC<OzonProductAnalysisProps> = ({ onBack }) => 
                 </div>
                 <div>
                   <h1 className="text-2xl font-bold text-cyan-300 font-mono tracking-wider">
-                    AI PATTERN RECOGNITION
+                    AI PRODUCT ANALYSIS
                   </h1>
                   <p className="text-cyan-400/80 text-sm font-mono">
-                    Strategic Asset Classification Systems
+                    Automated Product Classification
                   </p>
                 </div>
               </div>
@@ -334,7 +334,7 @@ const OzonProductAnalysis: React.FC<OzonProductAnalysisProps> = ({ onBack }) => 
             <div className="flex items-center space-x-3">
               <div className="flex items-center space-x-2">
                 <div className="w-2 h-2 bg-purple-400 rounded-full animate-pulse"></div>
-                <span className="text-purple-300 text-sm font-mono">AI CORE ACTIVE</span>
+                <span className="text-purple-300 text-sm font-mono">AI ANALYSIS READY</span>
               </div>
             </div>
           </div>
@@ -352,7 +352,7 @@ const OzonProductAnalysis: React.FC<OzonProductAnalysisProps> = ({ onBack }) => 
             
             <h2 className="text-xl font-bold text-cyan-300 mb-6 flex items-center space-x-3 font-mono tracking-wide">
               <TrendingUp className="w-6 h-6 text-emerald-400" />
-              <span>ANALYSIS PERFORMANCE OVERVIEW</span>
+              <span>ANALYSIS PERFORMANCE METRICS</span>
             </h2>
             
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
@@ -373,7 +373,7 @@ const OzonProductAnalysis: React.FC<OzonProductAnalysisProps> = ({ onBack }) => 
                   <Database className="w-4 h-4 text-emerald-400" />
                 </div>
                 <p className="text-2xl font-bold text-emerald-300 font-mono">{stats.categories_analyzed}</p>
-                <p className="text-emerald-400/60 text-xs font-mono">Strategic Assets</p>
+                <p className="text-emerald-400/60 text-xs font-mono">Product Categories</p>
               </div>
               
               <div className="bg-gray-800/50 border border-purple-400/30 rounded-lg p-4 relative overflow-hidden">
@@ -411,7 +411,7 @@ const OzonProductAnalysis: React.FC<OzonProductAnalysisProps> = ({ onBack }) => 
           <div className="flex items-center justify-between mb-6">
             <h2 className="text-xl font-bold text-cyan-300 flex items-center space-x-3 font-mono tracking-wide">
               <Database className="w-6 h-6 text-cyan-400" />
-              <span>PRODUCTS DATABASE | STRATEGIC CATEGORIES ({categories.length})</span>
+              <span>PRODUCTS DATABASE | CATEGORIES ({categories.length})</span>
             </h2>
             <button
               onClick={loadCategories}
@@ -427,7 +427,7 @@ const OzonProductAnalysis: React.FC<OzonProductAnalysisProps> = ({ onBack }) => 
           {suppliers.length > 0 && (
             <div className="mb-6 p-4 bg-gray-800/30 border border-cyan-400/20 rounded-lg">
               <h3 className="text-sm font-mono text-cyan-400 mb-3 uppercase tracking-wider">
-                Filter by Trade Partner ({suppliers.length} entities):
+                Filter by Supplier ({suppliers.length} suppliers):
               </h3>
               <div className="flex flex-wrap gap-2">
                 <button
@@ -450,7 +450,7 @@ const OzonProductAnalysis: React.FC<OzonProductAnalysisProps> = ({ onBack }) => 
                         : 'bg-gray-800/50 text-cyan-400 border-cyan-400/30 hover:border-cyan-400/50'
                     }`}
                   >
-                    {supplier.name} ({supplier.count})
+                    ALL SUPPLIERS
                   </button>
                 ))}
               </div>
@@ -463,7 +463,8 @@ const OzonProductAnalysis: React.FC<OzonProductAnalysisProps> = ({ onBack }) => 
                 <AlertCircle className="w-8 h-8 text-black" />
               </div>
               <h3 className="text-lg font-mono text-red-300 mb-2 tracking-wide">NO STRATEGIC CATEGORIES DETECTED</h3>
-              <p className="text-red-400/80 font-mono text-sm">Import strategic assets to PRODUCTS database with valid classification fields.</p>
+              <h3 className="text-lg font-mono text-red-300 mb-2 tracking-wide">NO PRODUCT CATEGORIES FOUND</h3>
+              <p className="text-red-400/80 font-mono text-sm">Import products to PRODUCTS database with valid category fields.</p>
             </div>
           ) : (
             <div className="space-y-4">
@@ -502,8 +503,8 @@ const OzonProductAnalysis: React.FC<OzonProductAnalysisProps> = ({ onBack }) => 
                             <span className="text-sm font-mono">AI PROCESSING...</span>
                           </div>
                         ) : (
-                          <>
-                            <button
+                            <p className="font-mono text-cyan-300 font-bold text-sm">PRODUCT GROUPS:</p>
+                                alert('Product group data copied to clipboard!');
                               onClick={() => analyzeCategory(category)}
                               className="flex items-center space-x-2 px-4 py-2 bg-gradient-to-r from-purple-600 to-pink-600 border border-purple-400 text-black rounded hover:from-purple-500 hover:to-pink-500 transition-all duration-200 font-mono font-bold text-sm"
                             >
@@ -538,18 +539,18 @@ const OzonProductAnalysis: React.FC<OzonProductAnalysisProps> = ({ onBack }) => 
                             </div>
                             <div className="flex items-center space-x-2">
                               <div className="w-2 h-2 bg-cyan-400 rounded-full"></div>
-                              <span className="text-cyan-400">Assets: {categoryResults.reduce((sum, r) => sum + r.product_names.length, 0)}</span>
+                              <span className="text-cyan-400">Products: {categoryResults.reduce((sum, r) => sum + r.product_names.length, 0)}</span>
                             </div>
                           </div>
                           
                           <div className="mt-3 p-3 bg-blue-900/20 border border-blue-400/30 rounded text-xs font-mono">
-                            <p className="text-blue-300 font-bold mb-2">OPERATIONAL SCOPE:</p>
+                            <p className="text-blue-300 font-bold mb-2">ANALYSIS SCOPE:</p>
                             <div className="grid grid-cols-2 gap-2 text-blue-400">
-                              <span>📦 Total Assets: {(() => {
+                              <span>📦 Total Products: {(() => {
                                 const totalProducts = categoryResults[0]?.ai_response?.total_products_analyzed;
                                 return totalProducts || 'Loading...';
                               })()}</span>
-                              <span>🏪 Trade Partners: {(() => {
+                              <span>🏪 Suppliers: {(() => {
                                 const totalSuppliers = categoryResults[0]?.ai_response?.total_suppliers_analyzed;
                                 return totalSuppliers || 'Loading...';
                               })()}</span>
@@ -583,7 +584,7 @@ const OzonProductAnalysis: React.FC<OzonProductAnalysisProps> = ({ onBack }) => 
                                 
                                 <div className="flex items-start justify-between mb-3">
                                   <h4 className="font-mono text-cyan-300 font-bold text-sm tracking-wide">
-                                    CLASSIFICATION {index + 1}: {group.group_name}
+                                    GROUP {index + 1}: {group.group_name}
                                   </h4>
                                   <span className="bg-purple-400/10 border border-purple-400/30 text-purple-400 text-xs px-2 py-1 rounded font-mono">
                                     {(group.confidence_score * 100).toFixed(1)}% CONFIDENCE
@@ -599,7 +600,7 @@ const OzonProductAnalysis: React.FC<OzonProductAnalysisProps> = ({ onBack }) => 
                                 <div className="space-y-3">
                                   <div>
                                     <p className="text-sm font-mono text-emerald-400 font-bold mb-2">
-                                      STRATEGIC ASSETS ({group.product_names.length}):
+                                      PRODUCTS ({group.product_names.length}):
                                     </p>
                                     <div className="pl-3 space-y-1 max-h-32 overflow-y-auto bg-gray-900/30 border border-cyan-400/20 p-3 rounded">
                                       {group.product_names.map((product, pIndex) => (
@@ -613,10 +614,10 @@ const OzonProductAnalysis: React.FC<OzonProductAnalysisProps> = ({ onBack }) => 
                                   {group.vendor_analysis && (
                                     <div className="pt-3 border-t border-cyan-400/20">
                                       <p className="text-sm font-mono text-teal-400 font-bold mb-2">
-                                        TRADE PARTNERS ({group.vendor_analysis.vendor_count || 0}):
+                                        SUPPLIERS ({group.vendor_analysis.vendor_count || 0}):
                                       </p>
                                       <p className="text-xs text-teal-400/80 bg-gray-900/30 border border-cyan-400/20 p-2 rounded font-mono">
-                                        {group.vendor_analysis.vendors?.join(', ') || 'CLASSIFIED'}
+                                        {group.vendor_analysis.vendors?.join(', ') || 'N/A'}
                                       </p>
                                     </div>
                                   )}
@@ -624,18 +625,18 @@ const OzonProductAnalysis: React.FC<OzonProductAnalysisProps> = ({ onBack }) => 
                                   <div className="pt-3 border-t border-cyan-400/20">
                                     <button
                                       onClick={() => {
-                                        const groupText = `Strategic Classification: ${group.group_name}\n` +
-                                          `Intelligence Summary: ${group.group_description || 'CLASSIFIED'}\n` +
-                                          `Strategic Assets (${group.product_names.length}):\n` +
+                                        const groupText = `Product Group: ${group.group_name}\n` +
+                                          `Description: ${group.group_description || 'N/A'}\n` +
+                                          `Products (${group.product_names.length}):\n` +
                                           group.product_names.map(p => `  • ${p}`).join('\n') +
-                                          `\nTrade Partners: ${group.vendor_analysis?.vendors?.join(', ') || 'CLASSIFIED'}`;
+                                          `\nSuppliers: ${group.vendor_analysis?.vendors?.join(', ') || 'N/A'}`;
                                         
                                         navigator.clipboard.writeText(groupText);
-                                        alert('Classification data extracted to clipboard buffer!');
+                                        alert('Product group data copied to clipboard!');
                                       }}
                                       className="text-xs bg-gray-700 border border-cyan-400/30 text-cyan-400 px-3 py-1 rounded hover:bg-gray-600 hover:border-cyan-400/50 transition-all duration-200 font-mono"
                                     >
-                                      EXTRACT CLASSIFICATION DATA
+                                      COPY GROUP DATA
                                     </button>
                                   </div>
                                 </div>
@@ -658,17 +659,17 @@ const OzonProductAnalysis: React.FC<OzonProductAnalysisProps> = ({ onBack }) => 
           <div className="flex items-center justify-center space-x-6">
             <div className="flex items-center space-x-2">
               <div className="w-3 h-3 bg-purple-400 rounded-full animate-pulse shadow-lg shadow-purple-400/50"></div>
-              <span className="text-purple-300 font-mono font-bold text-sm">AI PATTERN RECOGNITION ACTIVE</span>
+              <span className="text-purple-300 font-mono font-bold text-sm">AI PRODUCT ANALYSIS ACTIVE</span>
             </div>
             <div className="text-cyan-400/60 font-mono text-sm">|</div>
             <div className="flex items-center space-x-2">
               <Brain className="w-4 h-4 text-cyan-400" />
-              <span className="text-cyan-400/80 font-mono text-sm">NEURAL NETWORKS: OPERATIONAL</span>
+              <span className="text-cyan-400/80 font-mono text-sm">AI SERVICES: OPERATIONAL</span>
             </div>
             <div className="text-cyan-400/60 font-mono text-sm">|</div>
             <div className="flex items-center space-x-2">
               <div className="w-3 h-3 bg-emerald-400 rounded-full animate-pulse shadow-lg shadow-emerald-400/50"></div>
-              <span className="text-emerald-400 font-mono text-sm">EMPIRE: ОФИС-КИТ</span>
+              <span className="text-emerald-400 font-mono text-sm">ORGANIZATION: ОФИС-КИТ</span>
             </div>
           </div>
         </div>

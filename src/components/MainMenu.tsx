@@ -18,48 +18,48 @@ const MainMenu: React.FC<MainMenuProps> = ({ onSelectModule }) => {
   const modules: AnalyticsModule[] = [
     {
       id: 'ceo-dashboard',
-      title: 'Imperial Command Center',
-      description: 'Real-time galactic empire overview with strategic KPIs and resource monitoring',
+      title: 'Executive Dashboard',
+      description: 'Real-time business overview with key performance indicators and strategic metrics',
       icon: <Eye className="w-8 h-8" />,
       color: 'from-blue-400 to-indigo-500',
       available: true
     },
     {
       id: 'ozon-dashboard',
-      title: 'OZON Trade Networks',
-      description: 'Import and analyze marketplace intelligence data from OZON trading systems',
+      title: 'OZON Marketplace Analytics',
+      description: 'Import and analyze marketplace data from OZON e-commerce platform',
       icon: <FileSpreadsheet className="w-8 h-8" />,
       color: 'from-emerald-400 to-teal-500',
       available: true
     },
     {
       id: 'sales-analytics',
-      title: 'Economic Analysis',
-      description: 'Advanced economic performance algorithms and trade route optimization',
+      title: 'Sales Analytics',
+      description: 'Advanced sales performance analysis and revenue optimization insights',
       icon: <TrendingUp className="w-8 h-8" />,
       color: 'from-purple-400 to-pink-500',
       available: false
     },
     {
       id: 'client-insights',
-      title: 'Diplomatic Relations',
-      description: 'Faction behavior analysis and strategic partnership evaluation protocols',
+      title: 'Customer Intelligence',
+      description: 'Customer behavior analysis and strategic account management insights',
       icon: <Users className="w-8 h-8" />,
       color: 'from-orange-400 to-red-500',
       available: false
     },
     {
       id: 'inventory-analytics',
-      title: 'Resource Management',
-      description: 'Strategic resource allocation, stockpile analysis, and demand forecasting systems',
+      title: 'Inventory Management',
+      description: 'Strategic inventory optimization, stock analysis, and demand forecasting',
       icon: <Database className="w-8 h-8" />,
       color: 'from-cyan-400 to-blue-500',
       available: false
     },
     {
       id: 'financial-reports',
-      title: 'Treasury Systems',
-      description: 'Imperial treasury analysis, cash flow optimization, and economic performance metrics',
+      title: 'Financial Reports',
+      description: 'Comprehensive financial analysis, cash flow optimization, and performance metrics',
       icon: <BarChart3 className="w-8 h-8" />,
       color: 'from-indigo-400 to-purple-500',
       available: false
@@ -90,14 +90,14 @@ const MainMenu: React.FC<MainMenuProps> = ({ onSelectModule }) => {
               <div className="absolute -top-1 -right-1 w-4 h-4 bg-emerald-400 rounded-full border-2 border-black animate-pulse"></div>
             </div>
             <h1 className="text-5xl font-bold text-cyan-300 mb-3 font-mono tracking-wider">
-              OFK ANALYTICS COMMAND
+              OFK ANALYTICS SUITE
             </h1>
             <p className="text-xl text-cyan-400/80 mb-4 font-mono">
-              SELECT OPERATIONAL MODULE
+              Business Intelligence Platform
             </p>
             <div className="flex items-center justify-center space-x-2 text-teal-300 font-mono text-sm">
               <span className="w-2 h-2 bg-teal-400 rounded-full"></span>
-              <span>EMPIRE:</span>
+              <span>ORGANIZATION:</span>
               <span className="text-teal-400 font-bold">ОФИС-КИТ</span>
               <span className="w-2 h-2 bg-teal-400 rounded-full"></span>
             </div>
@@ -163,7 +163,7 @@ const MainMenu: React.FC<MainMenuProps> = ({ onSelectModule }) => {
                 {module.available && (
                   <div className="bg-gray-800/50 border border-cyan-400/30 rounded-lg px-4 py-2">
                     <div className="flex items-center text-emerald-400 text-sm font-mono font-bold">
-                      <span>INITIALIZE MODULE</span>
+                      <span>LAUNCH MODULE</span>
                       <Upload className="w-4 h-4 ml-2" />
                     </div>
                   </div>
@@ -183,7 +183,7 @@ const MainMenu: React.FC<MainMenuProps> = ({ onSelectModule }) => {
           <div className="flex items-center justify-center space-x-6">
             <div className="flex items-center space-x-3">
               <div className="w-4 h-4 bg-emerald-400 rounded-full animate-pulse shadow-lg shadow-emerald-400/50"></div>
-              <span className="text-emerald-300 font-mono font-bold text-sm">ANALYTICS COMMAND OPERATIONAL</span>
+              <span className="text-emerald-300 font-mono font-bold text-sm">ANALYTICS PLATFORM OPERATIONAL</span>
             </div>
             <div className="text-cyan-400/60 font-mono text-sm">|</div>
             <div className="flex items-center space-x-3">
@@ -193,7 +193,7 @@ const MainMenu: React.FC<MainMenuProps> = ({ onSelectModule }) => {
             <div className="text-cyan-400/60 font-mono text-sm">|</div>
             <div className="flex items-center space-x-3">
               <div className="w-4 h-4 bg-emerald-400 rounded-full animate-pulse shadow-lg shadow-emerald-400/50"></div>
-              <span className="text-emerald-400 font-mono text-sm">EMPIRE: ОФИС-КИТ</span>
+              <span className="text-emerald-400 font-mono text-sm">ORGANIZATION: ОФИС-КИТ</span>
             </div>
           </div>
         </div>

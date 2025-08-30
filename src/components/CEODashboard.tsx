@@ -329,17 +329,17 @@ const CEODashboard: React.FC<CEODashboardProps> = ({ onBack }) => {
           <div className="flex items-center justify-center space-x-6">
             <div className="flex items-center space-x-2">
               <div className="w-3 h-3 bg-emerald-400 rounded-full animate-pulse shadow-lg shadow-emerald-400/50"></div>
-              <span className="text-emerald-300 font-mono font-bold text-sm">IMPERIAL COMMAND CENTER ACTIVE</span>
+              <span className="text-emerald-300 font-mono font-bold text-sm">EXECUTIVE DASHBOARD ACTIVE</span>
             </div>
             <div className="text-cyan-400/60 font-mono text-sm">|</div>
             <div className="flex items-center space-x-2">
               <Zap className="w-4 h-4 text-cyan-400" />
-              <span className="text-cyan-400/80 font-mono text-sm">REAL-TIME INTELLIGENCE</span>
+              <span className="text-cyan-400/80 font-mono text-sm">REAL-TIME ANALYTICS</span>
             </div>
             <div className="text-cyan-400/60 font-mono text-sm">|</div>
             <div className="flex items-center space-x-2">
               <div className="w-3 h-3 bg-emerald-400 rounded-full animate-pulse shadow-lg shadow-emerald-400/50"></div>
-              <span className="text-emerald-400 font-mono text-sm">EMPIRE: ОФИС-КИТ</span>
+              <span className="text-emerald-400 font-mono text-sm">ORGANIZATION: ОФИС-КИТ</span>
             </div>
           </div>
         </div>

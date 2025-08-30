@@ -171,7 +171,7 @@ const OzonDashboard: React.FC<OzonDashboardProps> = ({ onBack }) => {
                 <div className="flex items-center justify-center space-x-6">
                   <div className="flex items-center space-x-2">
                     <div className="w-3 h-3 bg-cyan-400 rounded-full animate-pulse shadow-lg shadow-cyan-400/50"></div>
-                    <span className="text-cyan-300 font-mono font-bold text-sm">OZON TRADE NETWORKS</span>
+                    <span className="text-cyan-300 font-mono font-bold text-sm">OZON MARKETPLACE ANALYTICS</span>
                   </div>
                   <div className="text-cyan-400/60 font-mono text-sm">|</div>
                   <div className="flex items-center space-x-2">
@@ -181,7 +181,7 @@ const OzonDashboard: React.FC<OzonDashboardProps> = ({ onBack }) => {
                   <div className="text-cyan-400/60 font-mono text-sm">|</div>
                   <div className="flex items-center space-x-2">
                     <div className="w-3 h-3 bg-emerald-400 rounded-full animate-pulse shadow-lg shadow-emerald-400/50"></div>
-                    <span className="text-emerald-400 font-mono text-sm">STATUS: READY</span>
+                    <span className="text-emerald-400 font-mono text-sm">STATUS: OPERATIONAL</span>
                   </div>
                 </div>
               </div>

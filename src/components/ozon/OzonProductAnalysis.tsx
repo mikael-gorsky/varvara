@@ -334,7 +334,7 @@ const OzonProductAnalysis: React.FC<OzonProductAnalysisProps> = ({ onBack }) => 
             <div className="flex items-center space-x-3">
               <div className="flex items-center space-x-2">
                 <div className="w-2 h-2 bg-purple-400 rounded-full animate-pulse"></div>
-                <span className="text-purple-300 text-sm font-mono">AI CORE ACTIVE</span>
+                <span className="text-purple-300 text-sm font-mono">AI ANALYSIS READY</span>
               </div>
             </div>
           </div>
@@ -363,7 +363,7 @@ const OzonProductAnalysis: React.FC<OzonProductAnalysisProps> = ({ onBack }) => 
                   <BarChart3 className="w-4 h-4 text-blue-400" />
                 </div>
                 <p className="text-2xl font-bold text-blue-300 font-mono">{stats.total_groups}</p>
-                <p className="text-blue-400/60 text-xs font-mono">Product Groups</p>
+                <p className="text-blue-400/60 text-xs font-mono">AI Classifications</p>
               </div>
               
               <div className="bg-gray-800/50 border border-emerald-400/30 rounded-lg p-4 relative overflow-hidden">
@@ -373,7 +373,7 @@ const OzonProductAnalysis: React.FC<OzonProductAnalysisProps> = ({ onBack }) => 
                   <Database className="w-4 h-4 text-emerald-400" />
                 </div>
                 <p className="text-2xl font-bold text-emerald-300 font-mono">{stats.categories_analyzed}</p>
-                <p className="text-emerald-400/60 text-xs font-mono">Product Categories</p>
+                <p className="text-emerald-400/60 text-xs font-mono">Strategic Assets</p>
               </div>
               
               <div className="bg-gray-800/50 border border-purple-400/30 rounded-lg p-4 relative overflow-hidden">
@@ -411,7 +411,7 @@ const OzonProductAnalysis: React.FC<OzonProductAnalysisProps> = ({ onBack }) => 
           <div className="flex items-center justify-between mb-6">
             <h2 className="text-xl font-bold text-cyan-300 flex items-center space-x-3 font-mono tracking-wide">
               <Database className="w-6 h-6 text-cyan-400" />
-              <span>PRODUCT DATABASE | CATEGORIES ({categories.length})</span>
+              <span>PRODUCTS DATABASE | STRATEGIC CATEGORIES ({categories.length})</span>
             </h2>
             <button
               onClick={loadCategories}

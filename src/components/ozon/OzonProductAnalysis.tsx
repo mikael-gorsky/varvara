@@ -643,32 +643,32 @@ const OzonProductAnalysis: React.FC<OzonProductAnalysisProps> = ({ onBack }) => 
                             ))}
                           </div>
                         </div>
-                      )}
-                    </div>
-                  );
-                })}
-              </div>
-            )}
-          </div>
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
 
-          {/* System Status Footer */}
-          <div className="bg-gradient-to-r from-gray-900 to-gray-800 border border-cyan-400/30 rounded-lg p-4 relative overflow-hidden">
-            <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-purple-400 to-cyan-400"></div>
-            <div className="flex items-center justify-center space-x-6">
-              <div className="flex items-center space-x-2">
-                <div className="w-3 h-3 bg-purple-400 rounded-full animate-pulse shadow-lg shadow-purple-400/50"></div>
-                <span className="text-purple-300 font-mono font-bold text-sm">AI PATTERN RECOGNITION ACTIVE</span>
-              </div>
-              <div className="text-cyan-400/60 font-mono text-sm">|</div>
-              <div className="flex items-center space-x-2">
-                <Brain className="w-4 h-4 text-cyan-400" />
-                <span className="text-cyan-400/80 font-mono text-sm">NEURAL NETWORKS: OPERATIONAL</span>
-              </div>
-              <div className="text-cyan-400/60 font-mono text-sm">|</div>
-              <div className="flex items-center space-x-2">
-                <div className="w-3 h-3 bg-emerald-400 rounded-full animate-pulse shadow-lg shadow-emerald-400/50"></div>
-                <span className="text-emerald-400 font-mono text-sm">EMPIRE: ОФИС-КИТ</span>
-              </div>
+        {/* System Status Footer */}
+        <div className="bg-gradient-to-r from-gray-900 to-gray-800 border border-cyan-400/30 rounded-lg p-4 relative overflow-hidden">
+          <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-purple-400 to-cyan-400"></div>
+          <div className="flex items-center justify-center space-x-6">
+            <div className="flex items-center space-x-2">
+              <div className="w-3 h-3 bg-purple-400 rounded-full animate-pulse shadow-lg shadow-purple-400/50"></div>
+              <span className="text-purple-300 font-mono font-bold text-sm">AI PATTERN RECOGNITION ACTIVE</span>
+            </div>
+            <div className="text-cyan-400/60 font-mono text-sm">|</div>
+            <div className="flex items-center space-x-2">
+              <Brain className="w-4 h-4 text-cyan-400" />
+              <span className="text-cyan-400/80 font-mono text-sm">NEURAL NETWORKS: OPERATIONAL</span>
+            </div>
+            <div className="text-cyan-400/60 font-mono text-sm">|</div>
+            <div className="flex items-center space-x-2">
+              <div className="w-3 h-3 bg-emerald-400 rounded-full animate-pulse shadow-lg shadow-emerald-400/50"></div>
+              <span className="text-emerald-400 font-mono text-sm">EMPIRE: ОФИС-КИТ</span>
             </div>
           </div>
         </div>

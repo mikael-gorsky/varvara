@@ -1,29 +1,29 @@
 import React, { useState } from 'react';
-import AnalyticsPicker from './components/AnalyticsPicker';
+import MainMenu from './components/MainMenu';
 import CEODashboard from './components/CEODashboard';
-import OzonAnalysis from './components/OzonAnalysis';
+import OzonDashboard from './components/OzonDashboard';
 
-type ActiveModule = 'picker' | 'ceo-dashboard' | 'ozon-analysis';
+type ActiveModule = 'main-menu' | 'ceo-dashboard' | 'ozon-dashboard';
 
 function App() {
-  const [activeModule, setActiveModule] = useState<ActiveModule>('picker');
+  const [activeModule, setActiveModule] = useState<ActiveModule>('main-menu');
 
   const handleSelectModule = (moduleId: string) => {
     setActiveModule(moduleId as ActiveModule);
   };
 
   const handleBack = () => {
-    setActiveModule('picker');
+    setActiveModule('main-menu');
   };
 
   const renderModule = () => {
     switch (activeModule) {
       case 'ceo-dashboard':
         return <CEODashboard onBack={handleBack} />;
-      case 'ozon-analysis':
-        return <OzonAnalysis onBack={handleBack} />;
+      case 'ozon-dashboard':
+        return <OzonDashboard onBack={handleBack} />;
       default:
-        return <AnalyticsPicker onSelectModule={handleSelectModule} />;
+        return <MainMenu onSelectModule={handleSelectModule} />;
     }
   };
 

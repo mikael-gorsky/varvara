@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { ArrowLeft, RefreshCw, BarChart3, TrendingUp, Users, AlertCircle, X } from 'lucide-react';
-import { ProductAnalysisService, ProductGroup, AnalysisResult } from '../services/productAnalysisService';
-import { supabase, supabaseAdmin } from '../lib/supabase';
+import { ProductAnalysisService, ProductGroup, AnalysisResult } from '../../services/productAnalysisService';
+import { supabase, supabaseAdmin } from '../../lib/supabase';
 
-interface OzonAnalysisProps {
+interface OzonProductAnalysisProps {
   onBack: () => void;
 }
 
@@ -11,6 +11,7 @@ interface Supplier {
   name: string;
   count: number;
 }
+
 interface DiagnosticInfo {
   step: string;
   status: 'loading' | 'success' | 'error';
@@ -18,7 +19,7 @@ interface DiagnosticInfo {
   details?: any;
 }
 
-const OzonAnalysis: React.FC<OzonAnalysisProps> = ({ onBack }) => {
+const OzonProductAnalysis: React.FC<OzonProductAnalysisProps> = ({ onBack }) => {
   const [categories, setCategories] = useState<string[]>([]);
   const [suppliers, setSuppliers] = useState<Supplier[]>([]);
   const [selectedSupplier, setSelectedSupplier] = useState<string | null>(null);
@@ -36,19 +37,16 @@ const OzonAnalysis: React.FC<OzonAnalysisProps> = ({ onBack }) => {
 
   const loadCategories = async () => {
     setLoadingCategories(true);
-    // Only show diagnostics during category loading if not analyzing
     if (!analyzingCategory) {
       setDiagnostics([]);
       setShowDiagnostics(true);
     }
 
     try {
-      // Only add category loading diagnostics if not doing AI analysis
       if (!analyzingCategory) {
         addDiagnostic('connect', 'loading', 'Connecting to database...');
       }
       
-      // First check if we can connect at all
       const { data: testData, error: testError } = await supabase
         .from('products')
         .select('id')
@@ -75,7 +73,6 @@ const OzonAnalysis: React.FC<OzonAnalysisProps> = ({ onBack }) => {
       }
       const result = await ProductAnalysisService.getCategories();
       
-      // Add service diagnostics only if not doing AI analysis
       if (!analyzingCategory) {
         result.diagnostics.forEach(diag => {
           addDiagnostic(diag.step, diag.status as any, diag.message, diag.details);
@@ -100,8 +97,6 @@ const OzonAnalysis: React.FC<OzonAnalysisProps> = ({ onBack }) => {
       }
       
       setCategories(result.categories);
-      
-      // Load suppliers for filtering
       await loadSuppliers();
 
     } catch (error) {
@@ -118,7 +113,6 @@ const OzonAnalysis: React.FC<OzonAnalysisProps> = ({ onBack }) => {
 
   const loadSuppliers = async () => {
     try {
-      // Get all suppliers with their product counts
       const { data, error } = await supabaseAdmin
         .from('products')
         .select('supplier')
@@ -130,7 +124,6 @@ const OzonAnalysis: React.FC<OzonAnalysisProps> = ({ onBack }) => {
         return;
       }
 
-      // Count suppliers
       const supplierCounts: { [key: string]: number } = {};
       data?.forEach(product => {
         if (product.supplier) {
@@ -147,6 +140,7 @@ const OzonAnalysis: React.FC<OzonAnalysisProps> = ({ onBack }) => {
       console.error('Load suppliers error:', error);
     }
   };
+
   const loadAnalysisResults = async () => {
     try {
       const results = await ProductAnalysisService.getAnalysisResults();
@@ -167,7 +161,6 @@ const OzonAnalysis: React.FC<OzonAnalysisProps> = ({ onBack }) => {
 
   const analyzeCategory = async (category: string) => {
     setAnalyzingCategory(category);
-    // Clear all diagnostics and show only AI-related ones
     setDiagnostics([]);
     setShowDiagnostics(true);
     
@@ -176,10 +169,7 @@ const OzonAnalysis: React.FC<OzonAnalysisProps> = ({ onBack }) => {
       
       const result = await ProductAnalysisService.analyzeCategory(category);
       
-      // Add only AI analysis diagnostics to our diagnostic display
       if (result.diagnostics) {
-        // Filter to show only AI-related steps
-        // Show ALL diagnostics - no filtering!
         result.diagnostics.forEach((diag: any) => {
           addDiagnostic(diag.step, diag.status, diag.message, diag.details);
         });
@@ -191,7 +181,6 @@ const OzonAnalysis: React.FC<OzonAnalysisProps> = ({ onBack }) => {
           analysis_confidence: result.analysis_confidence
         });
         
-        // Refresh analysis results and stats
         await loadAnalysisResults();
         await loadStats();
       } else {
@@ -207,7 +196,6 @@ const OzonAnalysis: React.FC<OzonAnalysisProps> = ({ onBack }) => {
         }
       }
     } catch (error) {
-      // If there's an error, try to get diagnostics from the error object
       if (error && typeof error === 'object' && 'diagnostics' in error) {
         (error as any).diagnostics?.forEach((diag: any) => {
           addDiagnostic(diag.step, diag.status, diag.message, diag.details);
@@ -315,12 +303,12 @@ const OzonAnalysis: React.FC<OzonAnalysisProps> = ({ onBack }) => {
               className="flex items-center space-x-2 text-gray-600 hover:text-gray-800 transition-colors"
             >
               <ArrowLeft className="w-5 h-5" />
-              <span>Back to Analytics</span>
+              <span>Back to OZON Dashboard</span>
             </button>
             <div className="h-6 border-l border-gray-300"></div>
             <h1 className="text-3xl font-bold text-gray-800 flex items-center space-x-3">
-              <BarChart3 className="w-8 h-8 text-blue-600" />
-              <span>OZON Data Analytics</span>
+              <BarChart3 className="w-8 h-8 text-purple-600" />
+              <span>OZON Product Analysis</span>
             </h1>
           </div>
         </div>
@@ -464,16 +452,20 @@ const OzonAnalysis: React.FC<OzonAnalysisProps> = ({ onBack }) => {
                           <span>Analyzed Products: {categoryResults.reduce((sum, r) => sum + r.product_names.length, 0)}</span>
                         </div>
                         
-                        {/* Show analysis scope */}
                         <div className="mt-2 p-2 bg-blue-50 rounded text-xs">
                           <p className="text-blue-800 font-medium mb-1">Analysis Scope:</p>
                           <div className="grid grid-cols-2 gap-2 text-blue-700">
-                            <span>📦 Products: {categoryResults[0]?.ai_response?.total_products_analyzed || 'N/A'}</span>
-                            <span>🏪 Suppliers: {categoryResults[0]?.ai_response?.total_suppliers_analyzed || 'N/A'}</span>
+                            <span>📦 Total Products: {(() => {
+                              const totalProducts = categoryResults[0]?.ai_response?.total_products_analyzed;
+                              return totalProducts || 'Loading...';
+                            })()}</span>
+                            <span>🏪 Total Suppliers: {(() => {
+                              const totalSuppliers = categoryResults[0]?.ai_response?.total_suppliers_analyzed;
+                              return totalSuppliers || 'Loading...';
+                            })()}</span>
                           </div>
                         </div>
                         
-                        {/* Detailed Group Breakdown */}
                         <div className="mt-4 space-y-3">
                           <div className="flex items-center justify-between mb-3">
                             <p className="font-medium text-gray-800 text-sm">Detailed Groups:</p>
@@ -533,7 +525,6 @@ const OzonAnalysis: React.FC<OzonAnalysisProps> = ({ onBack }) => {
                                 </div>
                               )}
                               
-                              {/* Copy individual group button */}
                               <div className="mt-3 pt-3 border-t border-gray-200">
                                 <button
                                   onClick={() => {
@@ -567,4 +558,4 @@ const OzonAnalysis: React.FC<OzonAnalysisProps> = ({ onBack }) => {
   );
 };
 
-export default OzonAnalysis;
+export default OzonProductAnalysis;

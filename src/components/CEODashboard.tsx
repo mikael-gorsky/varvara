@@ -117,12 +117,12 @@ const CEODashboard: React.FC<CEODashboardProps> = ({ onBack }) => {
                 </div>
                 <div>
                   <h1 className="text-2xl font-bold text-cyan-300 font-mono tracking-wider">
-                    IMPERIAL COMMAND CENTER
+                    CORPORATE DASHBOARD
                   </h1>
                   <p className="text-cyan-400/80 text-sm font-mono">
-                    Real-time Strategic Overview
+                    Real-time Business Overview
                   </p>
-                  <p className="text-teal-300 text-sm font-mono">EMPIRE: ОФИС-КИТ</p>
+                  <p className="text-teal-300 text-sm font-mono">ORGANIZATION: ОФИС-КИТ</p>
                 </div>
               </div>
             </div>

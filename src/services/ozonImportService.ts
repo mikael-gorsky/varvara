@@ -1,33 +1,4 @@
-import React, { useState, useEffect } from 'react';
-import { TrendingUp, Users, Package, DollarSign, BarChart3, Activity, Eye, ChevronRight, ArrowLeft, Crown, Zap } from 'lucide-react';
-
-interface Client {
-  id: string;
-  name: string;
-  sales: number;
-  growth: number;
-  industry: string;
-}
-
-interface Product {
-  id: string;
-  name: string;
-  category: string;
-  sales: number;
-  units: number;
-  growth: number;
-}
-
-interface KPIData {
-  totalRevenue: number;
-  topProductsShare: number;
-  majorClientsShare: number;
-  averageProductMargin: number;
-}
-
-interface CEODashboardProps {
-  onBack: () => void;
-}
+import { supabase } from '../lib/supabase';
 
 export interface OzonStats {
   totalProducts: number;
@@ -40,323 +11,372 @@ export interface OzonStats {
   }>;
 }
 
-const CEODashboard: React.FC<CEODashboardProps> = ({ onBack }) => {
-  const [currentTime, setCurrentTime] = useState(new Date());
+export interface OzonRecord {
+  product_name: string;
+  product_link?: string;
+  seller?: string;
+  brand?: string;
+  category_level1?: string;
+  category_level3?: string;
+  product_flag?: string;
+  ordered_sum?: number;
+  turnover_dynamic?: number;
+  ordered_quantity?: number;
+  average_price?: number;
+  minimum_price?: number;
+  buyout_share?: number;
+  lost_sales?: number;
+  days_no_stock?: number;
+  average_delivery_hours?: number;
+  average_daily_revenue?: number;
+  average_daily_sales_pcs?: number;
+  ending_stock?: number;
+  work_scheme?: string;
+  volume_liters?: number;
+  views?: number;
+  views_search?: number;
+  views_card?: number;
+  view_to_cart?: number;
+  search_to_cart?: number;
+  description_to_cart?: number;
+  discount_promo?: number;
+  revenue_promo?: number;
+  days_promo?: number;
+  days_boost?: number;
+  ads_share?: number;
+  card_date?: string;
+  import_date?: string;
+}
 
-  useEffect(() => {
-    const timer = setInterval(() => {
-      setCurrentTime(new Date());
-    }, 1000);
+class OzonImportService {
+  async importData(csvData: string): Promise<{ success: boolean; message: string; count: number }> {
+    try {
+      const lines = csvData.trim().split('\n');
+      if (lines.length < 2) {
+        throw new Error('CSV file appears to be empty or has no data rows');
+      }
 
-    return () => clearInterval(timer);
-  }, []);
+      const headers = lines[0].split(',').map(h => h.trim().replace(/"/g, ''));
+      const records: OzonRecord[] = [];
 
-  // Demo data - will be replaced with real data later
-  const kpiData: KPIData = {
-    totalRevenue: 3906946,
-    topProductsShare: 94.04,
-    majorClientsShare: 80.3,
-    averageProductMargin: 39.2
-  };
+      for (let i = 1; i < lines.length; i++) {
+        const values = this.parseCSVLine(lines[i]);
+        const record: any = {};
 
-  const topClients: Client[] = [
-    { id: '1', name: 'Интернет Решения', sales: 850323, growth: 44, industry: 'E-commerce' },
-    { id: '2', name: 'Бердандер', sales: 384399, growth: 42, industry: 'Manufacturing' },
-    { id: '3', name: 'Руссблaнкоиздат', sales: 381484, growth: 43, industry: 'Publishing' },
-    { id: '4', name: 'Хаскел/Мерлион', sales: 240359, growth: 44, industry: 'Technology' },
-    { id: '5', name: 'ВсеИнструменты.ру', sales: 239115, growth: 39, industry: 'E-commerce' },
-    { id: '6', name: 'АРВАДА', sales: 192300, growth: 24, industry: 'Retail' },
-    { id: '7', name: 'ДНС Ритейл', sales: 164424, growth: 44, industry: 'Electronics' },
-    { id: '8', name: 'ОнЛайн Трейд', sales: 164407, growth: 38, industry: 'E-commerce' },
-    { id: '9', name: 'Компсервис', sales: 134523, growth: 40, industry: 'IT Services' },
-    { id: '10', name: 'АЛЬФАПРИНТ МЕНЕДЖМЕНТ', sales: 130450, growth: 44, industry: 'Printing' },
-    { id: '11', name: 'Мишин Александр Николаевич ИП', sales: 76356, growth: 44, industry: 'Individual' },
-    { id: '12', name: 'Сибирский успех', sales: 66374, growth: 44, industry: 'Regional' },
-    { id: '13', name: 'Павлов Николай Александрович ИП', sales: 59917, growth: 43, industry: 'Individual' },
-    { id: '14', name: 'Триовист', sales: 53876, growth: 33, industry: 'Consulting' }
-  ];
-
-  const topProducts: Product[] = [
-    { id: '1', name: 'Уничтожители Office Kit', category: 'Office Equipment', sales: 1840810, units: 0, growth: 44.28 },
-    { id: '2', name: 'Пленка в пакетах', category: 'Packaging', sales: 839463, units: 0, growth: 35.26 },
-    { id: '3', name: 'Ламинаторы пакетные', category: 'Office Equipment', sales: 270118, units: 0, growth: 39.83 },
-    { id: '4', name: 'Переплет (Renz?)', category: 'Binding', sales: 268723, units: 0, growth: 42.78 },
-    { id: '5', name: 'Переплетчики Office Kit', category: 'Office Equipment', sales: 246391, units: 0, growth: 41.81 },
-    { id: '6', name: 'Уничтожители HSM офисное', category: 'Office Equipment', sales: 118939, units: 0, growth: 39.21 },
-    { id: '7', name: 'Пружины', category: 'Binding', sales: 89487, units: 0, growth: 31.01 }
-  ];
-
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD',
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 0,
-    }).format(amount);
-  };
-
-  const formatPercentage = (value: number, total: number) => {
-    const percentage = (value / total) * 100;
-    return percentage.toFixed(1);
-  };
-
-  return (
-    <div className="min-h-screen bg-black p-6" style={{
-      backgroundImage: `radial-gradient(circle at 20% 50%, rgba(0, 255, 255, 0.03) 0%, transparent 50%), 
-                       radial-gradient(circle at 80% 20%, rgba(0, 255, 255, 0.02) 0%, transparent 50%), 
-                       radial-gradient(circle at 40% 80%, rgba(0, 255, 255, 0.01) 0%, transparent 50%)`
-    }}>
-      <div className="max-w-7xl mx-auto space-y-6">
-        
-        {/* Imperial Command Header */}
-        <div className="bg-gradient-to-r from-gray-900 to-gray-800 rounded-lg border border-cyan-400/30 shadow-lg shadow-cyan-400/10 p-6 relative overflow-hidden">
-          <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-blue-400 to-indigo-400"></div>
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-4">
-              <button
-                onClick={onBack}
-                className="flex items-center space-x-2 px-4 py-2 bg-gray-800 border border-cyan-400/50 rounded text-cyan-300 hover:bg-gray-700 hover:border-cyan-400 transition-all duration-200 font-mono text-sm"
-              >
-                <ArrowLeft className="w-4 h-4" />
-                <span>RETURN TO COMMAND</span>
-              </button>
-              <div className="h-6 border-l border-cyan-400/30"></div>
-              <div className="flex items-center space-x-3">
-                <div className="w-12 h-12 bg-gradient-to-br from-blue-400 to-indigo-500 rounded-lg flex items-center justify-center shadow-lg border border-blue-300 relative">
-                  <Crown className="w-6 h-6 text-black" />
-                  <div className="absolute -top-1 -right-1 w-3 h-3 bg-emerald-400 rounded-full border border-black"></div>
-                </div>
-                <div>
-                  <h1 className="text-2xl font-bold text-cyan-300 font-mono tracking-wider">
-                    IMPERIAL COMMAND CENTER
-                  </h1>
-                  <p className="text-cyan-400/80 text-sm font-mono">
-                    Real-time Strategic Overview
-                  </p>
-                  <p className="text-teal-300 text-sm font-mono">EMPIRE: ОФИС-КИТ</p>
-                </div>
-              </div>
-            </div>
-            
-            <div className="text-center">
-              <div className="bg-gray-800/50 border border-cyan-400/30 rounded-lg px-4 py-2">
-                <p className="text-xl font-bold text-cyan-300 font-mono">
-                  {currentTime.toLocaleTimeString()}
-                </p>
-                <p className="text-cyan-400/80 font-mono text-sm">
-                  {currentTime.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
-                </p>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Strategic Resource Indicators */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-          <div className="bg-gradient-to-br from-gray-900 to-gray-800 rounded-xl border border-cyan-400/30 shadow-xl p-4 hover:border-cyan-400/50 transition-all duration-300 relative overflow-hidden">
-            <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-emerald-400 to-teal-400"></div>
-            <div className="flex items-center justify-between mb-3">
-              <div className="w-8 h-8 bg-gradient-to-br from-emerald-400 to-teal-500 rounded-lg flex items-center justify-center shadow-lg border border-emerald-300">
-                <DollarSign className="w-4 h-4 text-black" />
-              </div>
-              <TrendingUp className="w-4 h-4 text-emerald-400" />
-            </div>
-            <h3 className="text-xs font-mono text-cyan-400 mb-1 uppercase tracking-wider">Imperial Treasury</h3>
-            <p className="text-lg font-bold text-emerald-300 font-mono">{formatCurrency(kpiData.totalRevenue)}</p>
-            <p className="text-emerald-400/60 text-xs font-mono">Credits Generated</p>
-          </div>
-
-          <div className="bg-gradient-to-br from-gray-900 to-gray-800 rounded-xl border border-cyan-400/30 shadow-xl p-4 hover:border-cyan-400/50 transition-all duration-300 relative overflow-hidden">
-            <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-emerald-400 to-teal-400"></div>
-            <div className="flex items-center justify-between mb-3">
-              <div className="w-8 h-8 bg-gradient-to-br from-emerald-400 to-teal-500 rounded-lg flex items-center justify-center shadow-lg border border-emerald-300">
-                <Package className="w-4 h-4 text-black" />
-              </div>
-              <BarChart3 className="w-4 h-4 text-emerald-400" />
-            </div>
-            <h3 className="text-xs font-mono text-cyan-400 mb-1 uppercase tracking-wider">Top 7 Resources</h3>
-            <p className="text-lg font-bold text-emerald-300 font-mono">{kpiData.topProductsShare}%</p>
-            <p className="text-emerald-400/60 text-xs font-mono">Revenue Share</p>
-          </div>
-
-          <div className="bg-gradient-to-br from-gray-900 to-gray-800 rounded-xl border border-cyan-400/30 shadow-xl p-4 hover:border-cyan-400/50 transition-all duration-300 relative overflow-hidden">
-            <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-purple-400 to-pink-400"></div>
-            <div className="flex items-center justify-between mb-3">
-              <div className="w-8 h-8 bg-gradient-to-br from-purple-400 to-pink-500 rounded-lg flex items-center justify-center shadow-lg border border-purple-300">
-                <Users className="w-4 h-4 text-black" />
-              </div>
-              <TrendingUp className="w-4 h-4 text-purple-400" />
-            </div>
-            <h3 className="text-xs font-mono text-cyan-400 mb-1 uppercase tracking-wider">Major 14 Factions</h3>
-            <p className="text-lg font-bold text-purple-300 font-mono">{kpiData.majorClientsShare}%</p>
-            <p className="text-purple-400/60 text-xs font-mono">Trade Influence</p>
-          </div>
-
-          <div className="bg-gradient-to-br from-gray-900 to-gray-800 rounded-xl border border-cyan-400/30 shadow-xl p-4 hover:border-cyan-400/50 transition-all duration-300 relative overflow-hidden">
-            <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-blue-400 to-indigo-400"></div>
-            <div className="flex items-center justify-between mb-3">
-              <div className="w-8 h-8 bg-gradient-to-br from-blue-400 to-indigo-500 rounded-lg flex items-center justify-center shadow-lg border border-blue-300">
-                <Activity className="w-4 h-4 text-black" />
-              </div>
-              <TrendingUp className="w-4 h-4 text-blue-400" />
-            </div>
-            <h3 className="text-xs font-mono text-cyan-400 mb-1 uppercase tracking-wider">Avg Efficiency</h3>
-            <p className="text-lg font-bold text-blue-300 font-mono">{kpiData.averageProductMargin}%</p>
-            <p className="text-blue-400/60 text-xs font-mono">Resource Yield</p>
-          </div>
-        </div>
-
-        {/* Strategic Intelligence Panels */}
-        <div className="space-y-6 lg:grid lg:grid-cols-2 lg:gap-6 lg:space-y-0">
+        headers.forEach((header, index) => {
+          const value = values[index]?.trim().replace(/"/g, '');
           
-          {/* Major Trade Factions */}
-          <div className="bg-gradient-to-br from-gray-900 to-gray-800 rounded-xl border border-cyan-400/30 shadow-xl p-6 relative overflow-hidden">
-            <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-blue-400 to-indigo-400"></div>
-            <div className="absolute top-4 right-4">
-              <span className="bg-gray-800/60 border border-blue-400/30 text-blue-400 text-xs px-2 py-1 rounded font-mono">
-                TRADE-01
-              </span>
-            </div>
-            
-            <div className="flex items-center gap-3 mb-6">
-              <div className="w-10 h-10 bg-gradient-to-br from-blue-400 to-indigo-500 rounded-lg flex items-center justify-center shadow-lg border border-blue-300">
-                <Users className="w-5 h-5 text-black" />
-              </div>
-              <div>
-                <h2 className="text-xl font-bold text-cyan-300 font-mono tracking-wide">MAJOR TRADE FACTIONS</h2>
-                <p className="text-cyan-400/80 text-sm font-mono">Strategic Partnership Analysis</p>
-              </div>
-            </div>
-            
-            <div className="space-y-3">
-              {topClients.map((client, index) => (
-                <div
-                  key={client.id}
-                  className="bg-gray-800/40 border border-cyan-400/20 rounded-lg p-4 hover:border-cyan-400/40 hover:bg-gray-800/60 transition-all duration-200 relative"
-                >
-                  <div className="absolute left-0 top-0 w-1 h-full bg-gradient-to-b from-indigo-400 to-purple-500 rounded-l-lg"></div>
-                  
-                  <div className="flex items-start gap-3 ml-2">
-                    <div className="w-6 h-6 bg-gradient-to-br from-indigo-400 to-purple-500 rounded-lg flex items-center justify-center text-black font-bold text-xs shadow-lg flex-shrink-0 border border-indigo-300">
-                      {index + 1}
-                    </div>
-                    <div className="flex-1 min-w-0 space-y-2">
-                      <h3 className="font-semibold text-cyan-300 text-sm leading-tight font-mono">
-                        {client.name}
-                      </h3>
-                      
-                      <div className="flex flex-wrap items-center gap-2 text-xs">
-                        <span className="bg-gray-700/50 border border-cyan-400/30 text-cyan-400 px-2 py-1 rounded font-mono">
-                          {client.industry}
-                        </span>
-                        <span className="text-cyan-400/60 font-mono">•</span>
-                        <span className="text-cyan-300 font-mono">{formatPercentage(client.sales, kpiData.totalRevenue)}%</span>
-                      </div>
-                      
-                      <div className="flex items-center justify-between">
-                        <div className="font-bold text-cyan-300 text-sm font-mono">
-                          {formatCurrency(client.sales)}
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <span className="text-xs font-mono text-emerald-400 bg-emerald-400/10 border border-emerald-400/30 px-2 py-1 rounded">
-                            +{client.growth}%
-                          </span>
-                          <ChevronRight className="w-3 h-3 text-cyan-400" />
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
+          switch (header.toLowerCase()) {
+            case 'товар':
+            case 'product_name':
+              record.product_name = value;
+              break;
+            case 'ссылка на товар':
+            case 'product_link':
+              record.product_link = value;
+              break;
+            case 'продавец':
+            case 'seller':
+              record.seller = value;
+              break;
+            case 'бренд':
+            case 'brand':
+              record.brand = value;
+              break;
+            case 'категория 1 уровня':
+            case 'category_level1':
+              record.category_level1 = value;
+              break;
+            case 'категория 3 уровня':
+            case 'category_level3':
+              record.category_level3 = value;
+              break;
+            case 'флаг товара':
+            case 'product_flag':
+              record.product_flag = value;
+              break;
+            case 'заказано на сумму':
+            case 'ordered_sum':
+              record.ordered_sum = this.parseNumber(value);
+              break;
+            case 'динамика оборота':
+            case 'turnover_dynamic':
+              record.turnover_dynamic = this.parseNumber(value);
+              break;
+            case 'заказано штук':
+            case 'ordered_quantity':
+              record.ordered_quantity = this.parseInteger(value);
+              break;
+            case 'средняя цена':
+            case 'average_price':
+              record.average_price = this.parseNumber(value);
+              break;
+            case 'минимальная цена':
+            case 'minimum_price':
+              record.minimum_price = this.parseNumber(value);
+              break;
+            case 'доля выкупа':
+            case 'buyout_share':
+              record.buyout_share = this.parseNumber(value);
+              break;
+            case 'потерянные продажи':
+            case 'lost_sales':
+              record.lost_sales = this.parseNumber(value);
+              break;
+            case 'дней без остатков':
+            case 'days_no_stock':
+              record.days_no_stock = this.parseInteger(value);
+              break;
+            case 'средн время доставки (час)':
+            case 'average_delivery_hours':
+              record.average_delivery_hours = this.parseNumber(value);
+              break;
+            case 'средн выручка в день':
+            case 'average_daily_revenue':
+              record.average_daily_revenue = this.parseNumber(value);
+              break;
+            case 'средн продаж в день (шт)':
+            case 'average_daily_sales_pcs':
+              record.average_daily_sales_pcs = this.parseNumber(value);
+              break;
+            case 'остаток на конец':
+            case 'ending_stock':
+              record.ending_stock = this.parseInteger(value);
+              break;
+            case 'схема работы':
+            case 'work_scheme':
+              record.work_scheme = value;
+              break;
+            case 'объем (л)':
+            case 'volume_liters':
+              record.volume_liters = this.parseNumber(value);
+              break;
+            case 'просмотры':
+            case 'views':
+              record.views = this.parseInteger(value);
+              break;
+            case 'просмотры в поиске':
+            case 'views_search':
+              record.views_search = this.parseInteger(value);
+              break;
+            case 'просмотры карточки':
+            case 'views_card':
+              record.views_card = this.parseInteger(value);
+              break;
+            case 'переходы в корзину из просмотров':
+            case 'view_to_cart':
+              record.view_to_cart = this.parseNumber(value);
+              break;
+            case 'переходы в корзину из поиска':
+            case 'search_to_cart':
+              record.search_to_cart = this.parseNumber(value);
+              break;
+            case 'переходы в корзину из карточки':
+            case 'description_to_cart':
+              record.description_to_cart = this.parseNumber(value);
+              break;
+            case 'скидка промо':
+            case 'discount_promo':
+              record.discount_promo = this.parseNumber(value);
+              break;
+            case 'выручка от промо':
+            case 'revenue_promo':
+              record.revenue_promo = this.parseNumber(value);
+              break;
+            case 'дней в промо':
+            case 'days_promo':
+              record.days_promo = this.parseInteger(value);
+              break;
+            case 'дней в буст':
+            case 'days_boost':
+              record.days_boost = this.parseInteger(value);
+              break;
+            case 'доля рекламы':
+            case 'ads_share':
+              record.ads_share = this.parseNumber(value);
+              break;
+            case 'дата карточки':
+            case 'card_date':
+              record.card_date = this.parseDate(value);
+              break;
+          }
+        });
 
-          {/* Top Products */}
-          <div className="bg-gradient-to-br from-gray-900 to-gray-800 rounded-xl border border-cyan-400/30 shadow-xl p-6 relative overflow-hidden">
-            <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-emerald-400 to-teal-400"></div>
-            <div className="absolute top-4 right-4">
-              <span className="bg-gray-800/60 border border-emerald-400/30 text-emerald-400 text-xs px-2 py-1 rounded font-mono">
-                RES-01
-              </span>
-            </div>
-            
-            <div className="flex items-center gap-3 mb-6">
-              <div className="w-10 h-10 bg-gradient-to-br from-emerald-400 to-teal-500 rounded-lg flex items-center justify-center shadow-lg border border-emerald-300">
-                <Package className="w-5 h-5 text-black" />
-              </div>
-              <div>
-                <h2 className="text-xl font-bold text-cyan-300 font-mono tracking-wide">TOP PRODUCTS</h2>
-                <p className="text-cyan-400/80 text-sm font-mono">Top Performing Products</p>
-              </div>
-            </div>
-            
-            <div className="space-y-3">
-              {topProducts.map((product, index) => (
-                <div
-                  key={product.id}
-                  className="bg-gray-800/40 border border-cyan-400/20 rounded-lg p-4 hover:border-cyan-400/40 hover:bg-gray-800/60 transition-all duration-200 relative"
-                >
-                  <div className="absolute left-0 top-0 w-1 h-full bg-gradient-to-b from-emerald-400 to-teal-500 rounded-l-lg"></div>
-                  
-                  <div className="flex items-start gap-3 ml-2">
-                    <div className="w-6 h-6 bg-gradient-to-br from-emerald-400 to-teal-500 rounded-lg flex items-center justify-center text-black font-bold text-xs shadow-lg flex-shrink-0 border border-emerald-300">
-                      {index + 1}
-                    </div>
-                    <div className="flex-1 min-w-0 space-y-2">
-                      <h3 className="font-semibold text-cyan-300 text-sm leading-tight font-mono">
-                        {product.name}
-                      </h3>
-                      
-                      <div className="flex flex-wrap items-center gap-2 text-xs">
-                        <span className="bg-gray-700/50 border border-cyan-400/30 text-cyan-400 px-2 py-1 rounded font-mono">
-                          {product.category}
-                        </span>
-                        <span className="text-cyan-400/60 font-mono">•</span>
-                        <span className="text-cyan-300 font-mono">{formatPercentage(product.sales, kpiData.totalRevenue)}%</span>
-                      </div>
-                      
-                      <div className="flex items-center justify-between">
-                        <div className="font-bold text-cyan-300 text-sm font-mono">
-                          {formatCurrency(product.sales)}
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <span className="text-xs font-mono text-emerald-400 bg-emerald-400/10 border border-emerald-400/30 px-2 py-1 rounded">
-                            +{product.growth.toFixed(1)}%
-                          </span>
-                          <ChevronRight className="w-3 h-3 text-cyan-400" />
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
+        if (record.product_name) {
+          record.import_date = new Date().toISOString().split('T')[0];
+          records.push(record);
+        }
+      }
 
-        {/* Command Status */}
-        <div className="bg-gradient-to-r from-gray-900 to-gray-800 border border-cyan-400/30 rounded-lg p-4 relative overflow-hidden">
-          <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-emerald-400 to-cyan-400"></div>
-          <div className="flex items-center justify-center space-x-6">
-            <div className="flex items-center space-x-2">
-              <div className="w-3 h-3 bg-emerald-400 rounded-full animate-pulse shadow-lg shadow-emerald-400/50"></div>
-              <span className="text-emerald-300 font-mono font-bold text-sm">EXECUTIVE DASHBOARD ACTIVE</span>
-            </div>
-            <div className="text-cyan-400/60 font-mono text-sm">|</div>
-            <div className="flex items-center space-x-2">
-              <Zap className="w-4 h-4 text-cyan-400" />
-              <span className="text-cyan-400/80 font-mono text-sm">REAL-TIME ANALYTICS</span>
-            </div>
-            <div className="text-cyan-400/60 font-mono text-sm">|</div>
-            <div className="flex items-center space-x-2">
-              <div className="w-3 h-3 bg-emerald-400 rounded-full animate-pulse shadow-lg shadow-emerald-400/50"></div>
-              <span className="text-emerald-400 font-mono text-sm">ORGANIZATION: ОФИС-КИТ</span>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-};
+      if (records.length === 0) {
+        throw new Error('No valid records found in CSV');
+      }
 
-export default CEODashboard;
+      const { error } = await supabase
+        .from('ozon_data')
+        .insert(records);
+
+      if (error) {
+        console.error('Supabase insert error:', error);
+        throw new Error(`Failed to save data: ${error.message}`);
+      }
+
+      return {
+        success: true,
+        message: `Successfully imported ${records.length} OZON records`,
+        count: records.length
+      };
+    } catch (error) {
+      console.error('Import error:', error);
+      return {
+        success: false,
+        message: error instanceof Error ? error.message : 'Unknown error occurred',
+        count: 0
+      };
+    }
+  }
+
+  async getData(): Promise<OzonRecord[]> {
+    try {
+      const { data, error } = await supabase
+        .from('ozon_data')
+        .select('*')
+        .limit(50000)
+        .order('created_at', { ascending: false });
+
+      if (error) {
+        console.error('Error fetching OZON data:', error);
+        throw new Error(`Failed to fetch data: ${error.message}`);
+      }
+
+      return data || [];
+    } catch (error) {
+      console.error('Get data error:', error);
+      throw error;
+    }
+  }
+
+  async getStats(): Promise<OzonStats> {
+    try {
+      const { data, error } = await supabase
+        .from('ozon_data')
+        .select('*')
+        .limit(50000);
+
+      if (error) {
+        console.error('Error fetching OZON stats:', error);
+        throw new Error(`Failed to fetch stats: ${error.message}`);
+      }
+
+      const records = data || [];
+      
+      const totalProducts = records.length;
+      const totalRevenue = records.reduce((sum, record) => sum + (record.ordered_sum || 0), 0);
+      const averagePrice = totalProducts > 0 ? totalRevenue / totalProducts : 0;
+
+      // Group by category and calculate stats
+      const categoryStats = new Map<string, { count: number; revenue: number }>();
+      
+      records.forEach(record => {
+        const category = record.category_level1 || 'Unknown';
+        const current = categoryStats.get(category) || { count: 0, revenue: 0 };
+        categoryStats.set(category, {
+          count: current.count + 1,
+          revenue: current.revenue + (record.ordered_sum || 0)
+        });
+      });
+
+      const topCategories = Array.from(categoryStats.entries())
+        .map(([category, stats]) => ({
+          category,
+          productCount: stats.count,
+          revenue: stats.revenue
+        }))
+        .sort((a, b) => b.revenue - a.revenue)
+        .slice(0, 10);
+
+      return {
+        totalProducts,
+        totalRevenue,
+        averagePrice,
+        topCategories
+      };
+    } catch (error) {
+      console.error('Get stats error:', error);
+      throw error;
+    }
+  }
+
+  async clearData(): Promise<{ success: boolean; message: string }> {
+    try {
+      const { error } = await supabase
+        .from('ozon_data')
+        .delete()
+        .neq('id', '00000000-0000-0000-0000-000000000000'); // Delete all records
+
+      if (error) {
+        console.error('Error clearing OZON data:', error);
+        throw new Error(`Failed to clear data: ${error.message}`);
+      }
+
+      return {
+        success: true,
+        message: 'All OZON data cleared successfully'
+      };
+    } catch (error) {
+      console.error('Clear data error:', error);
+      return {
+        success: false,
+        message: error instanceof Error ? error.message : 'Unknown error occurred'
+      };
+    }
+  }
+
+  private parseCSVLine(line: string): string[] {
+    const result: string[] = [];
+    let current = '';
+    let inQuotes = false;
+    
+    for (let i = 0; i < line.length; i++) {
+      const char = line[i];
+      
+      if (char === '"') {
+        inQuotes = !inQuotes;
+      } else if (char === ',' && !inQuotes) {
+        result.push(current);
+        current = '';
+      } else {
+        current += char;
+      }
+    }
+    
+    result.push(current);
+    return result;
+  }
+
+  private parseNumber(value: string): number {
+    if (!value || value.trim() === '') return 0;
+    const cleaned = value.replace(/[^\d.-]/g, '');
+    const num = parseFloat(cleaned);
+    return isNaN(num) ? 0 : num;
+  }
+
+  private parseInteger(value: string): number {
+    if (!value || value.trim() === '') return 0;
+    const cleaned = value.replace(/[^\d-]/g, '');
+    const num = parseInt(cleaned);
+    return isNaN(num) ? 0 : num;
+  }
+
+  private parseDate(value: string): string | null {
+    if (!value || value.trim() === '') return null;
+    try {
+      const date = new Date(value);
+      return isNaN(date.getTime()) ? null : date.toISOString().split('T')[0];
+    } catch {
+      return null;
+    }
+  }
+}
+
+export const ozonImportService = new OzonImportService();

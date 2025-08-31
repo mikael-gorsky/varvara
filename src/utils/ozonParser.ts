@@ -1,3 +1,5 @@
+import * as XLSX from 'xlsx';
+
 export interface OzonDataRow {
   product_name: string;
   product_link?: string;
@@ -36,9 +38,19 @@ export interface OzonDataRow {
 }
 
 export interface OzonParsedData {
-  data: OzonDataRow[];
+  rows: OzonDataRow[];
   headers: string[];
   errors: string[];
+  headerValidation: {
+    isValid: boolean;
+    missingFields: string[];
+    extraFields: string[];
+  };
+  stats: {
+    totalRows: number;
+    validRows: number;
+    invalidRows: number;
+  };
 }
 
 export interface ValidationResult {
@@ -57,102 +69,164 @@ const EXPECTED_HEADERS = {
   'Признак товара': 'product_flag'
 };
 
-export function parseOzonFile(csvData: string): OzonParsedData {
-  const lines = csvData.split('\n').map(line => line.trim()).filter(line => line);
-  const errors: string[] = [];
-  const data: OzonDataRow[] = [];
+export async function parseOzonFile(file: File): Promise<OzonParsedData> {
+  return new Promise((resolve) => {
+    const reader = new FileReader();
+    
+    reader.onload = (e) => {
+      try {
+        const data = e.target?.result;
+        if (!data) {
+          resolve({
+            rows: [],
+            headers: [],
+            errors: ['Failed to read file'],
+            headerValidation: { isValid: false, missingFields: [], extraFields: [] },
+            stats: { totalRows: 0, validRows: 0, invalidRows: 0 }
+          });
+          return;
+        }
 
-  if (lines.length < 7) {
+        const workbook = XLSX.read(data, { type: 'binary' });
+        const firstSheetName = workbook.SheetNames[0];
+        const worksheet = workbook.Sheets[firstSheetName];
+        const rawData = XLSX.utils.sheet_to_json(worksheet, { header: 1, raw: false });
+
+        const result = processOzonRawData(rawData as string[][]);
+        resolve(result);
+      } catch (error) {
+        resolve({
+          rows: [],
+          headers: [],
+          errors: [`Failed to parse Excel file: ${error instanceof Error ? error.message : 'Unknown error'}`],
+          headerValidation: { isValid: false, missingFields: [], extraFields: [] },
+          stats: { totalRows: 0, validRows: 0, invalidRows: 0 }
+        });
+      }
+    };
+
+    reader.onerror = () => {
+      resolve({
+        rows: [],
+        headers: [],
+        errors: ['Failed to read file'],
+        headerValidation: { isValid: false, missingFields: [], extraFields: [] },
+        stats: { totalRows: 0, validRows: 0, invalidRows: 0 }
+      });
+    };
+
+    reader.readAsBinaryString(file);
+  });
+}
+
+function processOzonRawData(rawData: string[][]): OzonParsedData {
+  const errors: string[] = [];
+  const rows: OzonDataRow[] = [];
+
+  if (rawData.length < 7) {
     return {
-      data: [],
+      rows: [],
       headers: [],
-      errors: ['File must contain at least 7 rows with headers and data']
+      errors: ['File must contain at least 7 rows with headers and data'],
+      headerValidation: { isValid: false, missingFields: [], extraFields: [] },
+      stats: { totalRows: 0, validRows: 0, invalidRows: 0 }
     };
   }
 
   // Headers are in row 5 (index 4)
-  const headerLine = lines[4];
-  const headers = headerLine.split('\t').map(h => h.trim());
-  
+  const headers = rawData[4] || [];
   console.log('Detected headers:', headers);
   
-  // Validate required headers
-  const validation = validateHeaders(headers);
-  if (!validation.isValid) {
-    return {
-      data: [],
-      headers,
-      errors: validation.errors
-    };
-  }
+  // Validate headers
+  const headerValidation = validateOzonHeaders(headers);
+  
+  let validRows = 0;
+  let invalidRows = 0;
 
   // Process data rows starting from row 7 (index 6)
-  for (let i = 6; i < lines.length; i++) {
-    const line = lines[i];
+  for (let i = 6; i < rawData.length; i++) {
+    const rowData = rawData[i];
     
     // Skip summary rows
-    if (line.includes('Среднее значение по товарам') || line.includes('Итого')) {
+    if (!rowData || rowData.length === 0 || 
+        (rowData[0] && (rowData[0].includes('Среднее значение') || rowData[0].includes('Итого')))) {
       continue;
     }
 
-    const values = line.split('\t').map(v => v.trim());
-    
-    if (values.length < headers.length) {
-      continue; // Skip incomplete rows
-    }
-
     try {
-      const rowData = parseRowData(headers, values);
-      if (rowData.product_name) {
-        data.push(rowData);
+      const mappedRow = mapOzonRowToData(headers, rowData);
+      if (mappedRow && mappedRow.product_name) {
+        rows.push(mappedRow);
+        validRows++;
+      } else {
+        invalidRows++;
       }
     } catch (error) {
       errors.push(`Row ${i + 1}: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      invalidRows++;
     }
   }
 
   return {
-    data,
+    rows,
     headers,
-    errors
+    errors,
+    headerValidation,
+    stats: {
+      totalRows: rawData.length - 6, // Exclude header rows
+      validRows,
+      invalidRows
+    }
   };
 }
 
-function validateHeaders(headers: string[]): ValidationResult {
-  const errors: string[] = [];
-  const warnings: string[] = [];
+function validateOzonHeaders(headers: string[]): {
+  isValid: boolean;
+  missingFields: string[];
+  extraFields: string[];
+} {
+  const missingFields: string[] = [];
+  const extraFields: string[] = [];
 
   // Check for required product name field
   const hasProductName = headers.some(h => 
-    h.includes('Название товара') || 
-    h.includes('товара') ||
-    h.toLowerCase().includes('product')
+    h && (h.includes('Название товара') || 
+          h.includes('товара') ||
+          h.toLowerCase().includes('product'))
   );
 
   if (!hasProductName) {
-    errors.push('Missing required field: Название товара');
+    missingFields.push('Название товара');
   }
 
   return {
-    isValid: errors.length === 0,
-    errors,
-    warnings
+    isValid: missingFields.length === 0,
+    missingFields,
+    extraFields
   };
 }
 
-function parseRowData(headers: string[], values: string[]): OzonDataRow {
+function mapOzonRowToData(headers: string[], values: string[]): OzonDataRow | null {
   const row: any = {};
+  let hasRequiredData = false;
 
   headers.forEach((header, index) => {
+    if (!header) return;
+    
     const value = values[index] || '';
     const fieldName = getFieldName(header);
     
     if (fieldName) {
-      row[fieldName] = parseValue(value, fieldName);
+      const parsedValue = parseOzonValue(value, fieldName);
+      row[fieldName] = parsedValue;
+      
+      if (fieldName === 'product_name' && parsedValue) {
+        hasRequiredData = true;
+      }
     }
   });
 
-  return row;
+  return hasRequiredData ? row : null;
 }
 
 function getFieldName(header: string): string | null {
@@ -189,8 +263,8 @@ function getFieldName(header: string): string | null {
   return null;
 }
 
-function parseValue(value: string, fieldName: string): any {
-  if (!value || value === '-') {
+function parseOzonValue(value: string, fieldName: string): any {
+  if (!value || value === '-' || value.trim() === '') {
     return null;
   }
 
@@ -209,5 +283,5 @@ function parseValue(value: string, fieldName: string): any {
     return isNaN(numericValue) ? 0 : numericValue;
   }
 
-  return value;
+  return value.trim();
 }

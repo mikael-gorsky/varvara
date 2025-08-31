@@ -176,9 +176,9 @@ const CEODashboard: React.FC<CEODashboardProps> = ({ onBack }) => {
               </div>
               <TrendingUp className="w-4 h-4 text-purple-400" />
             </div>
-            <h3 className="text-xs font-mono text-cyan-400 mb-1 uppercase tracking-wider">Major Clients (more than 1%)</h3>
+            <h3 className="text-xs font-mono text-cyan-400 mb-1 uppercase tracking-wider">Major 14 Factions</h3>
             <p className="text-lg font-bold text-purple-300 font-mono">{kpiData.majorClientsShare}%</p>
-            <p className="text-purple-400/60 text-xs font-mono">Revenue Share</p>
+            <p className="text-purple-400/60 text-xs font-mono">Trade Influence</p>
           </div>
 
           <div className="bg-gradient-to-br from-gray-900 to-gray-800 rounded-xl border border-cyan-400/30 shadow-xl p-4 hover:border-cyan-400/50 transition-all duration-300 relative overflow-hidden">
@@ -198,7 +198,7 @@ const CEODashboard: React.FC<CEODashboardProps> = ({ onBack }) => {
         {/* Strategic Intelligence Panels */}
         <div className="space-y-6 lg:grid lg:grid-cols-2 lg:gap-6 lg:space-y-0">
           
-          {/* Major Trade Factions */}
+          {/* Major Clients */}
           <div className="bg-gradient-to-br from-gray-900 to-gray-800 rounded-xl border border-cyan-400/30 shadow-xl p-6 relative overflow-hidden">
             <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-blue-400 to-indigo-400"></div>
             <div className="absolute top-4 right-4">
@@ -212,8 +212,8 @@ const CEODashboard: React.FC<CEODashboardProps> = ({ onBack }) => {
                 <Users className="w-5 h-5 text-black" />
               </div>
               <div>
-                <h2 className="text-xl font-bold text-cyan-300 font-mono tracking-wide">MAJOR TRADE FACTIONS</h2>
-                <p className="text-cyan-400/80 text-sm font-mono">Strategic Partnership Analysis</p>
+                <h2 className="text-xl font-bold text-cyan-300 font-mono tracking-wide">MAJOR CLIENTS</h2>
+                <p className="text-cyan-400/80 text-sm font-mono">Client Performance Analysis</p>
               </div>
             </div>
             

@@ -1,77 +1,96 @@
 import React, { useState, useEffect } from 'react';
 import { ArrowLeft, RefreshCw, BarChart3, TrendingUp, Users, AlertCircle, X, Zap, Activity, Database, Brain } from 'lucide-react';
-import { ProductAnalysisService, ProductGroup, AnalysisResult } from '../../services/productAnalysisService';
+import { productAnalysisService, ProductGroup, AnalysisResult } from '../../services/productAnalysisService';
 import { supabase, supabaseAdmin } from '../../lib/supabase';
 
-interface OzonProductAnalysisProps {
+interface Supplier {
+  id: string;
+  name: string;
+  product_count: number;
+}
+
+interface Category {
+  category: string;
+  product_count: number;
+  total_sales: number;
+  avg_price: number;
+}
+
+interface AnalysisStats {
+  total_categories: number;
+  analyzed_categories: number;
+  total_groups: number;
+  last_analysis: string | null;
+}
+
+interface Diagnostic {
+  id: string;
+  step: string;
+  status: 'loading' | 'success' | 'error' | 'warning';
+  message: string;
+  details?: any;
+  timestamp: Date;
+}
+
+interface ProductAnalysisProps {
   onBack: () => void;
 }
 
-interface Supplier {
-  name: string;
-  count: number;
-}
-
-interface DiagnosticInfo {
-  step: string;
-  status: 'loading' | 'success' | 'error';
-  message: string;
-  details?: any;
-}
-
-const OzonProductAnalysis: React.FC<OzonProductAnalysisProps> = ({ onBack }) => {
-  const [categories, setCategories] = useState<string[]>([]);
+const ProductAnalysis: React.FC<ProductAnalysisProps> = ({ onBack }) => {
+  const [categories, setCategories] = useState<Category[]>([]);
   const [suppliers, setSuppliers] = useState<Supplier[]>([]);
-  const [selectedSupplier, setSelectedSupplier] = useState<string | null>(null);
-  const [loadingCategories, setLoadingCategories] = useState(false);
-  const [analysisResults, setAnalysisResults] = useState<ProductGroup[]>([]);
+  const [analysisResults, setAnalysisResults] = useState<AnalysisResult[]>([]);
+  const [stats, setStats] = useState<AnalysisStats>({
+    total_categories: 0,
+    analyzed_categories: 0,
+    total_groups: 0,
+    last_analysis: null
+  });
+  const [loading, setLoading] = useState(true);
   const [analyzingCategory, setAnalyzingCategory] = useState<string | null>(null);
-  const [stats, setStats] = useState<any>(null);
-  const [diagnostics, setDiagnostics] = useState<DiagnosticInfo[]>([]);
+  const [diagnostics, setDiagnostics] = useState<Diagnostic[]>([]);
   const [showDiagnostics, setShowDiagnostics] = useState(false);
 
-  const addDiagnostic = (step: string, status: 'loading' | 'success' | 'error', message: string, details?: any) => {
-    const newDiagnostic = { step, status, message, details };
-    setDiagnostics(prev => [...prev, newDiagnostic]);
+  useEffect(() => {
+    loadData();
+  }, []);
+
+  const addDiagnostic = (step: string, status: 'loading' | 'success' | 'error' | 'warning', message: string, details?: any) => {
+    const diagnostic: Diagnostic = {
+      id: `${step}-${Date.now()}`,
+      step,
+      status,
+      message,
+      details,
+      timestamp: new Date()
+    };
+    setDiagnostics(prev => [...prev, diagnostic]);
+  };
+
+  const loadData = async () => {
+    try {
+      setLoading(true);
+      await loadCategories();
+      await loadAnalysisResults();
+      await loadStats();
+    } catch (error) {
+      console.error('Failed to load strategic intelligence:', error);
+    } finally {
+      setLoading(false);
+    }
   };
 
   const loadCategories = async () => {
-    setLoadingCategories(true);
-    if (!analyzingCategory) {
-      setDiagnostics([]);
-      setShowDiagnostics(true);
-    }
-
     try {
       if (!analyzingCategory) {
-        addDiagnostic('database_connect', 'loading', 'Establishing quantum link to database core...');
-      }
-      
-      const { data: testData, error: testError } = await supabase
-        .from('products')
-        .select('id')
-        .limit(1);
-
-      if (testError) {
-        if (!analyzingCategory) {
-          addDiagnostic('connection_failed', 'error', 'Quantum database link failed', {
-            table: 'products',
-            error: testError.message,
-            code: testError.code
-          });
-        }
-        setCategories([]);
-        return;
-      }
-
-      if (!analyzingCategory) {
-        addDiagnostic('connection_established', 'success', 'Quantum link established with PRODUCTS database');
+        setDiagnostics([]);
+        addDiagnostic('system_init', 'loading', 'Initializing strategic intelligence core...');
       }
       
       if (!analyzingCategory) {
         addDiagnostic('data_scan', 'loading', 'Scanning database for strategic intelligence...');
       }
-      const result = await ProductAnalysisService.getCategories();
+      const result = await productAnalysisService.getCategories();
       
       if (!analyzingCategory) {
         result.diagnostics.forEach(diag => {
@@ -98,52 +117,66 @@ const OzonProductAnalysis: React.FC<OzonProductAnalysisProps> = ({ onBack }) => 
       
       setCategories(result.categories);
       await loadSuppliers();
-
     } catch (error) {
       if (!analyzingCategory) {
-        addDiagnostic('system_error', 'error', 'Critical system failure during category scan', {
-          table: 'products',
-          error: error instanceof Error ? error.message : 'Unknown system malfunction'
+        addDiagnostic('critical_failure', 'error', 'Strategic intelligence core malfunction', {
+          error: error instanceof Error ? error.message : 'Unknown system failure'
         });
       }
-    } finally {
-      setLoadingCategories(false);
+      console.error('Failed to load categories:', error);
     }
   };
 
   const loadSuppliers = async () => {
     try {
-      const { data, error } = await supabaseAdmin
-        .from('products')
-        .select('supplier')
-        .not('supplier', 'is', null)
-        .neq('supplier', '');
-
-      if (error) {
-        console.error('Failed to load trade partners:', error);
-        return;
+      if (!analyzingCategory) {
+        addDiagnostic('supplier_scan', 'loading', 'Scanning supplier networks...');
       }
+      
+      const { data, error } = await supabase
+        .from('products')
+        .select('supplier_name')
+        .not('supplier_name', 'is', null)
+        .not('supplier_name', 'eq', '');
 
-      const supplierCounts: { [key: string]: number } = {};
-      data?.forEach(product => {
-        if (product.supplier) {
-          supplierCounts[product.supplier] = (supplierCounts[product.supplier] || 0) + 1;
-        }
-      });
+      if (error) throw error;
 
-      const supplierList = Object.entries(supplierCounts)
-        .map(([name, count]) => ({ name, count }))
-        .sort((a, b) => b.count - a.count);
+      const supplierCounts = data.reduce((acc: Record<string, number>, product) => {
+        const supplier = product.supplier_name;
+        acc[supplier] = (acc[supplier] || 0) + 1;
+        return acc;
+      }, {});
 
-      setSuppliers(supplierList);
+      const suppliersArray = Object.entries(supplierCounts)
+        .map(([name, count]) => ({
+          id: name,
+          name,
+          product_count: count as number
+        }))
+        .sort((a, b) => b.product_count - a.product_count);
+
+      setSuppliers(suppliersArray);
+      
+      if (!analyzingCategory) {
+        addDiagnostic('supplier_scan_complete', 'success', `Supplier network mapped: ${suppliersArray.length} active suppliers`, {
+          total_suppliers: suppliersArray.length,
+          top_supplier: suppliersArray[0]?.name,
+          top_supplier_products: suppliersArray[0]?.product_count
+        });
+      }
     } catch (error) {
-      console.error('Load trade partners error:', error);
+      if (!analyzingCategory) {
+        addDiagnostic('supplier_scan_failed', 'error', 'Supplier network scan failed', {
+          error: error instanceof Error ? error.message : 'Unknown error'
+        });
+      }
+      console.error('Failed to load suppliers:', error);
     }
   };
 
   const loadAnalysisResults = async () => {
     try {
-      const results = await ProductAnalysisService.getAnalysisResults();
+      const results = await productAnalysisService.getAnalysisResults();
       setAnalysisResults(results);
     } catch (error) {
       console.error('Failed to load analysis archives:', error);
@@ -152,7 +185,7 @@ const OzonProductAnalysis: React.FC<OzonProductAnalysisProps> = ({ onBack }) => 
 
   const loadStats = async () => {
     try {
-      const statsData = await ProductAnalysisService.getAnalysisStats();
+      const statsData = await productAnalysisService.getAnalysisStats();
       setStats(statsData);
     } catch (error) {
       console.error('Failed to load strategic statistics:', error);
@@ -167,7 +200,7 @@ const OzonProductAnalysis: React.FC<OzonProductAnalysisProps> = ({ onBack }) => 
     try {
       addDiagnostic('ai_deployment', 'loading', `Deploying AI algorithms for strategic category: ${category}`);
       
-      const result = await ProductAnalysisService.analyzeCategory(category);
+      const result = await productAnalysisService.analyzeCategory(category);
       
       if (result.diagnostics) {
         result.diagnostics.forEach((diag: any) => {
@@ -221,7 +254,7 @@ const OzonProductAnalysis: React.FC<OzonProductAnalysisProps> = ({ onBack }) => 
   const clearCategoryAnalysis = async (category: string) => {
     if (confirm(`WARNING: Purge AI analysis data for strategic category "${category}"? This action cannot be reversed.`)) {
       try {
-        await ProductAnalysisService.clearCategoryAnalysis(category);
+        await productAnalysisService.clearCategoryAnalysis(category);
         await loadAnalysisResults();
         await loadStats();
       } catch (error) {
@@ -230,32 +263,55 @@ const OzonProductAnalysis: React.FC<OzonProductAnalysisProps> = ({ onBack }) => 
     }
   };
 
-  useEffect(() => {
-    loadCategories();
-    loadAnalysisResults();
-    loadStats();
-  }, []);
+  const formatCurrency = (amount: number) => {
+    return new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: 'USD',
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0,
+    }).format(amount);
+  };
 
-  const getStatusIcon = (status: 'loading' | 'success' | 'error') => {
+  const getStatusIcon = (status: string) => {
     switch (status) {
       case 'loading':
-        return '🟡';
+        return <div className="w-3 h-3 border border-cyan-400 border-t-transparent rounded-full animate-spin" />;
       case 'success':
-        return '🟢';
+        return <div className="w-3 h-3 bg-emerald-400 rounded-full animate-pulse" />;
       case 'error':
-        return '🔴';
+        return <div className="w-3 h-3 bg-red-400 rounded-full animate-pulse" />;
+      case 'warning':
+        return <div className="w-3 h-3 bg-yellow-400 rounded-full animate-pulse" />;
       default:
-        return '🔵';
+        return <div className="w-3 h-3 bg-gray-400 rounded-full" />;
     }
   };
 
-  const isCategoryAnalyzed = (category: string) => {
-    return analysisResults.some(result => result.category === category);
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case 'loading':
+        return 'text-cyan-400';
+      case 'success':
+        return 'text-emerald-400';
+      case 'error':
+        return 'text-red-400';
+      case 'warning':
+        return 'text-yellow-400';
+      default:
+        return 'text-gray-400';
+    }
   };
 
-  const getCategoryResults = (category: string) => {
-    return analysisResults.filter(result => result.category === category);
-  };
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-black flex items-center justify-center">
+        <div className="text-center space-y-4">
+          <div className="w-16 h-16 border-4 border-cyan-400 border-t-transparent rounded-full animate-spin mx-auto"></div>
+          <p className="text-cyan-400 font-mono">Initializing Strategic Intelligence Core...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-black p-6" style={{
@@ -263,46 +319,9 @@ const OzonProductAnalysis: React.FC<OzonProductAnalysisProps> = ({ onBack }) => 
                        radial-gradient(circle at 80% 20%, rgba(0, 255, 255, 0.02) 0%, transparent 50%), 
                        radial-gradient(circle at 40% 80%, rgba(0, 255, 255, 0.01) 0%, transparent 50%)`
     }}>
-      
-      {/* Quantum Diagnostic Interface */}
-      {showDiagnostics && (
-        <div className="fixed top-4 right-4 z-50 max-w-md">
-          <div className="bg-gradient-to-br from-gray-900 to-gray-800 rounded-lg border border-cyan-400/40 shadow-xl shadow-cyan-400/20 p-6 relative overflow-hidden">
-            <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-cyan-400 to-teal-400"></div>
-            <div className="flex justify-between items-center mb-4">
-              <h3 className="text-lg font-bold text-cyan-300 font-mono">QUANTUM DIAGNOSTICS</h3>
-              <button 
-                onClick={() => setShowDiagnostics(false)}
-                className="text-cyan-400 hover:text-cyan-300 bg-gray-800/50 border border-cyan-400/30 rounded p-1 hover:border-cyan-400/50 transition-all"
-              >
-                <X className="w-5 h-5" />
-              </button>
-            </div>
-            
-            <div className="space-y-2 max-h-64 overflow-y-auto">
-              {diagnostics.map((diag, index) => (
-                <div key={index} className="flex items-start space-x-2 p-2 bg-gray-800/30 border border-cyan-400/20 rounded">
-                  <span className="text-sm">{getStatusIcon(diag.status)}</span>
-                  <div className="flex-1">
-                    <p className="text-sm font-mono text-cyan-300">{diag.message}</p>
-                    {diag.details && (
-                      <pre className="text-xs text-cyan-400/60 mt-1 whitespace-pre-wrap font-mono max-h-20 overflow-y-auto">
-                        {typeof diag.details === 'object' 
-                          ? JSON.stringify(diag.details, null, 2)
-                          : diag.details}
-                      </pre>
-                    )}
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-      )}
-
-      <div className="max-w-7xl mx-auto space-y-8">
+      <div className="max-w-7xl mx-auto space-y-6">
         
-        {/* Command Header */}
+        {/* Header */}
         <div className="bg-gradient-to-r from-gray-900 to-gray-800 rounded-lg border border-cyan-400/30 shadow-lg shadow-cyan-400/10 p-6 relative overflow-hidden">
           <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-purple-400 to-pink-400"></div>
           <div className="flex items-center justify-between">
@@ -312,364 +331,347 @@ const OzonProductAnalysis: React.FC<OzonProductAnalysisProps> = ({ onBack }) => 
                 className="flex items-center space-x-2 px-4 py-2 bg-gray-800 border border-cyan-400/50 rounded text-cyan-300 hover:bg-gray-700 hover:border-cyan-400 transition-all duration-200 font-mono text-sm"
               >
                 <ArrowLeft className="w-4 h-4" />
-                <span>RETURN TO OZON COMMAND</span>
+                <span>RETURN TO COMMAND</span>
               </button>
               <div className="h-6 border-l border-cyan-400/30"></div>
               <div className="flex items-center space-x-3">
                 <div className="w-12 h-12 bg-gradient-to-br from-purple-400 to-pink-500 rounded-lg flex items-center justify-center shadow-lg border border-purple-300 relative">
                   <Brain className="w-6 h-6 text-black" />
-                  <div className="absolute -top-1 -right-1 w-3 h-3 bg-cyan-400 rounded-full border border-black"></div>
+                  <div className="absolute -top-1 -right-1 w-3 h-3 bg-emerald-400 rounded-full border border-black animate-pulse"></div>
                 </div>
                 <div>
                   <h1 className="text-2xl font-bold text-cyan-300 font-mono tracking-wider">
-                    AI PRODUCT ANALYSIS
+                    AI STRATEGIC ANALYSIS
                   </h1>
                   <p className="text-cyan-400/80 text-sm font-mono">
-                    Automated Product Classification
+                    Neural Network Product Intelligence
                   </p>
                 </div>
               </div>
             </div>
             
-            <div className="flex items-center space-x-3">
-              <div className="flex items-center space-x-2">
-                <div className="w-2 h-2 bg-purple-400 rounded-full animate-pulse"></div>
-                <span className="text-purple-300 text-sm font-mono">AI ANALYSIS READY</span>
-              </div>
+            <div className="flex items-center space-x-4">
+              <button
+                onClick={loadData}
+                disabled={analyzingCategory !== null}
+                className="flex items-center space-x-2 px-4 py-2 bg-gray-800 border border-cyan-400/50 rounded text-cyan-300 hover:bg-gray-700 hover:border-cyan-400 transition-all duration-200 font-mono text-sm disabled:opacity-50"
+              >
+                <RefreshCw className={`w-4 h-4 ${analyzingCategory ? 'animate-spin' : ''}`} />
+                <span>REFRESH INTEL</span>
+              </button>
+              
+              <button
+                onClick={() => setShowDiagnostics(!showDiagnostics)}
+                className="flex items-center space-x-2 px-4 py-2 bg-gray-800 border border-cyan-400/50 rounded text-cyan-300 hover:bg-gray-700 hover:border-cyan-400 transition-all duration-200 font-mono text-sm"
+              >
+                <Activity className="w-4 h-4" />
+                <span>DIAGNOSTICS</span>
+                {diagnostics.length > 0 && (
+                  <span className="bg-cyan-400 text-black px-2 py-1 rounded-full text-xs font-bold">
+                    {diagnostics.length}
+                  </span>
+                )}
+              </button>
             </div>
           </div>
         </div>
 
-        {/* Strategic Intelligence Overview */}
-        {stats && (
-          <div className="bg-gradient-to-r from-gray-900 to-gray-800 rounded-lg border border-cyan-400/30 shadow-lg shadow-cyan-400/10 p-6 relative overflow-hidden">
-            <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-emerald-400 to-cyan-400"></div>
-            <div className="absolute top-4 right-4">
-              <span className="bg-gray-800/60 border border-emerald-400/30 text-emerald-400 text-xs px-2 py-1 rounded font-mono">
-                INT-01
-              </span>
+        {/* Stats Overview */}
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="bg-gradient-to-br from-gray-900 to-gray-800 rounded-xl border border-cyan-400/30 shadow-xl p-4 hover:border-cyan-400/50 transition-all duration-300 relative overflow-hidden">
+            <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-blue-400 to-indigo-400"></div>
+            <div className="flex items-center justify-between mb-3">
+              <div className="w-8 h-8 bg-gradient-to-br from-blue-400 to-indigo-500 rounded-lg flex items-center justify-center shadow-lg border border-blue-300">
+                <Database className="w-4 h-4 text-black" />
+              </div>
+              <BarChart3 className="w-4 h-4 text-blue-400" />
+            </div>
+            <h3 className="text-xs font-mono text-cyan-400 mb-1 uppercase tracking-wider">Total Categories</h3>
+            <p className="text-lg font-bold text-blue-300 font-mono">{stats.total_categories}</p>
+            <p className="text-blue-400/60 text-xs font-mono">Strategic Classifications</p>
+          </div>
+
+          <div className="bg-gradient-to-br from-gray-900 to-gray-800 rounded-xl border border-cyan-400/30 shadow-xl p-4 hover:border-cyan-400/50 transition-all duration-300 relative overflow-hidden">
+            <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-emerald-400 to-teal-400"></div>
+            <div className="flex items-center justify-between mb-3">
+              <div className="w-8 h-8 bg-gradient-to-br from-emerald-400 to-teal-500 rounded-lg flex items-center justify-center shadow-lg border border-emerald-300">
+                <Brain className="w-4 h-4 text-black" />
+              </div>
+              <TrendingUp className="w-4 h-4 text-emerald-400" />
+            </div>
+            <h3 className="text-xs font-mono text-cyan-400 mb-1 uppercase tracking-wider">AI Analyzed</h3>
+            <p className="text-lg font-bold text-emerald-300 font-mono">{stats.analyzed_categories}</p>
+            <p className="text-emerald-400/60 text-xs font-mono">Neural Processing Complete</p>
+          </div>
+
+          <div className="bg-gradient-to-br from-gray-900 to-gray-800 rounded-xl border border-cyan-400/30 shadow-xl p-4 hover:border-cyan-400/50 transition-all duration-300 relative overflow-hidden">
+            <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-purple-400 to-pink-400"></div>
+            <div className="flex items-center justify-between mb-3">
+              <div className="w-8 h-8 bg-gradient-to-br from-purple-400 to-pink-500 rounded-lg flex items-center justify-center shadow-lg border border-purple-300">
+                <Users className="w-4 h-4 text-black" />
+              </div>
+              <Activity className="w-4 h-4 text-purple-400" />
+            </div>
+            <h3 className="text-xs font-mono text-cyan-400 mb-1 uppercase tracking-wider">Product Groups</h3>
+            <p className="text-lg font-bold text-purple-300 font-mono">{stats.total_groups}</p>
+            <p className="text-purple-400/60 text-xs font-mono">AI Classifications</p>
+          </div>
+
+          <div className="bg-gradient-to-br from-gray-900 to-gray-800 rounded-xl border border-cyan-400/30 shadow-xl p-4 hover:border-cyan-400/50 transition-all duration-300 relative overflow-hidden">
+            <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-yellow-400 to-orange-400"></div>
+            <div className="flex items-center justify-between mb-3">
+              <div className="w-8 h-8 bg-gradient-to-br from-yellow-400 to-orange-500 rounded-lg flex items-center justify-center shadow-lg border border-yellow-300">
+                <Zap className="w-4 h-4 text-black" />
+              </div>
+              <Activity className="w-4 h-4 text-yellow-400" />
+            </div>
+            <h3 className="text-xs font-mono text-cyan-400 mb-1 uppercase tracking-wider">Last Analysis</h3>
+            <p className="text-lg font-bold text-yellow-300 font-mono">
+              {stats.last_analysis ? new Date(stats.last_analysis).toLocaleDateString() : 'Never'}
+            </p>
+            <p className="text-yellow-400/60 text-xs font-mono">Neural Network Activity</p>
+          </div>
+        </div>
+
+        {/* Diagnostics Panel */}
+        {showDiagnostics && (
+          <div className="bg-gradient-to-br from-gray-900 to-gray-800 rounded-xl border border-cyan-400/30 shadow-xl p-6 relative overflow-hidden">
+            <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-cyan-400 to-blue-400"></div>
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center space-x-3">
+                <div className="w-8 h-8 bg-gradient-to-br from-cyan-400 to-blue-500 rounded-lg flex items-center justify-center shadow-lg border border-cyan-300">
+                  <Activity className="w-4 h-4 text-black" />
+                </div>
+                <h2 className="text-xl font-bold text-cyan-300 font-mono tracking-wide">SYSTEM DIAGNOSTICS</h2>
+              </div>
+              <button
+                onClick={() => setShowDiagnostics(false)}
+                className="text-cyan-400 hover:text-cyan-300 transition-colors"
+              >
+                <X className="w-5 h-5" />
+              </button>
             </div>
             
-            <h2 className="text-xl font-bold text-cyan-300 mb-6 flex items-center space-x-3 font-mono tracking-wide">
-              <TrendingUp className="w-6 h-6 text-emerald-400" />
-              <span>ANALYSIS PERFORMANCE METRICS</span>
-            </h2>
-            
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-              <div className="bg-gray-800/50 border border-blue-400/30 rounded-lg p-4 relative overflow-hidden">
-                <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-blue-400 to-indigo-400"></div>
-                <div className="flex items-center justify-between mb-2">
-                  <span className="text-cyan-400 text-xs font-mono uppercase tracking-wider">Analysis Groups</span>
-                  <BarChart3 className="w-4 h-4 text-blue-400" />
-                </div>
-                <p className="text-2xl font-bold text-blue-300 font-mono">{stats.total_groups}</p>
-                <p className="text-blue-400/60 text-xs font-mono">AI Classifications</p>
-              </div>
-              
-              <div className="bg-gray-800/50 border border-emerald-400/30 rounded-lg p-4 relative overflow-hidden">
-                <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-emerald-400 to-teal-400"></div>
-                <div className="flex items-center justify-between mb-2">
-                  <span className="text-cyan-400 text-xs font-mono uppercase tracking-wider">Categories</span>
-                  <Database className="w-4 h-4 text-emerald-400" />
-                </div>
-                <p className="text-2xl font-bold text-emerald-300 font-mono">{stats.categories_analyzed}</p>
-                <p className="text-emerald-400/60 text-xs font-mono">Product Categories</p>
-              </div>
-              
-              <div className="bg-gray-800/50 border border-purple-400/30 rounded-lg p-4 relative overflow-hidden">
-                <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-purple-400 to-pink-400"></div>
-                <div className="flex items-center justify-between mb-2">
-                  <span className="text-cyan-400 text-xs font-mono uppercase tracking-wider">AI Confidence</span>
-                  <Brain className="w-4 h-4 text-purple-400" />
-                </div>
-                <p className="text-2xl font-bold text-purple-300 font-mono">{stats.avg_confidence}%</p>
-                <p className="text-purple-400/60 text-xs font-mono">Algorithm Accuracy</p>
-              </div>
-              
-              <div className="bg-gray-800/50 border border-orange-400/30 rounded-lg p-4 relative overflow-hidden">
-                <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-orange-400 to-red-400"></div>
-                <div className="flex items-center justify-between mb-2">
-                  <span className="text-cyan-400 text-xs font-mono uppercase tracking-wider">Last Analysis</span>
-                  <Activity className="w-4 h-4 text-orange-400" />
-                </div>
-                <p className="text-lg font-bold text-orange-300 font-mono">{stats.last_analysis}</p>
-                <p className="text-orange-400/60 text-xs font-mono">Temporal Sync</p>
-              </div>
+            <div className="space-y-2 max-h-96 overflow-y-auto">
+              {diagnostics.length === 0 ? (
+                <p className="text-cyan-400/60 font-mono text-sm">No diagnostic data available</p>
+              ) : (
+                diagnostics.map((diagnostic) => (
+                  <div
+                    key={diagnostic.id}
+                    className="bg-gray-800/40 border border-cyan-400/20 rounded-lg p-3 hover:border-cyan-400/40 transition-all duration-200"
+                  >
+                    <div className="flex items-start space-x-3">
+                      {getStatusIcon(diagnostic.status)}
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center justify-between">
+                          <p className={`font-mono text-sm ${getStatusColor(diagnostic.status)}`}>
+                            {diagnostic.message}
+                          </p>
+                          <span className="text-cyan-400/60 font-mono text-xs">
+                            {diagnostic.timestamp.toLocaleTimeString()}
+                          </span>
+                        </div>
+                        {diagnostic.details && (
+                          <pre className="text-cyan-400/60 font-mono text-xs mt-1 whitespace-pre-wrap">
+                            {JSON.stringify(diagnostic.details, null, 2)}
+                          </pre>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                ))
+              )}
             </div>
           </div>
         )}
 
-        {/* Strategic Categories Database */}
-        <div className="bg-gradient-to-br from-gray-900 to-gray-800 rounded-lg border border-cyan-400/30 shadow-xl p-6 relative overflow-hidden">
-          <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-cyan-400 to-blue-400"></div>
-          <div className="absolute top-4 right-4">
-            <span className="bg-gray-800/60 border border-cyan-400/30 text-cyan-400 text-xs px-2 py-1 rounded font-mono">
-              DB-PROD
-            </span>
-          </div>
+        {/* Main Content Grid */}
+        <div className="grid lg:grid-cols-2 gap-6">
           
-          <div className="flex items-center justify-between mb-6">
-            <h2 className="text-xl font-bold text-cyan-300 flex items-center space-x-3 font-mono tracking-wide">
-              <Database className="w-6 h-6 text-cyan-400" />
-              <span>PRODUCTS DATABASE | CATEGORIES ({categories.length})</span>
-            </h2>
-            <button
-              onClick={loadCategories}
-              disabled={loadingCategories}
-              className="flex items-center space-x-2 px-4 py-2 bg-gradient-to-r from-cyan-600 to-teal-600 border border-cyan-400 text-black rounded hover:from-cyan-500 hover:to-teal-500 transition-all duration-200 disabled:opacity-50 font-mono font-bold"
-            >
-              <RefreshCw className={`w-4 h-4 ${loadingCategories ? 'animate-spin' : ''}`} />
-              <span>REFRESH DATABASE</span>
-            </button>
+          {/* Categories Panel */}
+          <div className="bg-gradient-to-br from-gray-900 to-gray-800 rounded-xl border border-cyan-400/30 shadow-xl p-6 relative overflow-hidden">
+            <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-emerald-400 to-teal-400"></div>
+            <div className="flex items-center space-x-3 mb-6">
+              <div className="w-10 h-10 bg-gradient-to-br from-emerald-400 to-teal-500 rounded-lg flex items-center justify-center shadow-lg border border-emerald-300">
+                <BarChart3 className="w-5 h-5 text-black" />
+              </div>
+              <div>
+                <h2 className="text-xl font-bold text-cyan-300 font-mono tracking-wide">STRATEGIC CATEGORIES</h2>
+                <p className="text-cyan-400/80 text-sm font-mono">AI Analysis Targets</p>
+              </div>
+            </div>
+            
+            <div className="space-y-3 max-h-96 overflow-y-auto">
+              {categories.length === 0 ? (
+                <div className="text-center py-8">
+                  <AlertCircle className="w-12 h-12 text-yellow-400 mx-auto mb-4" />
+                  <p className="text-yellow-400 font-mono">No strategic categories detected</p>
+                  <p className="text-cyan-400/60 font-mono text-sm mt-2">Import product data with valid categories first</p>
+                </div>
+              ) : (
+                categories.map((category) => {
+                  const isAnalyzed = analysisResults.some(result => result.category === category.category);
+                  const isAnalyzing = analyzingCategory === category.category;
+                  
+                  return (
+                    <div
+                      key={category.category}
+                      className="bg-gray-800/40 border border-cyan-400/20 rounded-lg p-4 hover:border-cyan-400/40 transition-all duration-200 relative"
+                    >
+                      <div className="absolute left-0 top-0 w-1 h-full bg-gradient-to-b from-emerald-400 to-teal-500 rounded-l-lg"></div>
+                      
+                      <div className="ml-2 space-y-3">
+                        <div className="flex items-start justify-between">
+                          <div className="flex-1 min-w-0">
+                            <h3 className="font-semibold text-cyan-300 text-sm leading-tight font-mono">
+                              {category.category}
+                            </h3>
+                            <div className="flex items-center space-x-4 mt-1">
+                              <span className="text-cyan-400/60 font-mono text-xs">
+                                {category.product_count} products
+                              </span>
+                              <span className="text-cyan-400/60 font-mono text-xs">
+                                {formatCurrency(category.total_sales)}
+                              </span>
+                              <span className="text-cyan-400/60 font-mono text-xs">
+                                Avg: {formatCurrency(category.avg_price)}
+                              </span>
+                            </div>
+                          </div>
+                          
+                          <div className="flex items-center space-x-2">
+                            {isAnalyzed && (
+                              <span className="bg-emerald-400/20 border border-emerald-400/50 text-emerald-400 px-2 py-1 rounded font-mono text-xs">
+                                ANALYZED
+                              </span>
+                            )}
+                            {isAnalyzing && (
+                              <span className="bg-cyan-400/20 border border-cyan-400/50 text-cyan-400 px-2 py-1 rounded font-mono text-xs flex items-center space-x-1">
+                                <div className="w-3 h-3 border border-cyan-400 border-t-transparent rounded-full animate-spin"></div>
+                                <span>ANALYZING</span>
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                        
+                        <div className="flex items-center justify-between">
+                          <button
+                            onClick={() => analyzeCategory(category.category)}
+                            disabled={isAnalyzing || analyzingCategory !== null}
+                            className="flex items-center space-x-2 px-3 py-1 bg-emerald-600 hover:bg-emerald-500 text-black rounded font-mono text-xs font-bold transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                          >
+                            <Brain className="w-3 h-3" />
+                            <span>{isAnalyzed ? 'RE-ANALYZE' : 'ANALYZE'}</span>
+                          </button>
+                          
+                          {isAnalyzed && (
+                            <button
+                              onClick={() => clearCategoryAnalysis(category.category)}
+                              disabled={isAnalyzing || analyzingCategory !== null}
+                              className="flex items-center space-x-2 px-3 py-1 bg-red-600 hover:bg-red-500 text-white rounded font-mono text-xs font-bold transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                            >
+                              <X className="w-3 h-3" />
+                              <span>PURGE</span>
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })
+              )}
+            </div>
           </div>
 
-          {/* Trade Partner Filter */}
-          {suppliers.length > 0 && (
-            <div className="mb-6 p-4 bg-gray-800/30 border border-cyan-400/20 rounded-lg">
-              <h3 className="text-sm font-mono text-cyan-400 mb-3 uppercase tracking-wider">
-                Filter by Supplier ({suppliers.length} suppliers):
-              </h3>
-              <div className="flex flex-wrap gap-2">
-                <button
-                  onClick={() => setSelectedSupplier(null)}
-                  className={`px-3 py-1 text-xs rounded border font-mono transition-all duration-200 ${
-                    !selectedSupplier 
-                      ? 'bg-cyan-600 text-black border-cyan-400' 
-                      : 'bg-gray-800/50 text-cyan-400 border-cyan-400/30 hover:border-cyan-400/50'
-                  }`}
-                >
-                  ALL PARTNERS
-                </button>
-                {suppliers.slice(0, 10).map(supplier => (
-                  <button
-                    key={supplier.name}
-                    onClick={() => setSelectedSupplier(supplier.name)}
-                    className={`px-3 py-1 text-xs rounded border font-mono transition-all duration-200 ${
-                      selectedSupplier === supplier.name
-                        ? 'bg-cyan-600 text-black border-cyan-400'
-                        : 'bg-gray-800/50 text-cyan-400 border-cyan-400/30 hover:border-cyan-400/50'
-                    }`}
+          {/* Analysis Results Panel */}
+          <div className="bg-gradient-to-br from-gray-900 to-gray-800 rounded-xl border border-cyan-400/30 shadow-xl p-6 relative overflow-hidden">
+            <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-purple-400 to-pink-400"></div>
+            <div className="flex items-center space-x-3 mb-6">
+              <div className="w-10 h-10 bg-gradient-to-br from-purple-400 to-pink-500 rounded-lg flex items-center justify-center shadow-lg border border-purple-300">
+                <Brain className="w-5 h-5 text-black" />
+              </div>
+              <div>
+                <h2 className="text-xl font-bold text-cyan-300 font-mono tracking-wide">AI ANALYSIS RESULTS</h2>
+                <p className="text-cyan-400/80 text-sm font-mono">Neural Network Classifications</p>
+              </div>
+            </div>
+            
+            <div className="space-y-4 max-h-96 overflow-y-auto">
+              {analysisResults.length === 0 ? (
+                <div className="text-center py-8">
+                  <Brain className="w-12 h-12 text-purple-400 mx-auto mb-4" />
+                  <p className="text-purple-400 font-mono">No AI analysis results available</p>
+                  <p className="text-cyan-400/60 font-mono text-sm mt-2">Run analysis on strategic categories to see results</p>
+                </div>
+              ) : (
+                analysisResults.map((result) => (
+                  <div
+                    key={result.id}
+                    className="bg-gray-800/40 border border-cyan-400/20 rounded-lg p-4 hover:border-cyan-400/40 transition-all duration-200 relative"
                   >
-                    ALL SUPPLIERS
-                  </button>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {categories.length === 0 ? (
-            <div className="text-center py-12">
-              <div className="w-16 h-16 bg-gradient-to-br from-red-400 to-pink-500 rounded-xl flex items-center justify-center mx-auto mb-4 border border-red-300">
-                <AlertCircle className="w-8 h-8 text-black" />
-              </div>
-              <h3 className="text-lg font-mono text-red-300 mb-2 tracking-wide">NO STRATEGIC CATEGORIES DETECTED</h3>
-              <h3 className="text-lg font-mono text-red-300 mb-2 tracking-wide">NO PRODUCT CATEGORIES FOUND</h3>
-              <p className="text-red-400/80 font-mono text-sm">Import products to PRODUCTS database with valid category fields.</p>
-            </div>
-          ) : (
-            <div className="space-y-4">
-              {categories.map((category) => {
-                const isAnalyzed = isCategoryAnalyzed(category);
-                const categoryResults = getCategoryResults(category);
-                const isAnalyzing = analyzingCategory === category;
-
-                return (
-                  <div key={category} className="bg-gray-800/40 border border-cyan-400/20 rounded-lg p-6 hover:border-cyan-400/40 hover:bg-gray-800/60 transition-all duration-200 relative overflow-hidden">
-                    <div className={`absolute left-0 top-0 w-1 h-full rounded-l-lg ${
-                      isAnalyzed ? 'bg-gradient-to-b from-emerald-400 to-teal-400' : 'bg-gradient-to-b from-gray-600 to-gray-500'
-                    }`}></div>
+                    <div className="absolute left-0 top-0 w-1 h-full bg-gradient-to-b from-purple-400 to-pink-500 rounded-l-lg"></div>
                     
-                    <div className="flex items-center justify-between mb-4 ml-4">
-                      <div className="flex items-center space-x-4">
-                        <div className={`w-4 h-4 rounded-full border-2 ${
-                          isAnalyzed 
-                            ? 'bg-emerald-400 border-emerald-300 shadow-lg shadow-emerald-400/50' 
-                            : 'bg-gray-600 border-gray-500'
-                        }`}></div>
-                        <h3 className="font-mono text-lg text-cyan-300 tracking-wide">{category}</h3>
-                        <span className={`px-3 py-1 text-xs rounded border font-mono ${
-                          isAnalyzed 
-                            ? 'bg-emerald-400/10 text-emerald-400 border-emerald-400/30' 
-                            : 'bg-yellow-400/10 text-yellow-400 border-yellow-400/30'
-                        }`}>
-                          {isAnalyzed ? '✅ AI ANALYZED' : '⚠️ AWAITING ANALYSIS'}
+                    <div className="ml-2 space-y-3">
+                      <div className="flex items-start justify-between">
+                        <div>
+                          <h3 className="font-semibold text-cyan-300 text-sm font-mono">
+                            {result.category}
+                          </h3>
+                          <p className="text-cyan-400/60 font-mono text-xs">
+                            Analyzed: {new Date(result.created_at).toLocaleString()}
+                          </p>
+                        </div>
+                        <span className="bg-purple-400/20 border border-purple-400/50 text-purple-400 px-2 py-1 rounded font-mono text-xs">
+                          {result.groups.length} GROUPS
                         </span>
                       </div>
                       
-                      <div className="flex items-center space-x-3">
-                        {isAnalyzing ? (
-                          <div className="flex items-center space-x-2 text-purple-400">
-                            <RefreshCw className="w-4 h-4 animate-spin" />
-                            <span className="text-sm font-mono">AI PROCESSING...</span>
+                      <div className="space-y-2">
+                        {result.groups.slice(0, 3).map((group, index) => (
+                          <div key={index} className="bg-gray-700/30 border border-cyan-400/10 rounded p-2">
+                            <h4 className="text-cyan-300 font-mono text-xs font-semibold">
+                              {group.name}
+                            </h4>
+                            <p className="text-cyan-400/60 font-mono text-xs mt-1">
+                              {group.description}
+                            </p>
+                            <p className="text-cyan-400/40 font-mono text-xs mt-1">
+                              {group.products.length} products
+                            </p>
                           </div>
-                        ) : (
-                          <>
-                            <button
-                              onClick={() => analyzeCategory(category)}
-                              className="flex items-center space-x-2 px-4 py-2 bg-gradient-to-r from-purple-600 to-pink-600 border border-purple-400 text-black rounded hover:from-purple-500 hover:to-pink-500 transition-all duration-200 font-mono font-bold text-sm"
-                            >
-                              <Zap className="w-4 h-4" />
-                              <span>{isAnalyzed ? 'RE-DEPLOY AI' : 'DEPLOY AI'}</span>
-                            </button>
-                            {isAnalyzed && (
-                              <button
-                                onClick={() => clearCategoryAnalysis(category)}
-                                className="px-3 py-2 bg-red-900/50 border border-red-500/50 text-red-300 rounded hover:bg-red-900/70 hover:border-red-400 transition-all duration-200 font-mono text-sm"
-                              >
-                                PURGE
-                              </button>
-                            )}
-                          </>
+                        ))}
+                        {result.groups.length > 3 && (
+                          <p className="text-cyan-400/60 font-mono text-xs text-center">
+                            +{result.groups.length - 3} more groups...
+                          </p>
                         )}
                       </div>
                     </div>
-                    
-                    {categoryResults.length > 0 && (
-                      <div className="ml-4 space-y-4">
-                        <div className="bg-gray-800/50 border border-emerald-400/30 rounded-lg p-4">
-                          <p className="font-mono text-emerald-300 font-bold mb-2 text-sm">AI ANALYSIS RESULTS:</p>
-                          <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-xs font-mono">
-                            <div className="flex items-center space-x-2">
-                              <div className="w-2 h-2 bg-emerald-400 rounded-full"></div>
-                              <span className="text-emerald-400">Groups: {categoryResults.length}</span>
-                            </div>
-                            <div className="flex items-center space-x-2">
-                              <div className="w-2 h-2 bg-purple-400 rounded-full"></div>
-                              <span className="text-purple-400">Confidence: {(categoryResults.reduce((sum, r) => sum + (r.confidence_score || 0), 0) / categoryResults.length * 100).toFixed(1)}%</span>
-                            </div>
-                            <div className="flex items-center space-x-2">
-                              <div className="w-2 h-2 bg-cyan-400 rounded-full"></div>
-                              <span className="text-cyan-400">Products: {categoryResults.reduce((sum, r) => sum + r.product_names.length, 0)}</span>
-                            </div>
-                          </div>
-                          
-                          <div className="mt-3 p-3 bg-blue-900/20 border border-blue-400/30 rounded text-xs font-mono">
-                            <p className="text-blue-300 font-bold mb-2">ANALYSIS SCOPE:</p>
-                            <div className="grid grid-cols-2 gap-2 text-blue-400">
-                              <span>📦 Total Products: {(() => {
-                                const totalProducts = categoryResults[0]?.ai_response?.total_products_analyzed;
-                                return totalProducts || 'Loading...';
-                              })()}</span>
-                              <span>🏪 Suppliers: {(() => {
-                                const totalSuppliers = categoryResults[0]?.ai_response?.total_suppliers_analyzed;
-                                return totalSuppliers || 'Loading...';
-                              })()}</span>
-                            </div>
-                          </div>
-                          
-                          <div className="mt-4 space-y-3">
-                            <div className="flex items-center justify-between mb-3">
-                              <p className="font-mono text-cyan-300 font-bold text-sm">CLASSIFIED INTELLIGENCE GROUPS:</p>
-                              <button
-                                onClick={() => {
-                                  const groups = categoryResults.map((group, i) => 
-                                    `Group ${i+1}: ${group.group_name}\n` +
-                                    `Classification: ${group.group_description || 'N/A'}\n` +
-                                    `Assets (${group.product_names.length}):\n` +
-                                    group.product_names.map(p => `  • ${p}`).join('\n') +
-                                    `\nTrade Partners: ${group.vendor_analysis?.vendors?.join(', ') || 'N/A'}\n\n`
-                                  ).join('');
-                                  
-                                  navigator.clipboard.writeText(groups);
-                                  alert('Intelligence data transferred to clipboard buffer!');
-                                }}
-                                className="text-xs bg-cyan-600 text-black px-3 py-1 rounded border border-cyan-400 hover:bg-cyan-500 font-mono font-bold"
-                              >
-                                EXTRACT ALL DATA
-                              </button>
-                            </div>
-                            {categoryResults.map((group, index) => (
-                              <div key={group.id} className="bg-gray-800/60 border border-cyan-400/20 rounded-lg p-4 relative overflow-hidden">
-                                <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-purple-400 to-cyan-400"></div>
-                                
-                                <div className="flex items-start justify-between mb-3">
-                                  <h4 className="font-mono text-cyan-300 font-bold text-sm tracking-wide">
-                                    GROUP {index + 1}: {group.group_name}
-                                  </h4>
-                                  <span className="bg-purple-400/10 border border-purple-400/30 text-purple-400 text-xs px-2 py-1 rounded font-mono">
-                                    {(group.confidence_score * 100).toFixed(1)}% CONFIDENCE
-                                  </span>
-                                </div>
-                                
-                                {group.group_description && (
-                                  <p className="text-sm text-cyan-400/80 mb-3 italic bg-gray-900/30 border border-cyan-400/20 p-3 rounded font-mono">
-                                    {group.group_description}
-                                  </p>
-                                )}
-                                
-                                <div className="space-y-3">
-                                  <div>
-                                    <p className="text-sm font-mono text-emerald-400 font-bold mb-2">
-                                      PRODUCTS ({group.product_names.length}):
-                                    </p>
-                                    <div className="pl-3 space-y-1 max-h-32 overflow-y-auto bg-gray-900/30 border border-cyan-400/20 p-3 rounded">
-                                      {group.product_names.map((product, pIndex) => (
-                                        <p key={pIndex} className="text-xs text-cyan-400/80 leading-relaxed font-mono">
-                                          • {product}
-                                        </p>
-                                      ))}
-                                    </div>
-                                  </div>
-                                  
-                                  {group.vendor_analysis && (
-                                    <div className="pt-3 border-t border-cyan-400/20">
-                                      <p className="text-sm font-mono text-teal-400 font-bold mb-2">
-                                        SUPPLIERS ({group.vendor_analysis.vendor_count || 0}):
-                                      </p>
-                                      <p className="text-xs text-teal-400/80 bg-gray-900/30 border border-cyan-400/20 p-2 rounded font-mono">
-                                        {group.vendor_analysis.vendors?.join(', ') || 'N/A'}
-                                      </p>
-                                    </div>
-                                  )}
-                                  
-                                  <div className="pt-3 border-t border-cyan-400/20">
-                                    <button
-                                      onClick={() => {
-                                        const groupText = `Product Group: ${group.group_name}\n` +
-                                          `Description: ${group.group_description || 'N/A'}\n` +
-                                          `Products (${group.product_names.length}):\n` +
-                                          group.product_names.map(p => `  • ${p}`).join('\n') +
-                                          `\nSuppliers: ${group.vendor_analysis?.vendors?.join(', ') || 'N/A'}`;
-                                        
-                                        navigator.clipboard.writeText(groupText);
-                                        alert('Product group data copied to clipboard!');
-                                      }}
-                                      className="text-xs bg-gray-700 border border-cyan-400/30 text-cyan-400 px-3 py-1 rounded hover:bg-gray-600 hover:border-cyan-400/50 transition-all duration-200 font-mono"
-                                    >
-                                      COPY GROUP DATA
-                                    </button>
-                                  </div>
-                                </div>
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-                      </div>
-                    )}
                   </div>
-                );
-              })}
+                ))
+              )}
             </div>
-          )}
+          </div>
         </div>
 
-        {/* System Status Footer */}
+        {/* Command Status */}
         <div className="bg-gradient-to-r from-gray-900 to-gray-800 border border-cyan-400/30 rounded-lg p-4 relative overflow-hidden">
           <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-purple-400 to-cyan-400"></div>
           <div className="flex items-center justify-center space-x-6">
             <div className="flex items-center space-x-2">
               <div className="w-3 h-3 bg-purple-400 rounded-full animate-pulse shadow-lg shadow-purple-400/50"></div>
-              <span className="text-purple-300 font-mono font-bold text-sm">AI PRODUCT ANALYSIS ACTIVE</span>
+              <span className="text-purple-300 font-mono font-bold text-sm">AI STRATEGIC ANALYSIS ACTIVE</span>
             </div>
             <div className="text-cyan-400/60 font-mono text-sm">|</div>
             <div className="flex items-center space-x-2">
               <Brain className="w-4 h-4 text-cyan-400" />
-              <span className="text-cyan-400/80 font-mono text-sm">AI SERVICES: OPERATIONAL</span>
+              <span className="text-cyan-400/80 font-mono text-sm">NEURAL NETWORKS ONLINE</span>
             </div>
             <div className="text-cyan-400/60 font-mono text-sm">|</div>
             <div className="flex items-center space-x-2">
               <div className="w-3 h-3 bg-emerald-400 rounded-full animate-pulse shadow-lg shadow-emerald-400/50"></div>
-              <span className="text-emerald-400 font-mono text-sm">ORGANIZATION: ОФИС-КИТ</span>
+              <span className="text-emerald-400 font-mono text-sm">READY FOR ANALYSIS</span>
             </div>
           </div>
         </div>
@@ -678,4 +680,4 @@ const OzonProductAnalysis: React.FC<OzonProductAnalysisProps> = ({ onBack }) => 
   );
 };
 
-export default OzonProductAnalysis;
+export default ProductAnalysis;

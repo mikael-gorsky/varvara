@@ -150,9 +150,9 @@ const CEODashboard: React.FC<CEODashboardProps> = ({ onBack }) => {
               </div>
               <TrendingUp className="w-4 h-4 text-emerald-400" />
             </div>
-            <h3 className="text-xs font-mono text-cyan-400 mb-1 uppercase tracking-wider">Total Sales</h3>
+            <h3 className="text-xs font-mono text-cyan-400 mb-1 uppercase tracking-wider">Imperial Treasury</h3>
             <p className="text-lg font-bold text-emerald-300 font-mono">{formatCurrency(kpiData.totalRevenue)}</p>
-            <p className="text-emerald-400/60 text-xs font-mono">Annual Revenue</p>
+            <p className="text-emerald-400/60 text-xs font-mono">Credits Generated</p>
           </div>
 
           <div className="bg-gradient-to-br from-gray-900 to-gray-800 rounded-xl border border-cyan-400/30 shadow-xl p-4 hover:border-cyan-400/50 transition-all duration-300 relative overflow-hidden">
@@ -176,9 +176,9 @@ const CEODashboard: React.FC<CEODashboardProps> = ({ onBack }) => {
               </div>
               <TrendingUp className="w-4 h-4 text-purple-400" />
             </div>
-            <h3 className="text-xs font-mono text-cyan-400 mb-1 uppercase tracking-wider">Major 14 Factions</h3>
+            <h3 className="text-xs font-mono text-cyan-400 mb-1 uppercase tracking-wider">Major Clients (more than 1%)</h3>
             <p className="text-lg font-bold text-purple-300 font-mono">{kpiData.majorClientsShare}%</p>
-            <p className="text-purple-400/60 text-xs font-mono">Trade Influence</p>
+            <p className="text-purple-400/60 text-xs font-mono">Revenue Share</p>
           </div>
 
           <div className="bg-gradient-to-br from-gray-900 to-gray-800 rounded-xl border border-cyan-400/30 shadow-xl p-4 hover:border-cyan-400/50 transition-all duration-300 relative overflow-hidden">

@@ -140,3 +140,5 @@ const CEODashboard: React.FC<CEODashboardProps> = ({ onBack }) => {
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
               </div>
             <p className="text-lg font-bold text-emerald-300 font-mono">{formatCurrency(kpiData.totalRevenue)}</p>
+  )
+}

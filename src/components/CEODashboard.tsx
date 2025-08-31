@@ -198,7 +198,7 @@ const CEODashboard: React.FC<CEODashboardProps> = ({ onBack }) => {
         {/* Strategic Intelligence Panels */}
         <div className="space-y-6 lg:grid lg:grid-cols-2 lg:gap-6 lg:space-y-0">
           
-          {/* Major Clients */}
+          {/* Major Trade Factions */}
           <div className="bg-gradient-to-br from-gray-900 to-gray-800 rounded-xl border border-cyan-400/30 shadow-xl p-6 relative overflow-hidden">
             <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-blue-400 to-indigo-400"></div>
             <div className="absolute top-4 right-4">
@@ -212,8 +212,8 @@ const CEODashboard: React.FC<CEODashboardProps> = ({ onBack }) => {
                 <Users className="w-5 h-5 text-black" />
               </div>
               <div>
-                <h2 className="text-xl font-bold text-cyan-300 font-mono tracking-wide">MAJOR CLIENTS</h2>
-                <p className="text-cyan-400/80 text-sm font-mono">Client Performance Analysis</p>
+                <h2 className="text-xl font-bold text-cyan-300 font-mono tracking-wide">MAJOR TRADE FACTIONS</h2>
+                <p className="text-cyan-400/80 text-sm font-mono">Strategic Partnership Analysis</p>
               </div>
             </div>
             
@@ -260,7 +260,7 @@ const CEODashboard: React.FC<CEODashboardProps> = ({ onBack }) => {
             </div>
           </div>
 
-          {/* Strategic Resources */}
+          {/* Top Products */}
           <div className="bg-gradient-to-br from-gray-900 to-gray-800 rounded-xl border border-cyan-400/30 shadow-xl p-6 relative overflow-hidden">
             <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-emerald-400 to-teal-400"></div>
             <div className="absolute top-4 right-4">
@@ -274,8 +274,8 @@ const CEODashboard: React.FC<CEODashboardProps> = ({ onBack }) => {
                 <Package className="w-5 h-5 text-black" />
               </div>
               <div>
-                <h2 className="text-xl font-bold text-cyan-300 font-mono tracking-wide">STRATEGIC RESOURCES</h2>
-                <p className="text-cyan-400/80 text-sm font-mono">Top Performing Assets</p>
+                <h2 className="text-xl font-bold text-cyan-300 font-mono tracking-wide">TOP PRODUCTS</h2>
+                <p className="text-cyan-400/80 text-sm font-mono">Top Performing Products</p>
               </div>
             </div>
             

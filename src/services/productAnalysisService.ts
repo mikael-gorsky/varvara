@@ -1,756 +1,351 @@
-import { supabase, supabaseAdmin } from '../lib/supabase';
+import React, { useState, useEffect } from 'react';
+import { TrendingUp, Users, Package, DollarSign, BarChart3, Activity, Eye, ChevronRight, ArrowLeft, Crown, Zap } from 'lucide-react';
 
-export interface ProductGroup {
+interface Client {
   id: string;
-  category: string;
-  group_name: string;
-  group_description: string;
-  product_names: string[];
-  price_analysis: {
-    min_price: number;
-    max_price: number;
-    avg_price: number;
-    price_variance: string;
-    outliers: string[];
-  };
-  confidence_score: number;
-  vendor_analysis: {
-    vendor_count: number;
-    vendors: string[];
-  };
-  created_at: string;
+  name: string;
+  sales: number;
+  growth: number;
+  industry: string;
 }
 
-export interface AnalysisResult {
-  success: boolean;
+interface Product {
+  id: string;
+  name: string;
   category: string;
-  groups_created: number;
-  ungrouped_products: number;
-  analysis_confidence: number;
-  data: ProductGroup[];
-  error?: string;
+  sales: number;
+  units: number;
+  growth: number;
 }
 
-export class ProductAnalysisService {
-  
-  /**
-   * Analyze products in a specific category using AI
-   * Processes one category at a time as requested
-   */
-  static async analyzeCategory(category: string): Promise<AnalysisResult & { diagnostics?: any[] }> {
-    const diagnostics: any[] = [];
-    
-    try {
-      diagnostics.push({
-        step: 'start',
-        status: 'info',
-        message: `Starting AI analysis for category: ${category}`,
-        timestamp: new Date().toISOString()
-      });
-      
-      // Immediately check what env vars are available
-      diagnostics.push({
-        step: 'env_raw_check',
-        status: 'info',
-        message: 'Raw environment variable check',
-        details: {
-          import_meta_env: import.meta.env,
-          supabase_url_raw: import.meta.env.VITE_SUPABASE_URL,
-          anon_key_raw: import.meta.env.VITE_SUPABASE_ANON_KEY,
-          all_vite_vars: Object.keys(import.meta.env).filter(key => key.startsWith('VITE_'))
-        }
-      });
-      
-      // Check required environment variables
-      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-      const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
-      const openaiKey = import.meta.env.VITE_OPENAI_API_KEY;
-      
-      diagnostics.push({
-        step: 'env_vars_extracted',
-        status: 'info',
-        message: 'Environment variables extracted',
-        details: {
-          supabase_url_type: typeof supabaseUrl,
-          supabase_url_length: supabaseUrl?.length,
-          supabase_url_value: supabaseUrl,
-          anon_key_type: typeof supabaseAnonKey,
-          anon_key_length: supabaseAnonKey?.length,
-          openai_key_type: typeof openaiKey,
-          openai_key_present: !!openaiKey
-        }
-      });
+interface KPIData {
+  totalRevenue: number;
+  topProductsShare: number;
+  majorClientsShare: number;
+  averageProductMargin: number;
+}
 
-      if (!supabaseUrl) {
-        diagnostics.push({
-          step: 'env_check',
-          status: 'error',
-          message: 'VITE_SUPABASE_URL is missing',
-          details: { env_vars_checked: ['VITE_SUPABASE_URL'] }
-        });
-        return {
-          success: false,
-          category: category,
-          groups_created: 0,
-          ungrouped_products: 0,
-          analysis_confidence: 0,
-          data: [],
-          error: 'VITE_SUPABASE_URL environment variable is not defined. Please check your .env file.',
-          diagnostics
-        };
-      }
+interface CEODashboardProps {
+  onBack: () => void;
+}
 
-      if (!supabaseAnonKey) {
-        diagnostics.push({
-          step: 'env_check',
-          status: 'error',
-          message: 'VITE_SUPABASE_ANON_KEY is missing',
-          details: { env_vars_checked: ['VITE_SUPABASE_ANON_KEY'] }
-        });
-        return {
-          success: false,
-          category: category,
-          groups_created: 0,
-          ungrouped_products: 0,
-          analysis_confidence: 0,
-          data: [],
-          error: 'VITE_SUPABASE_ANON_KEY environment variable is not defined. Please check your .env file.',
-          diagnostics
-        };
-      }
+const CEODashboard: React.FC<CEODashboardProps> = ({ onBack }) => {
+  const [currentTime, setCurrentTime] = useState(new Date());
 
-      // Validate Supabase URL format
-      try {
-        new URL(supabaseUrl);
-      } catch (urlError) {
-        diagnostics.push({
-          step: 'env_check',
-          status: 'error',
-          message: 'VITE_SUPABASE_URL is not a valid URL',
-          details: { 
-            provided_url: supabaseUrl,
-            url_error: urlError instanceof Error ? urlError.message : 'Invalid URL format'
-          }
-        });
-        return {
-          success: false,
-          category: category,
-          groups_created: 0,
-          ungrouped_products: 0,
-          analysis_confidence: 0,
-          data: [],
-          error: `VITE_SUPABASE_URL is not a valid URL: ${supabaseUrl}`,
-          diagnostics
-        };
-      }
-      
-      diagnostics.push({
-        step: 'env_check',
-        status: 'success',
-        message: 'Environment variables validated',
-        details: {
-          supabase_url: supabaseUrl?.slice(0, 30) + '...',
-          full_supabase_url: supabaseUrl,
-          anon_key_present: !!supabaseAnonKey,
-          openai_key_present: !!openaiKey
-        }
-      });
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setCurrentTime(new Date());
+    }, 1000);
 
-      // 1. Get all products for this category
-      diagnostics.push({
-        step: 'fetch_products',
-        status: 'loading',
-        message: `Fetching products for category: ${category}`
-      });
-      
-      // First get total count for this category (including inactive products)
-      const { count: totalCount, error: countError } = await supabaseAdmin
-        .from('products')
-        .select('*', { count: 'exact', head: true })
-        .eq('category_name', category);
+    return () => clearInterval(timer);
+  }, []);
 
-      if (countError) {
-        diagnostics.push({
-          step: 'count_check',
-          status: 'error',
-          message: 'Failed to count products in category',
-          details: { category, error: countError.message }
-        });
-      } else {
-        diagnostics.push({
-          step: 'count_check',
-          status: 'success',
-          message: `Found ${totalCount} total products in category`,
-          details: { category, total_count: totalCount }
-        });
-      }
+  // Demo data - will be replaced with real data later
+  const kpiData: KPIData = {
+    totalRevenue: 3906946,
+    topProductsShare: 94.04,
+    majorClientsShare: 80.3,
+    averageProductMargin: 39.2
+  };
 
-      // Get ALL products for this category (remove is_active filter)
-      const { data: products, error: queryError } = await supabaseAdmin
-        .from('products')
-        .select('name, price, supplier, category_name, is_active')
-        .eq('category_name', category);
+  const topClients: Client[] = [
+    { id: '1', name: 'Интернет Решения', sales: 850323, growth: 44, industry: 'E-commerce' },
+    { id: '2', name: 'Бердандер', sales: 384399, growth: 42, industry: 'Manufacturing' },
+    { id: '3', name: 'Руссблaнкоиздат', sales: 381484, growth: 43, industry: 'Publishing' },
+    { id: '4', name: 'Хаскел/Мерлион', sales: 240359, growth: 44, industry: 'Technology' },
+    { id: '5', name: 'ВсеИнструменты.ру', sales: 239115, growth: 39, industry: 'E-commerce' },
+    { id: '6', name: 'АРВАДА', sales: 192300, growth: 24, industry: 'Retail' },
+    { id: '7', name: 'ДНС Ритейл', sales: 164424, growth: 44, industry: 'Electronics' },
+    { id: '8', name: 'ОнЛайн Трейд', sales: 164407, growth: 38, industry: 'E-commerce' },
+    { id: '9', name: 'Компсервис', sales: 134523, growth: 40, industry: 'IT Services' },
+    { id: '10', name: 'АЛЬФАПРИНТ МЕНЕДЖМЕНТ', sales: 130450, growth: 44, industry: 'Printing' },
+    { id: '11', name: 'Мишин Александр Николаевич ИП', sales: 76356, growth: 44, industry: 'Individual' },
+    { id: '12', name: 'Сибирский успех', sales: 66374, growth: 44, industry: 'Regional' },
+    { id: '13', name: 'Павлов Николай Александрович ИП', sales: 59917, growth: 43, industry: 'Individual' },
+    { id: '14', name: 'Триовист', sales: 53876, growth: 33, industry: 'Consulting' }
+  ];
 
-      if (queryError) {
-        diagnostics.push({
-          step: 'fetch_products',
-          status: 'error',
-          message: 'Failed to fetch products from database',
-          details: {
-            category,
-            error: queryError.message,
-            code: queryError.code
-          }
-        });
-        throw new Error(`Failed to fetch products: ${queryError.message}`);
-      }
+  const topProducts: Product[] = [
+    { id: '1', name: 'Уничтожители Office Kit', category: 'Office Equipment', sales: 1840810, units: 0, growth: 44.28 },
+    { id: '2', name: 'Пленка в пакетах', category: 'Packaging', sales: 839463, units: 0, growth: 35.26 },
+    { id: '3', name: 'Ламинаторы пакетные', category: 'Office Equipment', sales: 270118, units: 0, growth: 39.83 },
+    { id: '4', name: 'Переплет (Renz?)', category: 'Binding', sales: 268723, units: 0, growth: 42.78 },
+    { id: '5', name: 'Переплетчики Office Kit', category: 'Office Equipment', sales: 246391, units: 0, growth: 41.81 },
+    { id: '6', name: 'Уничтожители HSM офисное', category: 'Office Equipment', sales: 118939, units: 0, growth: 39.21 },
+    { id: '7', name: 'Пружины', category: 'Binding', sales: 89487, units: 0, growth: 31.01 }
+  ];
 
-      if (!products || products.length === 0) {
-        diagnostics.push({
-          step: 'fetch_products',
-          status: 'error',
-          message: 'No products found for category',
-          details: {
-            category,
-            product_count: 0
-          }
-        });
-        return {
-          success: false,
-          category,
-          groups_created: 0,
-          ungrouped_products: 0,
-          analysis_confidence: 0,
-          data: [],
-          error: `No active products found in category: ${category}`,
-          diagnostics
-        };
-      }
-      
-      diagnostics.push({
-        step: 'fetch_products',
-        status: 'success',
-        message: `Successfully fetched ${products.length} products`,
-        details: {
-          category,
-          product_count: products.length,
-          active_products: products.filter(p => p.is_active === true).length,
-          inactive_products: products.filter(p => p.is_active === false).length,
-          null_active_status: products.filter(p => p.is_active === null).length,
-          unique_suppliers: [...new Set(products.map(p => p.supplier).filter(Boolean))].length,
-          suppliers_list: [...new Set(products.map(p => p.supplier).filter(Boolean))],
-          sample_products: products.slice(0, 3).map(p => ({
-            name: p.name?.slice(0, 50) + '...',
-            price: p.price,
-            supplier: p.supplier,
-            is_active: p.is_active
-          }))
-        }
-      });
+  const formatCurrency = (amount: number) => {
+    return new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: 'USD',
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0,
+    }).format(amount);
+  };
 
-      // 2. Call edge function for AI analysis
-      diagnostics.push({
-        step: 'prepare_api_call',
-        status: 'loading',
-        message: `Preparing Edge Function API call for ${products.length} products from ${[...new Set(products.map(p => p.supplier).filter(Boolean))].length} suppliers`
-      });
-      
-      const functionUrl = `${supabaseUrl}/functions/v1/analyze-products`;
-      
-      // Validate the constructed function URL
-      try {
-        new URL(functionUrl);
-      } catch (urlError) {
-        diagnostics.push({
-          step: 'prepare_api_call',
-          status: 'error',
-          message: 'Constructed function URL is invalid',
-          details: {
-            constructed_url: functionUrl,
-            supabase_url: supabaseUrl,
-            url_error: urlError instanceof Error ? urlError.message : 'Invalid URL'
-          }
-        });
-        throw new Error(`Invalid function URL constructed: ${functionUrl}`);
-        return {
-          success: false,
-          category: category,
-          groups_created: 0,
-          ungrouped_products: 0,
-          analysis_confidence: 0,
-          data: [],
-          error: `Invalid function URL constructed: ${functionUrl}`,
-          diagnostics
-        };
-      }
-      
-      const requestPayload = {
-        category_name: category,
-        products
-      };
-      
-      diagnostics.push({
-        step: 'prepare_api_call',
-        status: 'success',
-        message: 'API call prepared',
-        details: {
-          function_url: functionUrl,
-          supabase_url: supabaseUrl,
-          payload_size: JSON.stringify(requestPayload).length,
-          products_count: products.length
-        }
-      });
-      
-      diagnostics.push({
-        step: 'call_edge_function',
-        status: 'loading',
-        message: 'Calling Supabase Edge Function...',
-        details: {
-          url: functionUrl,
-          method: 'POST',
-          headers: {
-            'Authorization': 'Bearer ' + supabaseAnonKey?.slice(0, 10) + '...',
-            'Content-Type': 'application/json'
-          }
-        }
-      });
-      
-      const requestStart = Date.now();
-      let response: Response;
-      
-      try {
-        response = await fetch(functionUrl, {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${supabaseAnonKey}`,
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify(requestPayload)
-        });
-      } catch (fetchError) {
-        const requestEnd = Date.now();
-        diagnostics.push({
-          step: 'call_edge_function',
-          status: 'error',
-          message: 'Failed to fetch Edge Function',
-          details: {
-            fetch_error: fetchError instanceof Error ? fetchError.message : 'Unknown fetch error',
-            error_type: fetchError instanceof Error ? fetchError.constructor.name : typeof fetchError,
-            function_url: functionUrl,
-            supabase_url: supabaseUrl,
-            request_duration_ms: requestEnd - requestStart,
-            troubleshooting: {
-              check_url: 'Verify VITE_SUPABASE_URL in .env file',
-              expected_format: 'https://your-project-ref.supabase.co',
-              current_url: supabaseUrl
-            }
-          }
-        });
-        return {
-          success: false,
-          category: category,
-          groups_created: 0,
-          ungrouped_products: 0,
-          analysis_confidence: 0,
-          data: [],
-          error: `Calling Supabase Edge Function failed: ${fetchError instanceof Error ? fetchError.message : 'Network error'}`,
-          diagnostics
-        };
-      }
-      
-      const requestEnd = Date.now();
-      
-      diagnostics.push({
-        step: 'call_edge_function',
-        status: response.ok ? 'success' : 'error',
-        message: `Edge Function responded with status ${response.status}`,
-        details: {
-          status: response.status,
-          status_text: response.statusText,
-          headers: Object.fromEntries(response.headers.entries()),
-          request_duration_ms: requestEnd - requestStart,
-          response_url: response.url,
-          response_type: response.type
-        }
-      });
+  const formatPercentage = (value: number, total: number) => {
+    const percentage = (value / total) * 100;
+    return percentage.toFixed(1);
+  };
 
-      if (!response.ok) {
-        diagnostics.push({
-          step: 'parse_error_response',
-          status: 'loading',
-          message: 'Parsing error response from Edge Function'
-        });
+  return (
+    <div className="min-h-screen bg-black p-6" style={{
+      backgroundImage: `radial-gradient(circle at 20% 50%, rgba(0, 255, 255, 0.03) 0%, transparent 50%), 
+                       radial-gradient(circle at 80% 20%, rgba(0, 255, 255, 0.02) 0%, transparent 50%), 
+                       radial-gradient(circle at 40% 80%, rgba(0, 255, 255, 0.01) 0%, transparent 50%)`
+    }}>
+      <div className="max-w-7xl mx-auto space-y-6">
         
-        let errorData;
-        try {
-          const errorText = await response.text();
-          diagnostics.push({
-            step: 'error_response_text',
-            status: 'info',
-            message: 'Raw error response from Edge Function',
-            details: {
-              raw_text: errorText,
-              text_length: errorText.length
-            }
-          });
+        {/* Imperial Command Header */}
+        <div className="bg-gradient-to-r from-gray-900 to-gray-800 rounded-lg border border-cyan-400/30 shadow-lg shadow-cyan-400/10 p-6 relative overflow-hidden">
+          <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-blue-400 to-indigo-400"></div>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-4">
+              <button
+                onClick={onBack}
+                className="flex items-center space-x-2 px-4 py-2 bg-gray-800 border border-cyan-400/50 rounded text-cyan-300 hover:bg-gray-700 hover:border-cyan-400 transition-all duration-200 font-mono text-sm"
+              >
+                <ArrowLeft className="w-4 h-4" />
+                <span>RETURN TO COMMAND</span>
+              </button>
+              <div className="h-6 border-l border-cyan-400/30"></div>
+              <div className="flex items-center space-x-3">
+                <div className="w-12 h-12 bg-gradient-to-br from-blue-400 to-indigo-500 rounded-lg flex items-center justify-center shadow-lg border border-blue-300 relative">
+                  <Crown className="w-6 h-6 text-black" />
+                  <div className="absolute -top-1 -right-1 w-3 h-3 bg-emerald-400 rounded-full border border-black"></div>
+                </div>
+                <div>
+                  <h1 className="text-2xl font-bold text-cyan-300 font-mono tracking-wider">
+                    IMPERIAL COMMAND CENTER
+                  </h1>
+                  <p className="text-cyan-400/80 text-sm font-mono">
+                    Real-time Strategic Overview
+                  </p>
+                  <p className="text-teal-300 text-sm font-mono">EMPIRE: ОФИС-КИТ</p>
+                </div>
+              </div>
+            </div>
+            
+            <div className="text-center">
+              <div className="bg-gray-800/50 border border-cyan-400/30 rounded-lg px-4 py-2">
+                <p className="text-xl font-bold text-cyan-300 font-mono">
+                  {currentTime.toLocaleTimeString()}
+                </p>
+                <p className="text-cyan-400/80 font-mono text-sm">
+                  {currentTime.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Strategic Resource Indicators */}
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="bg-gradient-to-br from-gray-900 to-gray-800 rounded-xl border border-cyan-400/30 shadow-xl p-4 hover:border-cyan-400/50 transition-all duration-300 relative overflow-hidden">
+            <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-emerald-400 to-teal-400"></div>
+            <div className="flex items-center justify-between mb-3">
+              <div className="w-8 h-8 bg-gradient-to-br from-emerald-400 to-teal-500 rounded-lg flex items-center justify-center shadow-lg border border-emerald-300">
+                <DollarSign className="w-4 h-4 text-black" />
+              </div>
+              <TrendingUp className="w-4 h-4 text-emerald-400" />
+            </div>
+            <h3 className="text-xs font-mono text-cyan-400 mb-1 uppercase tracking-wider">Imperial Treasury</h3>
+            <p className="text-lg font-bold text-emerald-300 font-mono">{formatCurrency(kpiData.totalRevenue)}</p>
+            <p className="text-emerald-400/60 text-xs font-mono">Credits Generated</p>
+          </div>
+
+          <div className="bg-gradient-to-br from-gray-900 to-gray-800 rounded-xl border border-cyan-400/30 shadow-xl p-4 hover:border-cyan-400/50 transition-all duration-300 relative overflow-hidden">
+            <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-emerald-400 to-teal-400"></div>
+            <div className="flex items-center justify-between mb-3">
+              <div className="w-8 h-8 bg-gradient-to-br from-emerald-400 to-teal-500 rounded-lg flex items-center justify-center shadow-lg border border-emerald-300">
+                <Package className="w-4 h-4 text-black" />
+              </div>
+              <BarChart3 className="w-4 h-4 text-emerald-400" />
+            </div>
+            <h3 className="text-xs font-mono text-cyan-400 mb-1 uppercase tracking-wider">Top 7 Resources</h3>
+            <p className="text-lg font-bold text-emerald-300 font-mono">{kpiData.topProductsShare}%</p>
+            <p className="text-emerald-400/60 text-xs font-mono">Revenue Share</p>
+          </div>
+
+          <div className="bg-gradient-to-br from-gray-900 to-gray-800 rounded-xl border border-cyan-400/30 shadow-xl p-4 hover:border-cyan-400/50 transition-all duration-300 relative overflow-hidden">
+            <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-purple-400 to-pink-400"></div>
+            <div className="flex items-center justify-between mb-3">
+              <div className="w-8 h-8 bg-gradient-to-br from-purple-400 to-pink-500 rounded-lg flex items-center justify-center shadow-lg border border-purple-300">
+                <Users className="w-4 h-4 text-black" />
+              </div>
+              <TrendingUp className="w-4 h-4 text-purple-400" />
+            </div>
+            <h3 className="text-xs font-mono text-cyan-400 mb-1 uppercase tracking-wider">Major 14 Factions</h3>
+            <p className="text-lg font-bold text-purple-300 font-mono">{kpiData.majorClientsShare}%</p>
+            <p className="text-purple-400/60 text-xs font-mono">Trade Influence</p>
+          </div>
+
+          <div className="bg-gradient-to-br from-gray-900 to-gray-800 rounded-xl border border-cyan-400/30 shadow-xl p-4 hover:border-cyan-400/50 transition-all duration-300 relative overflow-hidden">
+            <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-blue-400 to-indigo-400"></div>
+            <div className="flex items-center justify-between mb-3">
+              <div className="w-8 h-8 bg-gradient-to-br from-blue-400 to-indigo-500 rounded-lg flex items-center justify-center shadow-lg border border-blue-300">
+                <Activity className="w-4 h-4 text-black" />
+              </div>
+              <TrendingUp className="w-4 h-4 text-blue-400" />
+            </div>
+            <h3 className="text-xs font-mono text-cyan-400 mb-1 uppercase tracking-wider">Avg Efficiency</h3>
+            <p className="text-lg font-bold text-blue-300 font-mono">{kpiData.averageProductMargin}%</p>
+            <p className="text-blue-400/60 text-xs font-mono">Resource Yield</p>
+          </div>
+        </div>
+
+        {/* Strategic Intelligence Panels */}
+        <div className="space-y-6 lg:grid lg:grid-cols-2 lg:gap-6 lg:space-y-0">
           
-          errorData = JSON.parse(errorText);
-        } catch (parseError) {
-          errorData = { 
-            error: 'Failed to parse error response',
-            parse_error: parseError instanceof Error ? parseError.message : 'Unknown parse error',
-            raw_response: errorText || 'No response text'
-          };
-        }
-        
-        diagnostics.push({
-          step: 'parse_error_response',
-          status: 'error',
-          message: 'Edge Function returned error',
-          details: {
-            status: response.status,
-            error_data: errorData,
-            parsed_successfully: typeof errorData === 'object'
-          }
-        });
-        
-        throw new Error(errorData.error || `Analysis API error: ${response.status} ${response.statusText}`);
-      }
+          {/* Major Trade Factions */}
+          <div className="bg-gradient-to-br from-gray-900 to-gray-800 rounded-xl border border-cyan-400/30 shadow-xl p-6 relative overflow-hidden">
+            <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-blue-400 to-indigo-400"></div>
+            <div className="absolute top-4 right-4">
+              <span className="bg-gray-800/60 border border-blue-400/30 text-blue-400 text-xs px-2 py-1 rounded font-mono">
+                TRADE-01
+              </span>
+            </div>
+            
+            <div className="flex items-center gap-3 mb-6">
+              <div className="w-10 h-10 bg-gradient-to-br from-blue-400 to-indigo-500 rounded-lg flex items-center justify-center shadow-lg border border-blue-300">
+                <Users className="w-5 h-5 text-black" />
+              </div>
+              <div>
+                <h2 className="text-xl font-bold text-cyan-300 font-mono tracking-wide">MAJOR TRADE FACTIONS</h2>
+                <p className="text-cyan-400/80 text-sm font-mono">Strategic Partnership Analysis</p>
+              </div>
+            </div>
+            
+            <div className="space-y-3">
+              {topClients.map((client, index) => (
+                <div
+                  key={client.id}
+                  className="bg-gray-800/40 border border-cyan-400/20 rounded-lg p-4 hover:border-cyan-400/40 hover:bg-gray-800/60 transition-all duration-200 relative"
+                >
+                  <div className="absolute left-0 top-0 w-1 h-full bg-gradient-to-b from-indigo-400 to-purple-500 rounded-l-lg"></div>
+                  
+                  <div className="flex items-start gap-3 ml-2">
+                    <div className="w-6 h-6 bg-gradient-to-br from-indigo-400 to-purple-500 rounded-lg flex items-center justify-center text-black font-bold text-xs shadow-lg flex-shrink-0 border border-indigo-300">
+                      {index + 1}
+                    </div>
+                    <div className="flex-1 min-w-0 space-y-2">
+                      <h3 className="font-semibold text-cyan-300 text-sm leading-tight font-mono">
+                        {client.name}
+                      </h3>
+                      
+                      <div className="flex flex-wrap items-center gap-2 text-xs">
+                        <span className="bg-gray-700/50 border border-cyan-400/30 text-cyan-400 px-2 py-1 rounded font-mono">
+                          {client.industry}
+                        </span>
+                        <span className="text-cyan-400/60 font-mono">•</span>
+                        <span className="text-cyan-300 font-mono">{formatPercentage(client.sales, kpiData.totalRevenue)}%</span>
+                      </div>
+                      
+                      <div className="flex items-center justify-between">
+                        <div className="font-bold text-cyan-300 text-sm font-mono">
+                          {formatCurrency(client.sales)}
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <span className="text-xs font-mono text-emerald-400 bg-emerald-400/10 border border-emerald-400/30 px-2 py-1 rounded">
+                            +{client.growth}%
+                          </span>
+                          <ChevronRight className="w-3 h-3 text-cyan-400" />
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
 
-      diagnostics.push({
-        step: 'parse_success_response',
-        status: 'loading',
-        message: 'Parsing successful response from Edge Function'
-      });
-      
-      let result: AnalysisResult;
-      try {
-        const responseText = await response.text();
-        diagnostics.push({
-          step: 'success_response_text',
-          status: 'info',
-          message: 'Raw success response from Edge Function',
-          details: {
-            raw_text: responseText.slice(0, 1000) + (responseText.length > 1000 ? '...[truncated]' : ''),
-            full_length: responseText.length,
-            starts_with: responseText.slice(0, 100),
-            ends_with: responseText.slice(-100)
-          }
-        });
-        
-        result = JSON.parse(responseText);
-        
-        diagnostics.push({
-          step: 'response_parsed',
-          status: 'success',
-          message: 'Successfully parsed Edge Function response',
-          details: {
-            response_keys: Object.keys(result),
-            has_diagnostics: !!(result as any).diagnostics,
-            diagnostics_count: (result as any).diagnostics?.length || 0
-          }
-        });
-        
-      } catch (parseError) {
-        diagnostics.push({
-          step: 'parse_success_response',
-          status: 'error',
-          message: 'Failed to parse success response',
-          details: {
-            parse_error: parseError instanceof Error ? parseError.message : 'Unknown error',
-            response_type: typeof responseText,
-            response_preview: responseText?.slice(0, 200)
-          }
-        });
-        throw new Error(`Failed to parse success response: ${parseError instanceof Error ? parseError.message : 'Unknown error'}`);
-      }
-      
-      // Merge Edge Function diagnostics with our own
-      if ((result as any).diagnostics && Array.isArray((result as any).diagnostics)) {
-        diagnostics.push({
-          step: 'merge_diagnostics',
-          status: 'info',
-          message: `Merging ${(result as any).diagnostics.length} diagnostics from Edge Function`,
-          details: {
-            edge_function_diagnostics: (result as any).diagnostics.length,
-            frontend_diagnostics: diagnostics.length
-          }
-        });
-        
-        // Add Edge Function diagnostics to our diagnostics array
-        diagnostics.push(...(result as any).diagnostics);
-      }
-      
-      diagnostics.push({
-        step: 'parse_success_response',
-        status: 'success',
-        message: 'Successfully parsed Edge Function response',
-        details: {
-          success: result.success,
-          groups_created: result.groups_created,
-          analysis_confidence: result.analysis_confidence
-        }
-      });
-      
-      // Add diagnostics to result
-      result.diagnostics = diagnostics;
-      return result;
+          {/* Strategic Resources */}
+          <div className="bg-gradient-to-br from-gray-900 to-gray-800 rounded-xl border border-cyan-400/30 shadow-xl p-6 relative overflow-hidden">
+            <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-emerald-400 to-teal-400"></div>
+            <div className="absolute top-4 right-4">
+              <span className="bg-gray-800/60 border border-emerald-400/30 text-emerald-400 text-xs px-2 py-1 rounded font-mono">
+                RES-01
+              </span>
+            </div>
+            
+            <div className="flex items-center gap-3 mb-6">
+              <div className="w-10 h-10 bg-gradient-to-br from-emerald-400 to-teal-500 rounded-lg flex items-center justify-center shadow-lg border border-emerald-300">
+                <Package className="w-5 h-5 text-black" />
+              </div>
+              <div>
+                <h2 className="text-xl font-bold text-cyan-300 font-mono tracking-wide">STRATEGIC RESOURCES</h2>
+                <p className="text-cyan-400/80 text-sm font-mono">Top Performing Assets</p>
+              </div>
+            </div>
+            
+            <div className="space-y-3">
+              {topProducts.map((product, index) => (
+                <div
+                  key={product.id}
+                  className="bg-gray-800/40 border border-cyan-400/20 rounded-lg p-4 hover:border-cyan-400/40 hover:bg-gray-800/60 transition-all duration-200 relative"
+                >
+                  <div className="absolute left-0 top-0 w-1 h-full bg-gradient-to-b from-emerald-400 to-teal-500 rounded-l-lg"></div>
+                  
+                  <div className="flex items-start gap-3 ml-2">
+                    <div className="w-6 h-6 bg-gradient-to-br from-emerald-400 to-teal-500 rounded-lg flex items-center justify-center text-black font-bold text-xs shadow-lg flex-shrink-0 border border-emerald-300">
+                      {index + 1}
+                    </div>
+                    <div className="flex-1 min-w-0 space-y-2">
+                      <h3 className="font-semibold text-cyan-300 text-sm leading-tight font-mono">
+                        {product.name}
+                      </h3>
+                      
+                      <div className="flex flex-wrap items-center gap-2 text-xs">
+                        <span className="bg-gray-700/50 border border-cyan-400/30 text-cyan-400 px-2 py-1 rounded font-mono">
+                          {product.category}
+                        </span>
+                        <span className="text-cyan-400/60 font-mono">•</span>
+                        <span className="text-cyan-300 font-mono">{formatPercentage(product.sales, kpiData.totalRevenue)}%</span>
+                      </div>
+                      
+                      <div className="flex items-center justify-between">
+                        <div className="font-bold text-cyan-300 text-sm font-mono">
+                          {formatCurrency(product.sales)}
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <span className="text-xs font-mono text-emerald-400 bg-emerald-400/10 border border-emerald-400/30 px-2 py-1 rounded">
+                            +{product.growth.toFixed(1)}%
+                          </span>
+                          <ChevronRight className="w-3 h-3 text-cyan-400" />
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
 
-    } catch (error) {
-      diagnostics.push({
-        step: 'error',
-        status: 'error',
-        message: 'Analysis failed with exception',
-        details: {
-          error: error instanceof Error ? error.message : 'Unknown error',
-          error_type: error instanceof Error ? error.constructor.name : typeof error,
-          stack: error instanceof Error ? error.stack : undefined
-        }
-      });
-      
-      console.error('Product analysis service error:', error);
-      return {
-        success: false,
-        category: category,
-        groups_created: 0,
-        ungrouped_products: 0,
-        analysis_confidence: 0,
-        data: [],
-        error: error instanceof Error ? error.message : 'Unknown error',
-        diagnostics
-      };
-    }
-  }
+        {/* Command Status */}
+        <div className="bg-gradient-to-r from-gray-900 to-gray-800 border border-cyan-400/30 rounded-lg p-4 relative overflow-hidden">
+          <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-emerald-400 to-cyan-400"></div>
+          <div className="flex items-center justify-center space-x-6">
+            <div className="flex items-center space-x-2">
+              <div className="w-3 h-3 bg-emerald-400 rounded-full animate-pulse shadow-lg shadow-emerald-400/50"></div>
+              <span className="text-emerald-300 font-mono font-bold text-sm">EXECUTIVE DASHBOARD ACTIVE</span>
+            </div>
+            <div className="text-cyan-400/60 font-mono text-sm">|</div>
+            <div className="flex items-center space-x-2">
+              <Zap className="w-4 h-4 text-cyan-400" />
+              <span className="text-cyan-400/80 font-mono text-sm">REAL-TIME ANALYTICS</span>
+            </div>
+            <div className="text-cyan-400/60 font-mono text-sm">|</div>
+            <div className="flex items-center space-x-2">
+              <div className="w-3 h-3 bg-emerald-400 rounded-full animate-pulse shadow-lg shadow-emerald-400/50"></div>
+              <span className="text-emerald-400 font-mono text-sm">ORGANIZATION: ОФИС-КИТ</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
 
-  /**
-   * Get all available product categories for analysis
-   */
-  static async getCategories(): Promise<{
-    categories: string[];
-    diagnostics: Array<{
-      step: string;
-      status: 'success' | 'error' | 'info';
-      message: string;
-      details?: any;
-    }>;
-  }> {
-    const diagnostics: Array<{ step: string; status: 'success' | 'error' | 'info'; message: string; details?: any }> = [];
-    
-    try {
-      // 1. Get count of all products
-      const { count, error: countError } = await supabaseAdmin
-        .from('products')
-        .select('*', { count: 'exact', head: true });
-
-      if (countError) {
-        diagnostics.push({
-          step: 'connection_error',
-          status: 'error',
-          message: 'Database connection failed',
-          details: { error: countError.message }
-        });
-        return { categories: [], diagnostics };
-      }
-
-      diagnostics.push({
-        step: 'connection',
-        status: 'success',
-        message: `TABLE: products contains ${count} total rows`,
-      });
-
-      // 2. Test query - get sample data first
-      const { data: sampleData, error: sampleError } = await supabaseAdmin
-        .from('products')
-        .select('id, category_name, supplier')
-        .limit(10);
-
-      if (sampleError) {
-        diagnostics.push({
-          step: 'sample_query_error',
-          status: 'error',
-          message: 'Failed to fetch sample data',
-          details: { error: sampleError.message }
-        });
-        return { categories: [], diagnostics };
-      }
-
-      diagnostics.push({
-        step: 'sample_data',
-        status: 'success',
-        message: `Sample data retrieved: ${sampleData?.length || 0} rows`,
-        details: {
-          sample: sampleData?.map(row => ({
-            id: row.id?.slice(0, 8),
-            category_name: row.category_name,
-            supplier: row.supplier
-          }))
-        }
-      });
-
-      if (count === 0) {
-        diagnostics.push({
-          step: 'no_data',
-          status: 'error',
-          message: 'No products found in database'
-        }
-        )
-      }
-      // 3. Get all category_name values
-      const { data, error } = await supabaseAdmin
-        .from('products')
-        .select('category_name')
-        .not('category_name', 'is', null)
-        .neq('category_name', '')
-        .order('category_name');
-
-      // Use a direct SQL query to get DISTINCT categories
-      const { data: distinctData, error: distinctError } = await supabaseAdmin
-        .rpc('get_distinct_categories');
-
-      // If RPC doesn't work, fall back to processing the data manually
-      const categoryData = distinctError ? data : distinctData;
-      const finalError = distinctError ? error : distinctError;
-
-      if (finalError && error) {
-        diagnostics.push({
-          step: 'query_error',
-          status: 'error',
-          message: 'Failed to fetch categories',
-          details: { error: finalError?.message || error.message }
-        });
-        return { categories: [], diagnostics };
-        return { categories: [], diagnostics };
-      }
-      
-      diagnostics.push({
-        step: 'raw_query_result',
-        status: 'info',
-        message: `Query returned ${categoryData?.length || 0} rows`,
-        details: {
-          first_10_results: categoryData?.slice(0, 10).map(row => 
-            typeof row === 'string' ? row : row.category_name
-          )
-        }
-      });
-      
-      const allCategoryValues = categoryData?.map(p => 
-        typeof p === 'string' ? p : p.category_name
-      ).filter(c => c && c.trim() !== '') || [];
-      const uniqueCategories = [...new Set(allCategoryValues)];
-      
-      diagnostics.push({
-        step: 'processing_result',
-        status: 'info',
-        message: `Processed ${allCategoryValues.length} category values into ${uniqueCategories.length} unique categories`,
-        details: {
-          all_values_count: allCategoryValues.length,
-          unique_categories: uniqueCategories,
-          sample_raw_values: allCategoryValues.slice(0, 10)
-        }
-      });
-
-      diagnostics.push({
-        step: 'final_categories',
-        status: 'success',
-        message: `Found ${uniqueCategories.length} unique categories`,
-        details: {
-          categories: uniqueCategories
-        }
-      });
-      
-      return { categories: uniqueCategories, diagnostics };
-
-    } catch (error) {
-      diagnostics.push({
-        step: 'error',
-        status: 'error',
-        message: 'Unexpected error',
-        details: { error: error instanceof Error ? error.message : 'Unknown error' }
-      });
-      return { categories: [], diagnostics };
-    }
-  }
-
-  /**
-   * Get existing AI analysis results for a category
-   */
-  static async getAnalysisResults(category?: string): Promise<ProductGroup[]> {
-    try {
-      let query = supabaseAdmin
-        .from('ai_product_groups')
-        .select('*')
-        .order('created_at', { ascending: false });
-
-      if (category) {
-        query = query.eq('category', category);
-      }
-
-      const { data, error } = await query;
-
-      if (error) {
-        console.error('Failed to fetch analysis results:', error);
-        return [];
-      }
-
-      return data || [];
-
-    } catch (error) {
-      console.error('Get analysis results error:', error);
-      return [];
-    }
-  }
-
-  /**
-   * Delete analysis results for a category (to re-run analysis)
-   */
-  static async clearCategoryAnalysis(category: string): Promise<boolean> {
-    try {
-      const { error } = await supabaseAdmin
-        .from('ai_product_groups')
-        .delete()
-        .eq('category', category);
-
-      if (error) {
-        console.error('Failed to clear category analysis:', error);
-        return false;
-      }
-
-      return true;
-    } catch (error) {
-      console.error('Clear analysis error:', error);
-      return false;
-    }
-  }
-
-  /**
-   * Get analysis statistics across all categories
-   */
-  static async getAnalysisStats() {
-    try {
-      const { data, error } = await supabaseAdmin
-        .from('ai_product_groups')
-        .select('category, confidence_score, created_at');
-
-      if (error) {
-        console.error('Failed to fetch analysis stats:', error);
-        return null;
-      }
-
-      const stats = {
-        total_groups: data?.length || 0,
-        categories_analyzed: new Set(data?.map(g => g.category)).size,
-        avg_confidence: data?.length > 0 
-          ? (data.reduce((sum, g) => sum + (g.confidence_score || 0), 0) / data.length).toFixed(2)
-          : 0,
-        last_analysis: data?.length > 0 
-          ? new Date(Math.max(...data.map(g => new Date(g.created_at).getTime()))).toLocaleDateString()
-          : 'Never'
-      };
-
-      return stats;
-    } catch (error) {
-      console.error('Get analysis stats error:', error);
-      return null;
-    }
-  }
-}
+export default CEODashboard;

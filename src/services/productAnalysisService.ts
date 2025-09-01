@@ -1,351 +1,263 @@
-import React, { useState, useEffect } from 'react';
-import { TrendingUp, Users, Package, DollarSign, BarChart3, Activity, Eye, ChevronRight, ArrowLeft, Crown, Zap } from 'lucide-react';
+import { supabaseAdmin } from '../lib/supabase';
 
-interface Client {
-  id: string;
-  name: string;
-  sales: number;
-  growth: number;
-  industry: string;
-}
-
-interface Product {
-  id: string;
-  name: string;
+export interface AnalysisResult {
   category: string;
-  sales: number;
-  units: number;
-  growth: number;
+  groups: AnalysisGroup[];
+  totalProducts: number;
+  averagePrice: number;
+  priceRange: {
+    min: number;
+    max: number;
+  };
+  topVendors: Array<{
+    name: string;
+    count: number;
+  }>;
 }
 
-interface KPIData {
-  totalRevenue: number;
-  topProductsShare: number;
-  majorClientsShare: number;
-  averageProductMargin: number;
+export interface AnalysisGroup {
+  id: string;
+  group_name: string;
+  group_description?: string;
+  product_names: string[];
+  confidence_score?: number;
+  price_analysis?: any;
+  vendor_analysis?: any;
 }
 
-interface CEODashboardProps {
-  onBack: () => void;
+export interface AnalysisStats {
+  totalCategories: number;
+  totalGroups: number;
+  totalProducts: number;
+  lastAnalysisDate?: string;
 }
 
-const CEODashboard: React.FC<CEODashboardProps> = ({ onBack }) => {
-  const [currentTime, setCurrentTime] = useState(new Date());
+class ProductAnalysisService {
+  async getCategories(): Promise<string[]> {
+    try {
+      const { data, error } = await supabaseAdmin
+        .from('ozon_data')
+        .select('category_level1')
+        .not('category_level1', 'is', null);
 
-  useEffect(() => {
-    const timer = setInterval(() => {
-      setCurrentTime(new Date());
-    }, 1000);
+      if (error) throw error;
 
-    return () => clearInterval(timer);
-  }, []);
+      const categories = [...new Set(data.map(item => item.category_level1))];
+      return categories.filter(cat => cat && cat.trim());
+    } catch (error) {
+      console.error('Error fetching categories:', error);
+      throw error;
+    }
+  }
 
-  // Demo data - will be replaced with real data later
-  const kpiData: KPIData = {
-    totalRevenue: 3906946,
-    topProductsShare: 94.04,
-    majorClientsShare: 80.3,
-    averageProductMargin: 39.2
-  };
+  async getAnalysisStats(): Promise<AnalysisStats> {
+    try {
+      const [categoriesResult, groupsResult, productsResult] = await Promise.all([
+        supabaseAdmin.from('ozon_data').select('category_level1', { count: 'exact' }),
+        supabaseAdmin.from('ai_product_groups').select('id', { count: 'exact' }),
+        supabaseAdmin.from('ai_product_groups').select('product_names')
+      ]);
 
-  const topClients: Client[] = [
-    { id: '1', name: 'Интернет Решения', sales: 850323, growth: 44, industry: 'E-commerce' },
-    { id: '2', name: 'Бердандер', sales: 384399, growth: 42, industry: 'Manufacturing' },
-    { id: '3', name: 'Руссблaнкоиздат', sales: 381484, growth: 43, industry: 'Publishing' },
-    { id: '4', name: 'Хаскел/Мерлион', sales: 240359, growth: 44, industry: 'Technology' },
-    { id: '5', name: 'ВсеИнструменты.ру', sales: 239115, growth: 39, industry: 'E-commerce' },
-    { id: '6', name: 'АРВАДА', sales: 192300, growth: 24, industry: 'Retail' },
-    { id: '7', name: 'ДНС Ритейл', sales: 164424, growth: 44, industry: 'Electronics' },
-    { id: '8', name: 'ОнЛайн Трейд', sales: 164407, growth: 38, industry: 'E-commerce' },
-    { id: '9', name: 'Компсервис', sales: 134523, growth: 40, industry: 'IT Services' },
-    { id: '10', name: 'АЛЬФАПРИНТ МЕНЕДЖМЕНТ', sales: 130450, growth: 44, industry: 'Printing' },
-    { id: '11', name: 'Мишин Александр Николаевич ИП', sales: 76356, growth: 44, industry: 'Individual' },
-    { id: '12', name: 'Сибирский успех', sales: 66374, growth: 44, industry: 'Regional' },
-    { id: '13', name: 'Павлов Николай Александрович ИП', sales: 59917, growth: 43, industry: 'Individual' },
-    { id: '14', name: 'Триовист', sales: 53876, growth: 33, industry: 'Consulting' }
-  ];
+      const uniqueCategories = new Set();
+      if (categoriesResult.data) {
+        categoriesResult.data.forEach(item => {
+          if (item.category_level1) uniqueCategories.add(item.category_level1);
+        });
+      }
 
-  const topProducts: Product[] = [
-    { id: '1', name: 'Уничтожители Office Kit', category: 'Office Equipment', sales: 1840810, units: 0, growth: 44.28 },
-    { id: '2', name: 'Пленка в пакетах', category: 'Packaging', sales: 839463, units: 0, growth: 35.26 },
-    { id: '3', name: 'Ламинаторы пакетные', category: 'Office Equipment', sales: 270118, units: 0, growth: 39.83 },
-    { id: '4', name: 'Переплет (Renz?)', category: 'Binding', sales: 268723, units: 0, growth: 42.78 },
-    { id: '5', name: 'Переплетчики Office Kit', category: 'Office Equipment', sales: 246391, units: 0, growth: 41.81 },
-    { id: '6', name: 'Уничтожители HSM офисное', category: 'Office Equipment', sales: 118939, units: 0, growth: 39.21 },
-    { id: '7', name: 'Пружины', category: 'Binding', sales: 89487, units: 0, growth: 31.01 }
-  ];
+      let totalProducts = 0;
+      if (productsResult.data) {
+        productsResult.data.forEach(group => {
+          if (group.product_names && Array.isArray(group.product_names)) {
+            totalProducts += group.product_names.length;
+          }
+        });
+      }
 
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD',
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 0,
-    }).format(amount);
-  };
+      // Get last analysis date
+      const { data: lastAnalysis } = await supabaseAdmin
+        .from('ai_product_groups')
+        .select('created_at')
+        .order('created_at', { ascending: false })
+        .limit(1);
 
-  const formatPercentage = (value: number, total: number) => {
-    const percentage = (value / total) * 100;
-    return percentage.toFixed(1);
-  };
+      return {
+        totalCategories: uniqueCategories.size,
+        totalGroups: groupsResult.count || 0,
+        totalProducts,
+        lastAnalysisDate: lastAnalysis?.[0]?.created_at
+      };
+    } catch (error) {
+      console.error('Error fetching analysis stats:', error);
+      throw error;
+    }
+  }
 
-  return (
-    <div className="min-h-screen bg-black p-6" style={{
-      backgroundImage: `radial-gradient(circle at 20% 50%, rgba(0, 255, 255, 0.03) 0%, transparent 50%), 
-                       radial-gradient(circle at 80% 20%, rgba(0, 255, 255, 0.02) 0%, transparent 50%), 
-                       radial-gradient(circle at 40% 80%, rgba(0, 255, 255, 0.01) 0%, transparent 50%)`
-    }}>
-      <div className="max-w-7xl mx-auto space-y-6">
+  async getAnalysisResults(): Promise<AnalysisResult[]> {
+    try {
+      const { data: groups, error } = await supabaseAdmin
+        .from('ai_product_groups')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+
+      const groupsByCategory = groups?.reduce((acc, group) => {
+        const category = group.category;
+        if (!acc[category]) {
+          acc[category] = [];
+        }
+        acc[category].push(group);
+        return acc;
+      }, {} as Record<string, AnalysisGroup[]>) || {};
+
+      const results: AnalysisResult[] = [];
+
+      for (const [category, categoryGroups] of Object.entries(groupsByCategory)) {
+        // Get all product names for this category
+        const allProductNames = categoryGroups.flatMap(g => g.product_names || []);
         
-        {/* Imperial Command Header */}
-        <div className="bg-gradient-to-r from-gray-900 to-gray-800 rounded-lg border border-cyan-400/30 shadow-lg shadow-cyan-400/10 p-6 relative overflow-hidden">
-          <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-blue-400 to-indigo-400"></div>
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-4">
-              <button
-                onClick={onBack}
-                className="flex items-center space-x-2 px-4 py-2 bg-gray-800 border border-cyan-400/50 rounded text-cyan-300 hover:bg-gray-700 hover:border-cyan-400 transition-all duration-200 font-mono text-sm"
-              >
-                <ArrowLeft className="w-4 h-4" />
-                <span>RETURN TO COMMAND</span>
-              </button>
-              <div className="h-6 border-l border-cyan-400/30"></div>
-              <div className="flex items-center space-x-3">
-                <div className="w-12 h-12 bg-gradient-to-br from-blue-400 to-indigo-500 rounded-lg flex items-center justify-center shadow-lg border border-blue-300 relative">
-                  <Crown className="w-6 h-6 text-black" />
-                  <div className="absolute -top-1 -right-1 w-3 h-3 bg-emerald-400 rounded-full border border-black"></div>
-                </div>
-                <div>
-                  <h1 className="text-2xl font-bold text-cyan-300 font-mono tracking-wider">
-                    IMPERIAL COMMAND CENTER
-                  </h1>
-                  <p className="text-cyan-400/80 text-sm font-mono">
-                    Real-time Strategic Overview
-                  </p>
-                  <p className="text-teal-300 text-sm font-mono">EMPIRE: ОФИС-КИТ</p>
-                </div>
-              </div>
-            </div>
-            
-            <div className="text-center">
-              <div className="bg-gray-800/50 border border-cyan-400/30 rounded-lg px-4 py-2">
-                <p className="text-xl font-bold text-cyan-300 font-mono">
-                  {currentTime.toLocaleTimeString()}
-                </p>
-                <p className="text-cyan-400/80 font-mono text-sm">
-                  {currentTime.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
-                </p>
-              </div>
-            </div>
-          </div>
-        </div>
+        // Get product data for price analysis
+        const { data: products } = await supabaseAdmin
+          .from('ozon_data')
+          .select('average_price, seller')
+          .in('product_name', allProductNames);
 
-        {/* Strategic Resource Indicators */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-          <div className="bg-gradient-to-br from-gray-900 to-gray-800 rounded-xl border border-cyan-400/30 shadow-xl p-4 hover:border-cyan-400/50 transition-all duration-300 relative overflow-hidden">
-            <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-emerald-400 to-teal-400"></div>
-            <div className="flex items-center justify-between mb-3">
-              <div className="w-8 h-8 bg-gradient-to-br from-emerald-400 to-teal-500 rounded-lg flex items-center justify-center shadow-lg border border-emerald-300">
-                <DollarSign className="w-4 h-4 text-black" />
-              </div>
-              <TrendingUp className="w-4 h-4 text-emerald-400" />
-            </div>
-            <h3 className="text-xs font-mono text-cyan-400 mb-1 uppercase tracking-wider">Imperial Treasury</h3>
-            <p className="text-lg font-bold text-emerald-300 font-mono">{formatCurrency(kpiData.totalRevenue)}</p>
-            <p className="text-emerald-400/60 text-xs font-mono">Credits Generated</p>
-          </div>
+        const prices = products?.map(p => p.average_price).filter(p => p > 0) || [];
+        const vendors = products?.map(p => p.seller).filter(s => s) || [];
+        
+        const averagePrice = prices.length ? prices.reduce((a, b) => a + b, 0) / prices.length : 0;
+        const minPrice = prices.length ? Math.min(...prices) : 0;
+        const maxPrice = prices.length ? Math.max(...prices) : 0;
 
-          <div className="bg-gradient-to-br from-gray-900 to-gray-800 rounded-xl border border-cyan-400/30 shadow-xl p-4 hover:border-cyan-400/50 transition-all duration-300 relative overflow-hidden">
-            <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-emerald-400 to-teal-400"></div>
-            <div className="flex items-center justify-between mb-3">
-              <div className="w-8 h-8 bg-gradient-to-br from-emerald-400 to-teal-500 rounded-lg flex items-center justify-center shadow-lg border border-emerald-300">
-                <Package className="w-4 h-4 text-black" />
-              </div>
-              <BarChart3 className="w-4 h-4 text-emerald-400" />
-            </div>
-            <h3 className="text-xs font-mono text-cyan-400 mb-1 uppercase tracking-wider">Top 7 Resources</h3>
-            <p className="text-lg font-bold text-emerald-300 font-mono">{kpiData.topProductsShare}%</p>
-            <p className="text-emerald-400/60 text-xs font-mono">Revenue Share</p>
-          </div>
+        // Count vendors
+        const vendorCounts = vendors.reduce((acc, vendor) => {
+          acc[vendor] = (acc[vendor] || 0) + 1;
+          return acc;
+        }, {} as Record<string, number>);
 
-          <div className="bg-gradient-to-br from-gray-900 to-gray-800 rounded-xl border border-cyan-400/30 shadow-xl p-4 hover:border-cyan-400/50 transition-all duration-300 relative overflow-hidden">
-            <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-purple-400 to-pink-400"></div>
-            <div className="flex items-center justify-between mb-3">
-              <div className="w-8 h-8 bg-gradient-to-br from-purple-400 to-pink-500 rounded-lg flex items-center justify-center shadow-lg border border-purple-300">
-                <Users className="w-4 h-4 text-black" />
-              </div>
-              <TrendingUp className="w-4 h-4 text-purple-400" />
-            </div>
-            <h3 className="text-xs font-mono text-cyan-400 mb-1 uppercase tracking-wider">Major 14 Factions</h3>
-            <p className="text-lg font-bold text-purple-300 font-mono">{kpiData.majorClientsShare}%</p>
-            <p className="text-purple-400/60 text-xs font-mono">Trade Influence</p>
-          </div>
+        const topVendors = Object.entries(vendorCounts)
+          .sort(([, a], [, b]) => b - a)
+          .slice(0, 5)
+          .map(([name, count]) => ({ name, count }));
 
-          <div className="bg-gradient-to-br from-gray-900 to-gray-800 rounded-xl border border-cyan-400/30 shadow-xl p-4 hover:border-cyan-400/50 transition-all duration-300 relative overflow-hidden">
-            <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-blue-400 to-indigo-400"></div>
-            <div className="flex items-center justify-between mb-3">
-              <div className="w-8 h-8 bg-gradient-to-br from-blue-400 to-indigo-500 rounded-lg flex items-center justify-center shadow-lg border border-blue-300">
-                <Activity className="w-4 h-4 text-black" />
-              </div>
-              <TrendingUp className="w-4 h-4 text-blue-400" />
-            </div>
-            <h3 className="text-xs font-mono text-cyan-400 mb-1 uppercase tracking-wider">Avg Efficiency</h3>
-            <p className="text-lg font-bold text-blue-300 font-mono">{kpiData.averageProductMargin}%</p>
-            <p className="text-blue-400/60 text-xs font-mono">Resource Yield</p>
-          </div>
-        </div>
+        results.push({
+          category,
+          groups: categoryGroups,
+          totalProducts: allProductNames.length,
+          averagePrice,
+          priceRange: { min: minPrice, max: maxPrice },
+          topVendors
+        });
+      }
 
-        {/* Strategic Intelligence Panels */}
-        <div className="space-y-6 lg:grid lg:grid-cols-2 lg:gap-6 lg:space-y-0">
-          
-          {/* Major Trade Factions */}
-          <div className="bg-gradient-to-br from-gray-900 to-gray-800 rounded-xl border border-cyan-400/30 shadow-xl p-6 relative overflow-hidden">
-            <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-blue-400 to-indigo-400"></div>
-            <div className="absolute top-4 right-4">
-              <span className="bg-gray-800/60 border border-blue-400/30 text-blue-400 text-xs px-2 py-1 rounded font-mono">
-                TRADE-01
-              </span>
-            </div>
-            
-            <div className="flex items-center gap-3 mb-6">
-              <div className="w-10 h-10 bg-gradient-to-br from-blue-400 to-indigo-500 rounded-lg flex items-center justify-center shadow-lg border border-blue-300">
-                <Users className="w-5 h-5 text-black" />
-              </div>
-              <div>
-                <h2 className="text-xl font-bold text-cyan-300 font-mono tracking-wide">MAJOR TRADE FACTIONS</h2>
-                <p className="text-cyan-400/80 text-sm font-mono">Strategic Partnership Analysis</p>
-              </div>
-            </div>
-            
-            <div className="space-y-3">
-              {topClients.map((client, index) => (
-                <div
-                  key={client.id}
-                  className="bg-gray-800/40 border border-cyan-400/20 rounded-lg p-4 hover:border-cyan-400/40 hover:bg-gray-800/60 transition-all duration-200 relative"
-                >
-                  <div className="absolute left-0 top-0 w-1 h-full bg-gradient-to-b from-indigo-400 to-purple-500 rounded-l-lg"></div>
-                  
-                  <div className="flex items-start gap-3 ml-2">
-                    <div className="w-6 h-6 bg-gradient-to-br from-indigo-400 to-purple-500 rounded-lg flex items-center justify-center text-black font-bold text-xs shadow-lg flex-shrink-0 border border-indigo-300">
-                      {index + 1}
-                    </div>
-                    <div className="flex-1 min-w-0 space-y-2">
-                      <h3 className="font-semibold text-cyan-300 text-sm leading-tight font-mono">
-                        {client.name}
-                      </h3>
-                      
-                      <div className="flex flex-wrap items-center gap-2 text-xs">
-                        <span className="bg-gray-700/50 border border-cyan-400/30 text-cyan-400 px-2 py-1 rounded font-mono">
-                          {client.industry}
-                        </span>
-                        <span className="text-cyan-400/60 font-mono">•</span>
-                        <span className="text-cyan-300 font-mono">{formatPercentage(client.sales, kpiData.totalRevenue)}%</span>
-                      </div>
-                      
-                      <div className="flex items-center justify-between">
-                        <div className="font-bold text-cyan-300 text-sm font-mono">
-                          {formatCurrency(client.sales)}
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <span className="text-xs font-mono text-emerald-400 bg-emerald-400/10 border border-emerald-400/30 px-2 py-1 rounded">
-                            +{client.growth}%
-                          </span>
-                          <ChevronRight className="w-3 h-3 text-cyan-400" />
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
+      return results;
+    } catch (error) {
+      console.error('Error fetching analysis results:', error);
+      throw error;
+    }
+  }
 
-          {/* Top Products */}
-          <div className="bg-gradient-to-br from-gray-900 to-gray-800 rounded-xl border border-cyan-400/30 shadow-xl p-6 relative overflow-hidden">
-            <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-emerald-400 to-teal-400"></div>
-            <div className="absolute top-4 right-4">
-              <span className="bg-gray-800/60 border border-emerald-400/30 text-emerald-400 text-xs px-2 py-1 rounded font-mono">
-                RES-01
-              </span>
-            </div>
-            
-            <div className="flex items-center gap-3 mb-6">
-              <div className="w-10 h-10 bg-gradient-to-br from-emerald-400 to-teal-500 rounded-lg flex items-center justify-center shadow-lg border border-emerald-300">
-                <Package className="w-5 h-5 text-black" />
-              </div>
-              <div>
-                <h2 className="text-xl font-bold text-cyan-300 font-mono tracking-wide">TOP PRODUCTS</h2>
-                <p className="text-cyan-400/80 text-sm font-mono">Top Performing Products</p>
-              </div>
-            </div>
-            
-            <div className="space-y-3">
-              {topProducts.map((product, index) => (
-                <div
-                  key={product.id}
-                  className="bg-gray-800/40 border border-cyan-400/20 rounded-lg p-4 hover:border-cyan-400/40 hover:bg-gray-800/60 transition-all duration-200 relative"
-                >
-                  <div className="absolute left-0 top-0 w-1 h-full bg-gradient-to-b from-emerald-400 to-teal-500 rounded-l-lg"></div>
-                  
-                  <div className="flex items-start gap-3 ml-2">
-                    <div className="w-6 h-6 bg-gradient-to-br from-emerald-400 to-teal-500 rounded-lg flex items-center justify-center text-black font-bold text-xs shadow-lg flex-shrink-0 border border-emerald-300">
-                      {index + 1}
-                    </div>
-                    <div className="flex-1 min-w-0 space-y-2">
-                      <h3 className="font-semibold text-cyan-300 text-sm leading-tight font-mono">
-                        {product.name}
-                      </h3>
-                      
-                      <div className="flex flex-wrap items-center gap-2 text-xs">
-                        <span className="bg-gray-700/50 border border-cyan-400/30 text-cyan-400 px-2 py-1 rounded font-mono">
-                          {product.category}
-                        </span>
-                        <span className="text-cyan-400/60 font-mono">•</span>
-                        <span className="text-cyan-300 font-mono">{formatPercentage(product.sales, kpiData.totalRevenue)}%</span>
-                      </div>
-                      
-                      <div className="flex items-center justify-between">
-                        <div className="font-bold text-cyan-300 text-sm font-mono">
-                          {formatCurrency(product.sales)}
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <span className="text-xs font-mono text-emerald-400 bg-emerald-400/10 border border-emerald-400/30 px-2 py-1 rounded">
-                            +{product.growth.toFixed(1)}%
-                          </span>
-                          <ChevronRight className="w-3 h-3 text-cyan-400" />
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
+  async analyzeCategory(category: string): Promise<void> {
+    try {
+      // Get products for this category
+      const { data: products, error } = await supabaseAdmin
+        .from('ozon_data')
+        .select('product_name, average_price, seller, brand')
+        .eq('category_level1', category);
 
-        {/* Command Status */}
-        <div className="bg-gradient-to-r from-gray-900 to-gray-800 border border-cyan-400/30 rounded-lg p-4 relative overflow-hidden">
-          <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-emerald-400 to-cyan-400"></div>
-          <div className="flex items-center justify-center space-x-6">
-            <div className="flex items-center space-x-2">
-              <div className="w-3 h-3 bg-emerald-400 rounded-full animate-pulse shadow-lg shadow-emerald-400/50"></div>
-              <span className="text-emerald-300 font-mono font-bold text-sm">EXECUTIVE DASHBOARD ACTIVE</span>
-            </div>
-            <div className="text-cyan-400/60 font-mono text-sm">|</div>
-            <div className="flex items-center space-x-2">
-              <Zap className="w-4 h-4 text-cyan-400" />
-              <span className="text-cyan-400/80 font-mono text-sm">REAL-TIME ANALYTICS</span>
-            </div>
-            <div className="text-cyan-400/60 font-mono text-sm">|</div>
-            <div className="flex items-center space-x-2">
-              <div className="w-3 h-3 bg-emerald-400 rounded-full animate-pulse shadow-lg shadow-emerald-400/50"></div>
-              <span className="text-emerald-400 font-mono text-sm">ORGANIZATION: ОФИС-КИТ</span>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-};
+      if (error) throw error;
 
-export default CEODashboard;
+      if (!products || products.length === 0) {
+        throw new Error(`No products found for category: ${category}`);
+      }
+
+      // Simple grouping logic - in a real app, this would use AI
+      const groups = this.createProductGroups(products, category);
+
+      // Save groups to database
+      for (const group of groups) {
+        await supabaseAdmin
+          .from('ai_product_groups')
+          .insert(group);
+      }
+    } catch (error) {
+      console.error('Error analyzing category:', error);
+      throw error;
+    }
+  }
+
+  private createProductGroups(products: any[], category: string) {
+    // Simple grouping by brand or similar words in product names
+    const groups: any[] = [];
+    const processed = new Set<string>();
+
+    for (const product of products) {
+      if (processed.has(product.product_name)) continue;
+
+      const similarProducts = products.filter(p => 
+        !processed.has(p.product_name) && 
+        (p.brand === product.brand || this.areSimilarProducts(p.product_name, product.product_name))
+      );
+
+      if (similarProducts.length >= 2) {
+        const groupName = product.brand || this.extractGroupName(product.product_name);
+        
+        groups.push({
+          category,
+          group_name: groupName,
+          group_description: `Products grouped by ${product.brand ? 'brand' : 'similarity'}`,
+          product_names: similarProducts.map(p => p.product_name),
+          confidence_score: 0.8,
+          price_analysis: {
+            average: similarProducts.reduce((a, p) => a + p.average_price, 0) / similarProducts.length,
+            range: {
+              min: Math.min(...similarProducts.map(p => p.average_price)),
+              max: Math.max(...similarProducts.map(p => p.average_price))
+            }
+          },
+          vendor_analysis: {
+            vendors: [...new Set(similarProducts.map(p => p.seller))],
+            total_vendors: new Set(similarProducts.map(p => p.seller)).size
+          }
+        });
+
+        similarProducts.forEach(p => processed.add(p.product_name));
+      }
+    }
+
+    return groups;
+  }
+
+  private areSimilarProducts(name1: string, name2: string): boolean {
+    const words1 = name1.toLowerCase().split(' ');
+    const words2 = name2.toLowerCase().split(' ');
+    
+    const commonWords = words1.filter(word => 
+      word.length > 3 && words2.includes(word)
+    );
+    
+    return commonWords.length >= 2;
+  }
+
+  private extractGroupName(productName: string): string {
+    const words = productName.split(' ');
+    return words.slice(0, 2).join(' ');
+  }
+
+  async clearCategoryAnalysis(category: string): Promise<void> {
+    try {
+      const { error } = await supabaseAdmin
+        .from('ai_product_groups')
+        .delete()
+        .eq('category', category);
+
+      if (error) throw error;
+    } catch (error) {
+      console.error('Error clearing category analysis:', error);
+      throw error;
+    }
+  }
+}
+
+export const productAnalysisService = new ProductAnalysisService();

@@ -117,12 +117,12 @@ const CEODashboard: React.FC<CEODashboardProps> = ({ onBack }) => {
                 </div>
                 <div>
                   <h1 className="text-2xl font-bold text-cyan-300 font-mono tracking-wider">
-                    IMPERIAL COMMAND CENTER
+                    Executive Dashboard
                   </h1>
                   <p className="text-cyan-400/80 text-sm font-mono">
-                    Real-time Strategic Overview
+                    Business Performance Overview
                   </p>
-                  <p className="text-teal-300 text-sm font-mono">EMPIRE: ОФИС-КИТ</p>
+                  <p className="text-teal-300 text-sm font-mono">Company: ОФИС-КИТ</p>
                 </div>
               </div>
             </div>
@@ -151,8 +151,9 @@ const CEODashboard: React.FC<CEODashboardProps> = ({ onBack }) => {
               <TrendingUp className="w-4 h-4 text-emerald-400" />
             </div>
             <h3 className="text-xs font-mono text-cyan-400 mb-1 uppercase tracking-wider">Imperial Treasury</h3>
+            <h3 className="text-xs font-mono text-cyan-400 mb-1 uppercase tracking-wider">Total Revenue</h3>
             <p className="text-lg font-bold text-emerald-300 font-mono">{formatCurrency(kpiData.totalRevenue)}</p>
-            <p className="text-emerald-400/60 text-xs font-mono">Credits Generated</p>
+            <p className="text-emerald-400/60 text-xs font-mono">Current Period</p>
           </div>
 
           <div className="bg-gradient-to-br from-gray-900 to-gray-800 rounded-xl border border-cyan-400/30 shadow-xl p-4 hover:border-cyan-400/50 transition-all duration-300 relative overflow-hidden">
@@ -164,6 +165,7 @@ const CEODashboard: React.FC<CEODashboardProps> = ({ onBack }) => {
               <BarChart3 className="w-4 h-4 text-emerald-400" />
             </div>
             <h3 className="text-xs font-mono text-cyan-400 mb-1 uppercase tracking-wider">Top 7 Resources</h3>
+            <h3 className="text-xs font-mono text-cyan-400 mb-1 uppercase tracking-wider">Top Products</h3>
             <p className="text-lg font-bold text-emerald-300 font-mono">{kpiData.topProductsShare}%</p>
             <p className="text-emerald-400/60 text-xs font-mono">Revenue Share</p>
           </div>
@@ -177,8 +179,9 @@ const CEODashboard: React.FC<CEODashboardProps> = ({ onBack }) => {
               <TrendingUp className="w-4 h-4 text-purple-400" />
             </div>
             <h3 className="text-xs font-mono text-cyan-400 mb-1 uppercase tracking-wider">Major 14 Factions</h3>
+            <h3 className="text-xs font-mono text-cyan-400 mb-1 uppercase tracking-wider">Top 14 Clients</h3>
             <p className="text-lg font-bold text-purple-300 font-mono">{kpiData.majorClientsShare}%</p>
-            <p className="text-purple-400/60 text-xs font-mono">Trade Influence</p>
+            <p className="text-purple-400/60 text-xs font-mono">Revenue Share</p>
           </div>
 
           <div className="bg-gradient-to-br from-gray-900 to-gray-800 rounded-xl border border-cyan-400/30 shadow-xl p-4 hover:border-cyan-400/50 transition-all duration-300 relative overflow-hidden">
@@ -190,8 +193,9 @@ const CEODashboard: React.FC<CEODashboardProps> = ({ onBack }) => {
               <TrendingUp className="w-4 h-4 text-blue-400" />
             </div>
             <h3 className="text-xs font-mono text-cyan-400 mb-1 uppercase tracking-wider">Avg Efficiency</h3>
+            <h3 className="text-xs font-mono text-cyan-400 mb-1 uppercase tracking-wider">Average Margin</h3>
             <p className="text-lg font-bold text-blue-300 font-mono">{kpiData.averageProductMargin}%</p>
-            <p className="text-blue-400/60 text-xs font-mono">Resource Yield</p>
+            <p className="text-blue-400/60 text-xs font-mono">Profit Margin</p>
           </div>
         </div>
 
@@ -203,7 +207,7 @@ const CEODashboard: React.FC<CEODashboardProps> = ({ onBack }) => {
             <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-blue-400 to-indigo-400"></div>
             <div className="absolute top-4 right-4">
               <span className="bg-gray-800/60 border border-blue-400/30 text-blue-400 text-xs px-2 py-1 rounded font-mono">
-                TRADE-01
+                CLIENT-01
               </span>
             </div>
             
@@ -213,7 +217,7 @@ const CEODashboard: React.FC<CEODashboardProps> = ({ onBack }) => {
               </div>
               <div>
                 <h2 className="text-xl font-bold text-cyan-300 font-mono tracking-wide">MAJOR TRADE FACTIONS</h2>
-                <p className="text-cyan-400/80 text-sm font-mono">Strategic Partnership Analysis</p>
+                <p className="text-cyan-400/80 text-sm font-mono">Top Client Performance</p>
               </div>
             </div>
             
@@ -265,7 +269,7 @@ const CEODashboard: React.FC<CEODashboardProps> = ({ onBack }) => {
             <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-emerald-400 to-teal-400"></div>
             <div className="absolute top-4 right-4">
               <span className="bg-gray-800/60 border border-emerald-400/30 text-emerald-400 text-xs px-2 py-1 rounded font-mono">
-                RES-01
+                PROD-01
               </span>
             </div>
             
@@ -275,7 +279,7 @@ const CEODashboard: React.FC<CEODashboardProps> = ({ onBack }) => {
               </div>
               <div>
                 <h2 className="text-xl font-bold text-cyan-300 font-mono tracking-wide">TOP PRODUCTS</h2>
-                <p className="text-cyan-400/80 text-sm font-mono">Top Performing Products</p>
+                <p className="text-cyan-400/80 text-sm font-mono">Product Performance Analysis</p>
               </div>
             </div>
             
@@ -330,16 +334,19 @@ const CEODashboard: React.FC<CEODashboardProps> = ({ onBack }) => {
             <div className="flex items-center space-x-2">
               <div className="w-3 h-3 bg-emerald-400 rounded-full animate-pulse shadow-lg shadow-emerald-400/50"></div>
               <span className="text-emerald-300 font-mono font-bold text-sm">EXECUTIVE DASHBOARD ACTIVE</span>
+              <span className="text-emerald-300 font-mono font-bold text-sm">DASHBOARD OPERATIONAL</span>
             </div>
             <div className="text-cyan-400/60 font-mono text-sm">|</div>
             <div className="flex items-center space-x-2">
               <Zap className="w-4 h-4 text-cyan-400" />
               <span className="text-cyan-400/80 font-mono text-sm">REAL-TIME ANALYTICS</span>
+              <span className="text-cyan-400/80 font-mono text-sm">LIVE DATA FEED</span>
             </div>
             <div className="text-cyan-400/60 font-mono text-sm">|</div>
             <div className="flex items-center space-x-2">
               <div className="w-3 h-3 bg-emerald-400 rounded-full animate-pulse shadow-lg shadow-emerald-400/50"></div>
               <span className="text-emerald-400 font-mono text-sm">ORGANIZATION: ОФИС-КИТ</span>
+              <span className="text-emerald-400 font-mono text-sm">COMPANY: ОФИС-КИТ</span>
             </div>
           </div>
         </div>

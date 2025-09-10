@@ -164,7 +164,6 @@ const CEODashboard: React.FC<CEODashboardProps> = ({ onBack }) => {
               </div>
               <BarChart3 className="w-4 h-4 text-emerald-400" />
             </div>
-            <h3 className="text-xs font-mono text-cyan-400 mb-1 uppercase tracking-wider">Top 7 Resources</h3>
             <h3 className="text-xs font-mono text-cyan-400 mb-1 uppercase tracking-wider">Top Products</h3>
             <p className="text-lg font-bold text-emerald-300 font-mono">{kpiData.topProductsShare}%</p>
             <p className="text-emerald-400/60 text-xs font-mono">Revenue Share</p>
@@ -178,7 +177,6 @@ const CEODashboard: React.FC<CEODashboardProps> = ({ onBack }) => {
               </div>
               <TrendingUp className="w-4 h-4 text-purple-400" />
             </div>
-            <h3 className="text-xs font-mono text-cyan-400 mb-1 uppercase tracking-wider">Major 14 Factions</h3>
             <h3 className="text-xs font-mono text-cyan-400 mb-1 uppercase tracking-wider">Top Clients</h3>
             <p className="text-lg font-bold text-purple-300 font-mono">{kpiData.majorClientsShare}%</p>
             <p className="text-purple-400/60 text-xs font-mono">Revenue Share</p>
@@ -192,7 +190,6 @@ const CEODashboard: React.FC<CEODashboardProps> = ({ onBack }) => {
               </div>
               <TrendingUp className="w-4 h-4 text-blue-400" />
             </div>
-            <h3 className="text-xs font-mono text-cyan-400 mb-1 uppercase tracking-wider">Avg Efficiency</h3>
             <h3 className="text-xs font-mono text-cyan-400 mb-1 uppercase tracking-wider">Average Margin</h3>
             <p className="text-lg font-bold text-blue-300 font-mono">{kpiData.averageProductMargin}%</p>
             <p className="text-blue-400/60 text-xs font-mono">Profit Margin</p>

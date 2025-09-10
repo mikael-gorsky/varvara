@@ -150,7 +150,6 @@ const CEODashboard: React.FC<CEODashboardProps> = ({ onBack }) => {
               </div>
               <TrendingUp className="w-4 h-4 text-emerald-400" />
             </div>
-            <h3 className="text-xs font-mono text-cyan-400 mb-1 uppercase tracking-wider">Imperial Treasury</h3>
             <p className="text-lg font-bold text-emerald-300 font-mono">{formatCurrency(kpiData.totalRevenue)}</p>
             <p className="text-emerald-400/60 text-xs font-mono">Current Period</p>
           </div>

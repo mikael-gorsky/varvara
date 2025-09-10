@@ -179,7 +179,7 @@ const CEODashboard: React.FC<CEODashboardProps> = ({ onBack }) => {
               <TrendingUp className="w-4 h-4 text-purple-400" />
             </div>
             <h3 className="text-xs font-mono text-cyan-400 mb-1 uppercase tracking-wider">Major 14 Factions</h3>
-            <h3 className="text-xs font-mono text-cyan-400 mb-1 uppercase tracking-wider">Top 14 Clients</h3>
+            <h3 className="text-xs font-mono text-cyan-400 mb-1 uppercase tracking-wider">Top Clients</h3>
             <p className="text-lg font-bold text-purple-300 font-mono">{kpiData.majorClientsShare}%</p>
             <p className="text-purple-400/60 text-xs font-mono">Revenue Share</p>
           </div>
@@ -216,7 +216,7 @@ const CEODashboard: React.FC<CEODashboardProps> = ({ onBack }) => {
                 <Users className="w-5 h-5 text-black" />
               </div>
               <div>
-                <h2 className="text-xl font-bold text-cyan-300 font-mono tracking-wide">MAJOR TRADE FACTIONS</h2>
+                <h2 className="text-xl font-bold text-cyan-300 font-mono tracking-wide">TOP CLIENTS</h2>
                 <p className="text-cyan-400/80 text-sm font-mono">Top Client Performance</p>
               </div>
             </div>

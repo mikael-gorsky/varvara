@@ -90,7 +90,7 @@ const MainMenu: React.FC<MainMenuProps> = ({ onSelectModule }) => {
               <div className="absolute -top-1 -right-1 w-4 h-4 bg-emerald-400 rounded-full border-2 border-black animate-pulse"></div>
             </div>
             <h1 className="text-5xl font-bold text-cyan-300 mb-3 font-mono tracking-wider">
-              OFK ANALYTICS SUITE
+              ChatERP
             </h1>
             <p className="text-xl text-cyan-400/80 mb-4 font-mono">
               Business Intelligence Platform

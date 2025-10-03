@@ -105,12 +105,12 @@ export async function parseOzonFile(file: File): Promise<OzonParsedData> {
           return;
         }
 
-        const workbook = XLSX.read(data, { type: 'binary' });
+        const workbook = XLSX.read(data, { type: 'binary', cellDates: true });
         const firstSheetName = workbook.SheetNames[0];
         const worksheet = workbook.Sheets[firstSheetName];
-        const rawData = XLSX.utils.sheet_to_json(worksheet, { header: 1, raw: false });
+        const rawData = XLSX.utils.sheet_to_json(worksheet, { header: 1, raw: true, defval: '' });
 
-        const result = processOzonRawData(rawData as string[][], file);
+        const result = processOzonRawData(rawData as any[][], file);
         resolve(result);
       } catch (error) {
         resolve({
@@ -153,7 +153,7 @@ export async function parseOzonFile(file: File): Promise<OzonParsedData> {
   });
 }
 
-function processOzonRawData(rawData: string[][], file: File): OzonParsedData {
+function processOzonRawData(rawData: any[][], file: File): OzonParsedData {
   const errors: string[] = [];
   const rows: OzonDataRow[] = [];
 
@@ -285,20 +285,20 @@ function validateOzonHeaders(headers: string[]): {
   };
 }
 
-function mapOzonRowToData(headers: string[], values: string[]): OzonDataRow | null {
+function mapOzonRowToData(headers: any[], values: any[]): OzonDataRow | null {
   const row: any = {};
   let hasRequiredData = false;
 
   headers.forEach((header, index) => {
     if (!header) return;
-    
-    const value = values[index] || '';
-    const fieldName = getFieldName(header);
-    
+
+    const value = values[index];
+    const fieldName = getFieldName(String(header));
+
     if (fieldName) {
       const parsedValue = parseOzonValue(value, fieldName);
       row[fieldName] = parsedValue;
-      
+
       if (fieldName === 'product_name' && parsedValue) {
         hasRequiredData = true;
       }
@@ -309,41 +309,60 @@ function mapOzonRowToData(headers: string[], values: string[]): OzonDataRow | nu
 }
 
 function getFieldName(header: string): string | null {
-  const mappings = EXPECTED_HEADERS as Record<string, string>;
-  
-  // Direct match
-  if (mappings[header]) {
-    return mappings[header];
-  }
+  const h = header.toLowerCase();
 
-  // Partial matches for flexibility
-  if (header.includes('Название товара') || header.includes('товара')) {
-    return 'product_name';
-  }
-  if (header.includes('Ссылка') || header.includes('ссылка')) {
-    return 'product_link';
-  }
-  if (header.includes('Продавец') || header.includes('продавец')) {
-    return 'seller';
-  }
-  if (header.includes('Бренд') || header.includes('бренд')) {
-    return 'brand';
-  }
-  if (header.includes('Категория 1') || header.includes('категория 1')) {
-    return 'category_level1';
-  }
-  if (header.includes('Категория 3') || header.includes('категория 3')) {
-    return 'category_level3';
-  }
-  if (header.includes('Признак') || header.includes('признак')) {
-    return 'product_flag';
-  }
+  // Basic product info
+  if (h.includes('название товара') || h.includes('товара')) return 'product_name';
+  if (h.includes('ссылка')) return 'product_link';
+  if (h.includes('продавец')) return 'seller';
+  if (h.includes('бренд')) return 'brand';
+  if (h.includes('категория 1')) return 'category_level1';
+  if (h.includes('категория 3')) return 'category_level3';
+  if (h.includes('признак')) return 'product_flag';
+
+  // Financial metrics
+  if (h.includes('заказано на сумму') || h.includes('заказано') && h.includes('сумму')) return 'ordered_sum';
+  if (h.includes('динамика оборота')) return 'turnover_dynamic';
+  if (h.includes('заказано, шт') || (h.includes('заказано') && h.includes('шт'))) return 'ordered_quantity';
+  if (h.includes('средняя цена')) return 'average_price';
+  if (h.includes('минимальная цена')) return 'minimum_price';
+  if (h.includes('доля выкупа')) return 'buyout_share';
+  if (h.includes('упущенные продажи')) return 'lost_sales';
+
+  // Inventory and delivery
+  if (h.includes('дней без наличия')) return 'days_no_stock';
+  if (h.includes('среднее время доставки')) return 'average_delivery_hours';
+  if (h.includes('средний дневной оборот')) return 'average_daily_revenue';
+  if (h.includes('средние продажи в день')) return 'average_daily_sales_pcs';
+  if (h.includes('остаток')) return 'ending_stock';
+  if (h.includes('схема работы')) return 'work_scheme';
+  if (h.includes('объем')) return 'volume_liters';
+
+  // Views and conversion
+  if (h.includes('просмотры, всего')) return 'views';
+  if (h.includes('просмотры, поиск')) return 'views_search';
+  if (h.includes('просмотры, карточка')) return 'views_card';
+  if (h.includes('в корзину, просмотры')) return 'view_to_cart';
+  if (h.includes('в корзину, поиск')) return 'search_to_cart';
+  if (h.includes('в корзину, карточка')) return 'description_to_cart';
+
+  // Promotions
+  if (h.includes('скидка/акция')) return 'discount_promo';
+  if (h.includes('оборот акции')) return 'revenue_promo';
+  if (h.includes('дней в акции')) return 'days_promo';
+  if (h.includes('дней в бусте')) return 'days_boost';
+  if (h.includes('доля рекламы')) return 'ads_share';
+
+  // Dates
+  if (h.includes('дата размещения карточки')) return 'card_date';
+  if (h.includes('дата загрузки')) return 'import_date';
 
   return null;
 }
 
-function parseOzonValue(value: string, fieldName: string): any {
-  if (!value || value === '-' || value.trim() === '') {
+function parseOzonValue(value: any, fieldName: string): any {
+  // Handle null/undefined
+  if (value === null || value === undefined) {
     return null;
   }
 
@@ -358,9 +377,30 @@ function parseOzonValue(value: string, fieldName: string): any {
   ];
 
   if (numericFields.includes(fieldName)) {
-    const numericValue = parseFloat(value.replace(/[^\d.-]/g, ''));
-    return isNaN(numericValue) ? 0 : numericValue;
+    // If already a number, return it
+    if (typeof value === 'number') {
+      return value;
+    }
+
+    // Convert to string and check for empty/dash
+    const strValue = String(value).trim();
+    if (!strValue || strValue === '-') {
+      return null;
+    }
+
+    // Handle Russian number format: spaces as thousands separator, comma as decimal
+    let cleanValue = strValue
+      .replace(/\s+/g, '') // Remove spaces (thousands separator)
+      .replace(',', '.'); // Replace comma with dot (decimal separator)
+
+    // Remove any remaining non-numeric characters except dot and minus
+    cleanValue = cleanValue.replace(/[^\d.-]/g, '');
+
+    const numericValue = parseFloat(cleanValue);
+    return isNaN(numericValue) ? null : numericValue;
   }
 
-  return value.trim();
+  // For string fields, convert to string and trim
+  const strValue = String(value).trim();
+  return strValue === '-' || !strValue ? null : strValue;
 }

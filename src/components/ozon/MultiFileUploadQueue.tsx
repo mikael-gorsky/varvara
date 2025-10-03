@@ -74,8 +74,8 @@ const MultiFileUploadQueue: React.FC<MultiFileUploadQueueProps> = ({ onFilesVali
       const isDuplicate = !!duplicateRecord;
       const status = isDuplicate ? 'duplicate' : validationErrors.length > 0 ? 'invalid' : 'valid';
 
-      setQueuedFiles(prev =>
-        prev.map(f =>
+      setQueuedFiles(prev => {
+        const updatedFiles = prev.map(f =>
           f.id === queuedFile.id
             ? {
                 ...f,
@@ -90,13 +90,13 @@ const MultiFileUploadQueue: React.FC<MultiFileUploadQueueProps> = ({ onFilesVali
                 } : undefined
               }
             : f
-        )
-      );
-
-      onFilesValidated(queuedFiles);
+        );
+        onFilesValidated(updatedFiles);
+        return updatedFiles;
+      });
     } catch (error) {
-      setQueuedFiles(prev =>
-        prev.map(f =>
+      setQueuedFiles(prev => {
+        const updatedFiles = prev.map(f =>
           f.id === queuedFile.id
             ? {
                 ...f,
@@ -104,8 +104,10 @@ const MultiFileUploadQueue: React.FC<MultiFileUploadQueueProps> = ({ onFilesVali
                 validationErrors: [`Failed to validate: ${error instanceof Error ? error.message : 'Unknown error'}`]
               }
             : f
-        )
-      );
+        );
+        onFilesValidated(updatedFiles);
+        return updatedFiles;
+      });
     }
   };
 

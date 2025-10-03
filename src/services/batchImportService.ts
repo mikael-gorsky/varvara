@@ -66,8 +66,10 @@ export class BatchImportService {
 
       try {
         const fileStartTime = Date.now();
+        console.log(`[BatchImport] Starting import for file: ${file.name}`);
 
         const hashInfo = await fileHashService.getFileInfo(file);
+        console.log(`[BatchImport] File hash: ${hashInfo.hash}`);
 
         if (options.skipDuplicates) {
           const duplicate = await importHistoryService.checkDuplicateFile(hashInfo.hash);
@@ -91,6 +93,9 @@ export class BatchImportService {
         }
 
         const parsedData = await parseOzonFile(file);
+        console.log(`[BatchImport] Parsed ${parsedData.rows.length} rows from ${file.name}`);
+        console.log(`[BatchImport] Validation status:`, parsedData.headerValidation);
+        console.log(`[BatchImport] Errors:`, parsedData.errors);
 
         if (options.onProgress) {
           options.onProgress({
@@ -106,8 +111,10 @@ export class BatchImportService {
         }
 
         const validationStatus = this.getValidationStatus(parsedData);
+        console.log(`[BatchImport] Validation status for ${file.name}: ${validationStatus}`);
 
         if (validationStatus === 'invalid') {
+          console.error(`[BatchImport] File ${file.name} failed validation`);
           await this.createFailedImportRecord(file, hashInfo.hash, parsedData, 'Validation failed');
           result.filesFailed++;
           result.errors.push({
@@ -118,7 +125,11 @@ export class BatchImportService {
         }
 
         if (parsedData.rows.length > 0) {
+          console.log(`[BatchImport] Importing ${parsedData.rows.length} rows to database...`);
           await ozonImportService.importData(parsedData.rows);
+          console.log(`[BatchImport] Successfully imported ${parsedData.rows.length} rows`);
+        } else {
+          console.warn(`[BatchImport] No rows to import from ${file.name}`);
         }
 
         const fileDuration = Date.now() - fileStartTime;
@@ -141,6 +152,7 @@ export class BatchImportService {
           });
         }
       } catch (error) {
+        console.error(`[BatchImport] Error processing ${file.name}:`, error);
         result.filesFailed++;
         result.errors.push({
           fileName: file.name,

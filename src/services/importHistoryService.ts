@@ -1,4 +1,4 @@
-import { supabaseAdmin } from '../lib/supabase';
+import { supabase } from '../lib/supabase';
 
 export interface ImportHistoryRecord {
   id?: string;
@@ -27,7 +27,7 @@ export interface ImportSummary {
 
 export class ImportHistoryService {
   async checkDuplicateFile(fileHash: string): Promise<ImportHistoryRecord | null> {
-    const { data, error } = await supabaseAdmin
+    const { data, error } = await supabase
       .from('ozon_import_history')
       .select('*')
       .eq('file_hash', fileHash)
@@ -45,7 +45,7 @@ export class ImportHistoryService {
   }
 
   async createImportRecord(record: Omit<ImportHistoryRecord, 'id' | 'created_at'>): Promise<string | null> {
-    const { data, error } = await supabaseAdmin
+    const { data, error } = await supabase
       .from('ozon_import_history')
       .insert(record)
       .select('id')
@@ -60,7 +60,7 @@ export class ImportHistoryService {
   }
 
   async updateImportRecord(id: string, updates: Partial<ImportHistoryRecord>): Promise<boolean> {
-    const { error } = await supabaseAdmin
+    const { error } = await supabase
       .from('ozon_import_history')
       .update(updates)
       .eq('id', id);
@@ -74,7 +74,7 @@ export class ImportHistoryService {
   }
 
   async getImportHistory(limit: number = 50): Promise<ImportHistoryRecord[]> {
-    const { data, error } = await supabaseAdmin
+    const { data, error } = await supabase
       .from('ozon_import_history')
       .select('*')
       .order('created_at', { ascending: false })
@@ -89,7 +89,7 @@ export class ImportHistoryService {
   }
 
   async getImportSummary(): Promise<ImportSummary> {
-    const { data, error } = await supabaseAdmin
+    const { data, error } = await supabase
       .from('ozon_import_history')
       .select('*');
 
@@ -118,7 +118,7 @@ export class ImportHistoryService {
   }
 
   async getDateRangeCoverage(): Promise<{ start: string | null; end: string | null }> {
-    const { data, error } = await supabaseAdmin
+    const { data, error } = await supabase
       .from('ozon_import_history')
       .select('date_range_start, date_range_end')
       .eq('import_status', 'success')
@@ -141,7 +141,7 @@ export class ImportHistoryService {
   }
 
   async deleteImportRecord(id: string): Promise<boolean> {
-    const { error } = await supabaseAdmin
+    const { error } = await supabase
       .from('ozon_import_history')
       .delete()
       .eq('id', id);

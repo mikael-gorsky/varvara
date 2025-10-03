@@ -1,4 +1,4 @@
-import { supabaseAdmin } from '../lib/supabase';
+import { supabase } from '../lib/supabase';
 
 export interface OzonRecord {
   product_name: string;
@@ -54,17 +54,23 @@ export class OzonImportService {
       throw new Error('No data provided for import');
     }
 
-    const { error } = await supabaseAdmin
+    console.log(`[OzonImportService] Attempting to insert ${data.length} records`);
+    console.log(`[OzonImportService] Sample record:`, data[0]);
+
+    const { error } = await supabase
       .from('ozon_data')
       .insert(data);
 
     if (error) {
+      console.error(`[OzonImportService] Import error:`, error);
       throw new Error(`Import failed: ${error.message}`);
     }
+
+    console.log(`[OzonImportService] Successfully inserted ${data.length} records`);
   }
 
   async getStats(): Promise<OzonStats> {
-    const { data, error } = await supabaseAdmin
+    const { data, error } = await supabase
       .from('ozon_data')
       .select('*');
 
@@ -101,7 +107,7 @@ export class OzonImportService {
   }
 
   async clearData(): Promise<void> {
-    const { error } = await supabaseAdmin
+    const { error } = await supabase
       .from('ozon_data')
       .delete()
       .neq('id', '00000000-0000-0000-0000-000000000000'); // Delete all records
@@ -112,7 +118,7 @@ export class OzonImportService {
   }
 
   async getData(): Promise<OzonRecord[]> {
-    const { data, error } = await supabaseAdmin
+    const { data, error } = await supabase
       .from('ozon_data')
       .select('*')
       .order('created_at', { ascending: false });

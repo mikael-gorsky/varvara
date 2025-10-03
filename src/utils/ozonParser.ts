@@ -37,10 +37,20 @@ export interface OzonDataRow {
   import_date?: string;
 }
 
+export interface OzonFileMetadata {
+  fileName: string;
+  fileSize: number;
+  dateRangeStart: string | null;
+  dateRangeEnd: string | null;
+  reportPeriod: string | null;
+  categoryLevel3: string | null;
+}
+
 export interface OzonParsedData {
   rows: OzonDataRow[];
   headers: string[];
   errors: string[];
+  metadata: OzonFileMetadata;
   headerValidation: {
     isValid: boolean;
     missingFields: string[];
@@ -72,7 +82,7 @@ const EXPECTED_HEADERS = {
 export async function parseOzonFile(file: File): Promise<OzonParsedData> {
   return new Promise((resolve) => {
     const reader = new FileReader();
-    
+
     reader.onload = (e) => {
       try {
         const data = e.target?.result;
@@ -81,6 +91,14 @@ export async function parseOzonFile(file: File): Promise<OzonParsedData> {
             rows: [],
             headers: [],
             errors: ['Failed to read file'],
+            metadata: {
+              fileName: file.name,
+              fileSize: file.size,
+              dateRangeStart: null,
+              dateRangeEnd: null,
+              reportPeriod: null,
+              categoryLevel3: null
+            },
             headerValidation: { isValid: false, missingFields: [], extraFields: [] },
             stats: { totalRows: 0, validRows: 0, invalidRows: 0 }
           });
@@ -92,13 +110,21 @@ export async function parseOzonFile(file: File): Promise<OzonParsedData> {
         const worksheet = workbook.Sheets[firstSheetName];
         const rawData = XLSX.utils.sheet_to_json(worksheet, { header: 1, raw: false });
 
-        const result = processOzonRawData(rawData as string[][]);
+        const result = processOzonRawData(rawData as string[][], file);
         resolve(result);
       } catch (error) {
         resolve({
           rows: [],
           headers: [],
           errors: [`Failed to parse Excel file: ${error instanceof Error ? error.message : 'Unknown error'}`],
+          metadata: {
+            fileName: file.name,
+            fileSize: file.size,
+            dateRangeStart: null,
+            dateRangeEnd: null,
+            reportPeriod: null,
+            categoryLevel3: null
+          },
           headerValidation: { isValid: false, missingFields: [], extraFields: [] },
           stats: { totalRows: 0, validRows: 0, invalidRows: 0 }
         });
@@ -110,6 +136,14 @@ export async function parseOzonFile(file: File): Promise<OzonParsedData> {
         rows: [],
         headers: [],
         errors: ['Failed to read file'],
+        metadata: {
+          fileName: file.name,
+          fileSize: file.size,
+          dateRangeStart: null,
+          dateRangeEnd: null,
+          reportPeriod: null,
+          categoryLevel3: null
+        },
         headerValidation: { isValid: false, missingFields: [], extraFields: [] },
         stats: { totalRows: 0, validRows: 0, invalidRows: 0 }
       });
@@ -119,7 +153,7 @@ export async function parseOzonFile(file: File): Promise<OzonParsedData> {
   });
 }
 
-function processOzonRawData(rawData: string[][]): OzonParsedData {
+function processOzonRawData(rawData: string[][], file: File): OzonParsedData {
   const errors: string[] = [];
   const rows: OzonDataRow[] = [];
 
@@ -128,6 +162,7 @@ function processOzonRawData(rawData: string[][]): OzonParsedData {
       rows: [],
       headers: [],
       errors: ['File must contain at least 7 rows with headers and data'],
+      metadata: extractFileMetadata(rawData, file),
       headerValidation: { isValid: false, missingFields: [], extraFields: [] },
       stats: { totalRows: 0, validRows: 0, invalidRows: 0 }
     };
@@ -167,17 +202,61 @@ function processOzonRawData(rawData: string[][]): OzonParsedData {
     }
   }
 
+  const metadata = extractFileMetadata(rawData, file);
+
+  // Extract date range from actual data
+  if (rows.length > 0) {
+    const dates = rows
+      .map(r => r.card_date)
+      .filter(d => d)
+      .sort();
+
+    if (dates.length > 0) {
+      metadata.dateRangeStart = dates[0] || null;
+      metadata.dateRangeEnd = dates[dates.length - 1] || null;
+    }
+  }
+
   return {
     rows,
     headers,
     errors,
+    metadata,
     headerValidation,
     stats: {
-      totalRows: rawData.length - 6, // Exclude header rows
+      totalRows: rawData.length - 6,
       validRows,
       invalidRows
     }
   };
+}
+
+function extractFileMetadata(rawData: string[][], file: File): OzonFileMetadata {
+  const metadata: OzonFileMetadata = {
+    fileName: file.name,
+    fileSize: file.size,
+    dateRangeStart: null,
+    dateRangeEnd: null,
+    reportPeriod: null,
+    categoryLevel3: null
+  };
+
+  if (rawData.length < 4) return metadata;
+
+  // Extract metadata from first 4 rows
+  // Row 1: Дата формирования
+  // Row 2: Период отчета
+  // Row 3: Категория 3 уровня
+
+  if (rawData[1] && rawData[1][1]) {
+    metadata.reportPeriod = String(rawData[1][1]);
+  }
+
+  if (rawData[2] && rawData[2][1]) {
+    metadata.categoryLevel3 = String(rawData[2][1]);
+  }
+
+  return metadata;
 }
 
 function validateOzonHeaders(headers: string[]): {

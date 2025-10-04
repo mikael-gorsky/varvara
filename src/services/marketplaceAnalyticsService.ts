@@ -123,7 +123,8 @@ class MarketplaceAnalyticsService {
       const { data: products, error } = await supabaseAdmin
         .from('ozon_data')
         .select('seller, category_level3, ordered_sum, average_price')
-        .not('seller', 'is', null);
+        .not('seller', 'is', null)
+        .not('category_level3', 'is', null);
 
       if (error) throw error;
 
@@ -134,7 +135,8 @@ class MarketplaceAnalyticsService {
 
       products?.forEach(product => {
         const supplier = product.seller;
-        if (!supplier) return;
+        const category = product.category_level3;
+        if (!supplier || !category) return;
 
         if (!supplierMap.has(supplier)) {
           supplierMap.set(supplier, { products: [], categories: new Set() });
@@ -142,7 +144,7 @@ class MarketplaceAnalyticsService {
 
         const supplierData = supplierMap.get(supplier)!;
         supplierData.products.push(product);
-        if (product.category_level3) supplierData.categories.add(product.category_level3);
+        supplierData.categories.add(category);
       });
 
       const suppliers: SupplierStats[] = [];

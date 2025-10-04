@@ -200,7 +200,7 @@ const OzonMarketplaceAnalytics: React.FC<OzonMarketplaceAnalyticsProps> = ({ onB
                 </div>
               </div>
               <h3 className="text-xs font-mono text-cyan-400 mb-1 uppercase tracking-wider">Revenue</h3>
-              <p className="text-2xl font-bold text-violet-300 font-mono">${(overview.totalRevenue / 1000000).toFixed(1)}M</p>
+              <p className="text-2xl font-bold text-violet-300 font-mono">{(overview.totalRevenue / 1000000).toFixed(1)}M</p>
             </div>
           </div>
         )}

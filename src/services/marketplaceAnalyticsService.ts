@@ -128,6 +128,10 @@ class MarketplaceAnalyticsService {
 
       if (error) throw error;
 
+      console.log('Total products fetched:', products?.length);
+      const gelosSample = products?.filter(p => p.seller === 'ГЕЛЕОС').slice(0, 10);
+      console.log('ГЕЛЕОС sample (first 10):', gelosSample?.map(p => ({ seller: p.seller, category: p.category_level3 })));
+
       const supplierMap = new Map<string, {
         products: any[];
         categories: Set<string>;

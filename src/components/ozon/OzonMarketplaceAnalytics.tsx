@@ -526,7 +526,7 @@ const OzonMarketplaceAnalytics: React.FC<OzonMarketplaceAnalyticsProps> = ({ onB
                       </div>
                       <div>
                         <span className="text-cyan-400/60 font-mono">Revenue:</span>
-                        <p className="text-violet-300 font-bold font-mono">${(supplier.totalRevenue / 1000).toFixed(1)}K</p>
+                        <p className="text-violet-300 font-bold font-mono">{supplier.totalRevenue.toLocaleString()}</p>
                       </div>
                     </div>
                   </div>

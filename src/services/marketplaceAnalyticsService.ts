@@ -30,7 +30,8 @@ class MarketplaceAnalyticsService {
     try {
       const { data: products, error } = await supabaseAdmin
         .from('ozon_data')
-        .select('category_level3, seller, ordered_sum');
+        .select('category_level3, seller, ordered_sum')
+        .limit(100000);
 
       if (error) throw error;
 
@@ -61,7 +62,8 @@ class MarketplaceAnalyticsService {
       const { data: products, error } = await supabaseAdmin
         .from('ozon_data')
         .select('category_level3, seller, ordered_sum, average_price')
-        .not('category_level3', 'is', null);
+        .not('category_level3', 'is', null)
+        .limit(100000);
 
       if (error) throw error;
 
@@ -124,7 +126,8 @@ class MarketplaceAnalyticsService {
         .from('ozon_data')
         .select('seller, category_level3, ordered_sum, average_price')
         .not('seller', 'is', null)
-        .not('category_level3', 'is', null);
+        .not('category_level3', 'is', null)
+        .limit(100000);
 
       if (error) throw error;
 

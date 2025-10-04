@@ -17,6 +17,7 @@ const OzonMarketplaceAnalytics: React.FC<OzonMarketplaceAnalyticsProps> = ({ onB
   const [error, setError] = useState<string>('');
   const [searchTerm, setSearchTerm] = useState('');
   const [sortBy, setSortBy] = useState<'name' | 'count' | 'revenue' | 'avgDaysOOS'>('revenue');
+  const [minProducts, setMinProducts] = useState<number>(50);
 
   useEffect(() => {
     loadOverview();
@@ -51,11 +52,11 @@ const OzonMarketplaceAnalytics: React.FC<OzonMarketplaceAnalyticsProps> = ({ onB
     }
   };
 
-  const loadSuppliers = async () => {
+  const loadSuppliers = async (threshold?: number) => {
     setIsLoading(true);
     setError('');
     try {
-      const data = await marketplaceAnalyticsService.getSuppliersWithMinProducts(50);
+      const data = await marketplaceAnalyticsService.getSuppliersWithMinProducts(threshold || minProducts);
       setSuppliers(data);
       setViewState('suppliers-list');
     } catch (err) {
@@ -472,19 +473,27 @@ const OzonMarketplaceAnalytics: React.FC<OzonMarketplaceAnalyticsProps> = ({ onB
             </div>
           </div>
 
-          {/* Search and Filter Controls */}
+          {/* Filter Controls */}
           <div className="bg-gradient-to-br from-gray-900 to-gray-800 rounded-xl border border-cyan-400/30 shadow-xl p-4 relative overflow-hidden">
             <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-emerald-400 to-teal-400"></div>
-            <div className="flex items-center space-x-4">
-              <div className="flex-1 relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-cyan-400" />
-                <input
-                  type="text"
-                  placeholder="Search suppliers..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="w-full bg-gray-800 border border-cyan-400/50 text-cyan-300 rounded-lg pl-10 pr-4 py-2 font-mono text-sm focus:outline-none focus:border-cyan-400"
-                />
+            <div className="flex items-center justify-end space-x-4">
+              <div className="flex items-center space-x-2">
+                <Package className="w-4 h-4 text-cyan-400" />
+                <select
+                  value={minProducts}
+                  onChange={(e) => {
+                    const newThreshold = Number(e.target.value);
+                    setMinProducts(newThreshold);
+                    loadSuppliers(newThreshold);
+                  }}
+                  className="bg-gray-800 border border-cyan-400/50 text-cyan-300 rounded-lg px-4 py-2 font-mono text-sm focus:outline-none focus:border-cyan-400"
+                >
+                  <option value="50">Min 50 Products</option>
+                  <option value="40">Min 40 Products</option>
+                  <option value="30">Min 30 Products</option>
+                  <option value="20">Min 20 Products</option>
+                  <option value="10">Min 10 Products</option>
+                </select>
               </div>
               <div className="flex items-center space-x-2">
                 <Filter className="w-4 h-4 text-cyan-400" />
@@ -493,8 +502,8 @@ const OzonMarketplaceAnalytics: React.FC<OzonMarketplaceAnalyticsProps> = ({ onB
                   onChange={(e) => setSortBy(e.target.value as any)}
                   className="bg-gray-800 border border-cyan-400/50 text-cyan-300 rounded-lg px-4 py-2 font-mono text-sm focus:outline-none focus:border-cyan-400"
                 >
-                  <option value="count">Sort by Products</option>
                   <option value="revenue">Sort by Revenue</option>
+                  <option value="avgDaysOOS">Sort by Avg Days OOS</option>
                   <option value="name">Sort by Name</option>
                 </select>
               </div>

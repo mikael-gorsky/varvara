@@ -23,6 +23,12 @@ const OzonMarketplaceAnalytics: React.FC<OzonMarketplaceAnalyticsProps> = ({ onB
     loadOverview();
   }, []);
 
+  useEffect(() => {
+    if (viewState === 'suppliers-list' && suppliers.length === 0 && !isLoading) {
+      loadSuppliers();
+    }
+  }, [viewState]);
+
   const loadOverview = async () => {
     setIsLoading(true);
     setError('');
@@ -253,7 +259,7 @@ const OzonMarketplaceAnalytics: React.FC<OzonMarketplaceAnalyticsProps> = ({ onB
 
           {/* Suppliers Button */}
           <div
-            onClick={loadSuppliers}
+            onClick={() => setViewState('suppliers-list')}
             className="bg-gradient-to-br from-gray-900 to-gray-800 rounded-xl border border-cyan-400/30 shadow-xl p-8 cursor-pointer hover:border-cyan-400/60 hover:shadow-cyan-400/20 hover:shadow-2xl transition-all duration-300 relative overflow-hidden group"
           >
             <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-emerald-400 to-teal-400"></div>

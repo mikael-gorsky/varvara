@@ -55,18 +55,90 @@ export class OzonImportService {
     }
 
     console.log(`[OzonImportService] Attempting to insert ${data.length} records`);
-    console.log(`[OzonImportService] Sample record:`, data[0]);
+    console.log(`[OzonImportService] Sample record:`, JSON.stringify(data[0], null, 2));
 
-    const { error } = await supabase
-      .from('ozon_data')
-      .insert(data);
+    console.log(`[OzonImportService] Full data payload (first 3 records):`);
+    data.slice(0, 3).forEach((record, index) => {
+      console.log(`[OzonImportService] Record ${index}:`, JSON.stringify(record, null, 2));
+    });
 
-    if (error) {
-      console.error(`[OzonImportService] Import error:`, error);
-      throw new Error(`Import failed: ${error.message}`);
+    try {
+      const { error } = await supabase
+        .from('ozon_data')
+        .insert(data);
+
+      if (error) {
+        console.error(`[OzonImportService] ❌ Import error:`, error);
+        console.error(`[OzonImportService] Error details:`, {
+          message: error.message,
+          details: error.details,
+          hint: error.hint,
+          code: error.code
+        });
+
+        console.log(`[OzonImportService] Attempting row-by-row import to identify problematic record...`);
+        await this.importDataRowByRow(data);
+        return;
+      }
+
+      console.log(`[OzonImportService] ✅ Successfully inserted ${data.length} records`);
+    } catch (error) {
+      console.error(`[OzonImportService] ❌ Unexpected error during import:`, error);
+      throw error;
+    }
+  }
+
+  private async importDataRowByRow(data: OzonRecord[]): Promise<void> {
+    console.log(`[OzonImportService] Starting row-by-row import for ${data.length} records...`);
+    let successCount = 0;
+    let errorCount = 0;
+    const errors: Array<{ rowIndex: number; error: any; record: any }> = [];
+
+    for (let i = 0; i < data.length; i++) {
+      const record = data[i];
+      try {
+        const { error } = await supabase
+          .from('ozon_data')
+          .insert([record]);
+
+        if (error) {
+          errorCount++;
+          console.error(`[OzonImportService] ❌ Row ${i + 1} failed:`, {
+            error: error.message,
+            code: error.code,
+            details: error.details,
+            record: JSON.stringify(record, null, 2)
+          });
+          errors.push({ rowIndex: i, error, record });
+        } else {
+          successCount++;
+          if (successCount % 100 === 0) {
+            console.log(`[OzonImportService] Progress: ${successCount}/${data.length} rows imported`);
+          }
+        }
+      } catch (error) {
+        errorCount++;
+        console.error(`[OzonImportService] ❌ Unexpected error at row ${i + 1}:`, error);
+        console.error(`[OzonImportService] Problematic record:`, JSON.stringify(record, null, 2));
+        errors.push({ rowIndex: i, error, record });
+      }
     }
 
-    console.log(`[OzonImportService] Successfully inserted ${data.length} records`);
+    console.log(`[OzonImportService] Row-by-row import complete:`);
+    console.log(`[OzonImportService] ✅ Success: ${successCount} rows`);
+    console.log(`[OzonImportService] ❌ Failed: ${errorCount} rows`);
+
+    if (errors.length > 0) {
+      console.error(`[OzonImportService] First 5 errors:`);
+      errors.slice(0, 5).forEach(({ rowIndex, error, record }) => {
+        console.error(`[OzonImportService] Row ${rowIndex + 1}:`, {
+          error: error.message || error,
+          record
+        });
+      });
+
+      throw new Error(`Import completed with ${errorCount} errors. Successfully imported ${successCount} records. Check console for details.`);
+    }
   }
 
   async getStats(): Promise<OzonStats> {

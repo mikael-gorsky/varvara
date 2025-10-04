@@ -341,12 +341,83 @@ function validateOzonHeaders(headers: string[]): {
   };
 }
 
+const SMALLINT_MAX = 32767;
+const SMALLINT_MIN = -32768;
+const INTEGER_MAX = 2147483647;
+const INTEGER_MIN = -2147483648;
+
+const SCHEMA_CONSTRAINTS: Record<string, { type: 'smallint' | 'integer'; max: number; min: number }> = {
+  ordered_quantity: { type: 'smallint', max: SMALLINT_MAX, min: SMALLINT_MIN },
+  days_no_stock: { type: 'smallint', max: SMALLINT_MAX, min: SMALLINT_MIN },
+  average_delivery_hours: { type: 'smallint', max: SMALLINT_MAX, min: SMALLINT_MIN },
+  average_daily_sales_pcs: { type: 'smallint', max: SMALLINT_MAX, min: SMALLINT_MIN },
+  view_to_cart_percentage: { type: 'smallint', max: SMALLINT_MAX, min: SMALLINT_MIN },
+  search_to_cart_percentage: { type: 'smallint', max: SMALLINT_MAX, min: SMALLINT_MIN },
+  description_to_cart_percentage: { type: 'smallint', max: SMALLINT_MAX, min: SMALLINT_MIN },
+  ads_share_percentage: { type: 'smallint', max: SMALLINT_MAX, min: SMALLINT_MIN },
+  reported_days: { type: 'smallint', max: SMALLINT_MAX, min: SMALLINT_MIN },
+  ordered_sum: { type: 'integer', max: INTEGER_MAX, min: INTEGER_MIN },
+  turnover_dynamic_percentage: { type: 'integer', max: INTEGER_MAX, min: INTEGER_MIN },
+  average_price: { type: 'integer', max: INTEGER_MAX, min: INTEGER_MIN },
+  minimum_price: { type: 'integer', max: INTEGER_MAX, min: INTEGER_MIN },
+  buyout_share_percentage: { type: 'integer', max: INTEGER_MAX, min: INTEGER_MIN },
+  lost_sales: { type: 'integer', max: INTEGER_MAX, min: INTEGER_MIN },
+  average_daily_revenue: { type: 'integer', max: INTEGER_MAX, min: INTEGER_MIN },
+  ending_stock: { type: 'integer', max: INTEGER_MAX, min: INTEGER_MIN },
+  volume_liters: { type: 'integer', max: INTEGER_MAX, min: INTEGER_MIN },
+  views: { type: 'integer', max: INTEGER_MAX, min: INTEGER_MIN },
+  views_search: { type: 'integer', max: INTEGER_MAX, min: INTEGER_MIN },
+  views_card: { type: 'integer', max: INTEGER_MAX, min: INTEGER_MIN },
+  discount_promo: { type: 'integer', max: INTEGER_MAX, min: INTEGER_MIN },
+  revenue_promo_percentage: { type: 'integer', max: INTEGER_MAX, min: INTEGER_MIN },
+  days_promo: { type: 'integer', max: INTEGER_MAX, min: INTEGER_MIN },
+  days_boost: { type: 'integer', max: INTEGER_MAX, min: INTEGER_MIN }
+};
+
+function validateFieldValue(fieldName: string, value: any): { valid: boolean; error?: string; warning?: string } {
+  if (value === null || value === undefined) {
+    return { valid: true };
+  }
+
+  const constraint = SCHEMA_CONSTRAINTS[fieldName];
+  if (!constraint) {
+    return { valid: true };
+  }
+
+  const numValue = Number(value);
+  if (isNaN(numValue)) {
+    return { valid: true };
+  }
+
+  if (numValue > constraint.max) {
+    const error = `Field "${fieldName}" value ${numValue} exceeds ${constraint.type} maximum (${constraint.max})`;
+    console.error(`[Validation] ❌ ${error}`);
+    return { valid: false, error };
+  }
+
+  if (numValue < constraint.min) {
+    const error = `Field "${fieldName}" value ${numValue} below ${constraint.type} minimum (${constraint.min})`;
+    console.error(`[Validation] ❌ ${error}`);
+    return { valid: false, error };
+  }
+
+  if (constraint.type === 'smallint' && numValue > constraint.max * 0.9) {
+    const warning = `Field "${fieldName}" value ${numValue} is approaching ${constraint.type} maximum (${constraint.max})`;
+    console.warn(`[Validation] ⚠️  ${warning}`);
+    return { valid: true, warning };
+  }
+
+  return { valid: true };
+}
+
 function mapOzonRowToData(headers: any[], values: any[], metadata: OzonFileMetadata): OzonDataRow | null {
   const row: any = {
     date_of_report: metadata.dateOfReport,
     reported_days: metadata.reportedDays
   };
   let hasRequiredData = false;
+  const validationErrors: string[] = [];
+  const validationWarnings: string[] = [];
 
   headers.forEach((header, index) => {
     if (!header) return;
@@ -357,7 +428,16 @@ function mapOzonRowToData(headers: any[], values: any[], metadata: OzonFileMetad
     const mapping = COLUMN_MAPPING[headerStr];
 
     if (mapping) {
-      const parsedValue = parseOzonValue(value, mapping.instruction);
+      const parsedValue = parseOzonValue(value, mapping.instruction, mapping.field);
+
+      const validation = validateFieldValue(mapping.field, parsedValue);
+      if (!validation.valid) {
+        validationErrors.push(validation.error || 'Unknown validation error');
+      }
+      if (validation.warning) {
+        validationWarnings.push(validation.warning);
+      }
+
       row[mapping.field] = parsedValue;
 
       if (mapping.field === 'product_name' && parsedValue) {
@@ -370,10 +450,19 @@ function mapOzonRowToData(headers: any[], values: any[], metadata: OzonFileMetad
     row.category_level3 = metadata.categoryLevel3;
   }
 
+  if (validationErrors.length > 0) {
+    console.error(`[Validation] Row has ${validationErrors.length} validation errors:`, validationErrors);
+    console.error(`[Validation] Problematic row data:`, JSON.stringify(row, null, 2));
+  }
+
+  if (validationWarnings.length > 0) {
+    console.warn(`[Validation] Row has ${validationWarnings.length} warnings:`, validationWarnings);
+  }
+
   return hasRequiredData ? row : null;
 }
 
-function parseOzonValue(value: any, instruction: string): any {
+function parseOzonValue(value: any, instruction: string, fieldName?: string): any {
   if (value === null || value === undefined) {
     return null;
   }
@@ -401,7 +490,9 @@ function parseOzonValue(value: any, instruction: string): any {
       const x = parseInt(match[1], 10);
       const y = parseInt(match[2], 10);
       if (y > 0) {
-        return Math.round((x / y) * 100);
+        const result = Math.round((x / y) * 100);
+        console.log(`[Parser] ${fieldName || 'field'}: special_ratio "${strValue}" -> ${result}`);
+        return result;
       }
     }
     return null;
@@ -410,17 +501,23 @@ function parseOzonValue(value: any, instruction: string): any {
   if (instruction === 'special_hours') {
     const match = strValue.match(/(\d+)\s*ч/i);
     if (match) {
-      return parseInt(match[1], 10);
+      const result = parseInt(match[1], 10);
+      console.log(`[Parser] ${fieldName || 'field'}: special_hours "${strValue}" -> ${result}`);
+      return result;
     }
     const numMatch = strValue.match(/(\d+)/);
     if (numMatch) {
-      return parseInt(numMatch[1], 10);
+      const result = parseInt(numMatch[1], 10);
+      console.log(`[Parser] ${fieldName || 'field'}: special_hours "${strValue}" -> ${result}`);
+      return result;
     }
     return null;
   }
 
   if (typeof value === 'number') {
-    return applyTransformation(value, instruction);
+    const result = applyTransformation(value, instruction);
+    console.log(`[Parser] ${fieldName || 'field'}: ${instruction} ${value} -> ${result}`);
+    return result;
   }
 
   let cleanValue = strValue
@@ -434,7 +531,9 @@ function parseOzonValue(value: any, instruction: string): any {
     return null;
   }
 
-  return applyTransformation(numericValue, instruction);
+  const result = applyTransformation(numericValue, instruction);
+  console.log(`[Parser] ${fieldName || 'field'}: ${instruction} "${strValue}" (${numericValue}) -> ${result}`);
+  return result;
 }
 
 function applyTransformation(value: number, instruction: string): number {

@@ -521,8 +521,8 @@ const OzonMarketplaceAnalytics: React.FC<OzonMarketplaceAnalyticsProps> = ({ onB
                         <p className="text-blue-300 font-bold font-mono">{supplier.categoryCount}</p>
                       </div>
                       <div>
-                        <span className="text-cyan-400/60 font-mono">Avg Price:</span>
-                        <p className="text-orange-300 font-bold font-mono">{supplier.averagePrice.toFixed(2)}</p>
+                        <span className="text-cyan-400/60 font-mono">Avg Days OOS:</span>
+                        <p className="text-orange-300 font-bold font-mono">{supplier.averagePrice.toFixed(1)}</p>
                       </div>
                       <div>
                         <span className="text-cyan-400/60 font-mono">Revenue:</span>

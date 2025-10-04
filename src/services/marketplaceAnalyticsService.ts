@@ -124,16 +124,12 @@ class MarketplaceAnalyticsService {
     try {
       const { data: products, error } = await supabaseAdmin
         .from('ozon_data')
-        .select('seller, category_level3, ordered_sum, average_price', { count: 'exact' })
+        .select('seller, category_level3, ordered_sum, days_no_stock')
         .not('seller', 'is', null)
         .not('category_level3', 'is', null)
         .range(0, 999999);
 
       if (error) throw error;
-
-      console.log('Total products fetched:', products?.length);
-      const gelosSample = products?.filter(p => p.seller === 'ГЕЛЕОС').slice(0, 10);
-      console.log('ГЕЛЕОС sample (first 10):', gelosSample?.map(p => ({ seller: p.seller, category: p.category_level3 })));
 
       const supplierMap = new Map<string, {
         products: any[];
@@ -159,9 +155,7 @@ class MarketplaceAnalyticsService {
       supplierMap.forEach((data, supplier) => {
         if (data.products.length >= minProducts) {
           const totalRevenue = data.products.reduce((sum, p) => sum + (p.ordered_sum || 0), 0);
-          const averagePrice = data.products.reduce((sum, p) => sum + (p.average_price || 0), 0) / data.products.length;
-
-          console.log(`Supplier: ${supplier}, Products: ${data.products.length}, Categories Set:`, data.categories);
+          const avgDaysNoStock = data.products.reduce((sum, p) => sum + (p.days_no_stock || 0), 0) / data.products.length;
 
           suppliers.push({
             supplier,
@@ -169,7 +163,7 @@ class MarketplaceAnalyticsService {
             categoryCount: data.categories.size,
             categories: Array.from(data.categories),
             totalRevenue,
-            averagePrice
+            averagePrice: avgDaysNoStock
           });
         }
       });

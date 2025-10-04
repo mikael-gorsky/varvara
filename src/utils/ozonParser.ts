@@ -175,7 +175,7 @@ function processOzonRawData(rawData: any[][], file: File): OzonParsedData {
 
   const metadata = extractFileMetadata(rawData, file);
 
-  const headerRowIndex = 3;
+  const headerRowIndex = 4;
   const headers = rawData[headerRowIndex] || [];
   console.log('Detected headers:', headers);
 

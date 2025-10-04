@@ -403,11 +403,11 @@ const OzonMarketplaceAnalytics: React.FC<OzonMarketplaceAnalyticsProps> = ({ onB
                       </div>
                       <div>
                         <span className="text-cyan-400/60 font-mono">Avg Price:</span>
-                        <p className="text-orange-300 font-bold font-mono">${category.averagePrice.toFixed(2)}</p>
+                        <p className="text-orange-300 font-bold font-mono">{category.averagePrice.toFixed(2)}</p>
                       </div>
                       <div>
                         <span className="text-cyan-400/60 font-mono">Revenue:</span>
-                        <p className="text-violet-300 font-bold font-mono">${(category.totalRevenue / 1000).toFixed(1)}K</p>
+                        <p className="text-violet-300 font-bold font-mono">{category.totalRevenue.toLocaleString()}</p>
                       </div>
                     </div>
                   </div>
@@ -522,7 +522,7 @@ const OzonMarketplaceAnalytics: React.FC<OzonMarketplaceAnalyticsProps> = ({ onB
                       </div>
                       <div>
                         <span className="text-cyan-400/60 font-mono">Avg Price:</span>
-                        <p className="text-orange-300 font-bold font-mono">${supplier.averagePrice.toFixed(2)}</p>
+                        <p className="text-orange-300 font-bold font-mono">{supplier.averagePrice.toFixed(2)}</p>
                       </div>
                       <div>
                         <span className="text-cyan-400/60 font-mono">Revenue:</span>

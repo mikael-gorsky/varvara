@@ -461,6 +461,17 @@ const OzonMarketplaceAnalytics: React.FC<OzonMarketplaceAnalyticsProps> = ({ onB
                   <ArrowLeft className="w-4 h-4" />
                   <span>BACK TO MENU</span>
                 </button>
+                <div className="h-6 border-l border-cyan-400/30"></div>
+                <div className="flex items-center space-x-3">
+                  <div className="w-12 h-12 bg-gradient-to-br from-emerald-400 to-teal-500 rounded-lg flex items-center justify-center shadow-lg border border-emerald-300">
+                    <Users className="w-6 h-6 text-black" />
+                  </div>
+                  <div>
+                    <h1 className="text-2xl font-bold text-cyan-300 font-mono tracking-wider">
+                      SUPPLIERS ANALYTICS
+                    </h1>
+                  </div>
+                </div>
               </div>
             </div>
           </div>

@@ -488,11 +488,10 @@ const OzonMarketplaceAnalytics: React.FC<OzonMarketplaceAnalyticsProps> = ({ onB
                   }}
                   className="bg-gray-800 border border-cyan-400/50 text-cyan-300 rounded-lg px-4 py-2 font-mono text-sm focus:outline-none focus:border-cyan-400"
                 >
+                  <option value="100">Min 100 Products</option>
+                  <option value="75">Min 75 Products</option>
                   <option value="50">Min 50 Products</option>
-                  <option value="40">Min 40 Products</option>
-                  <option value="30">Min 30 Products</option>
-                  <option value="20">Min 20 Products</option>
-                  <option value="10">Min 10 Products</option>
+                  <option value="25">Min 25 Products</option>
                 </select>
               </div>
               <div className="flex items-center space-x-2">

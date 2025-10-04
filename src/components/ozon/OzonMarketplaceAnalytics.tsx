@@ -16,7 +16,7 @@ const OzonMarketplaceAnalytics: React.FC<OzonMarketplaceAnalyticsProps> = ({ onB
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string>('');
   const [searchTerm, setSearchTerm] = useState('');
-  const [sortBy, setSortBy] = useState<'name' | 'count' | 'revenue'>('count');
+  const [sortBy, setSortBy] = useState<'name' | 'count' | 'revenue' | 'avgDaysOOS'>('revenue');
 
   useEffect(() => {
     loadOverview();
@@ -100,6 +100,8 @@ const OzonMarketplaceAnalytics: React.FC<OzonMarketplaceAnalyticsProps> = ({ onB
         return filtered.sort((a, b) => b.productCount - a.productCount);
       case 'revenue':
         return filtered.sort((a, b) => b.totalRevenue - a.totalRevenue);
+      case 'avgDaysOOS':
+        return filtered.sort((a, b) => b.averagePrice - a.averagePrice);
       default:
         return filtered;
     }
@@ -372,15 +374,15 @@ const OzonMarketplaceAnalytics: React.FC<OzonMarketplaceAnalyticsProps> = ({ onB
                   onChange={(e) => setSortBy(e.target.value as any)}
                   className="bg-gray-800 border border-cyan-400/50 text-cyan-300 rounded-lg px-4 py-2 font-mono text-sm focus:outline-none focus:border-cyan-400"
                 >
-                  <option value="count">Sort by Products</option>
                   <option value="revenue">Sort by Revenue</option>
+                  <option value="avgDaysOOS">Sort by Avg Days OOS</option>
                   <option value="name">Sort by Name</option>
                 </select>
               </div>
             </div>
           </div>
 
-          {/* Categories List */}
+          {/* Suppliers List */}
           <div className="grid gap-4">
             {filteredCategories.map((category) => (
               <div

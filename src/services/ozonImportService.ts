@@ -32,7 +32,7 @@ export interface OzonRecord {
   revenue_promo?: number;
   days_promo?: number;
   days_boost?: number;
-  ads_share?: number;
+  ads_share_percentage?: number;
   card_date?: string;
   import_date?: string;
 }

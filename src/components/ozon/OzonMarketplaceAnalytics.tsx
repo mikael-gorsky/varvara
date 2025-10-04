@@ -465,7 +465,7 @@ const OzonMarketplaceAnalytics: React.FC<OzonMarketplaceAnalyticsProps> = ({ onB
                       SUPPLIERS ANALYTICS
                     </h1>
                     <p className="text-cyan-400/80 text-sm font-mono">
-                      {filteredSuppliers.length} Suppliers (50+ Products)
+                      {filteredSuppliers.length} Suppliers ({minProducts}+ Products)
                     </p>
                   </div>
                 </div>

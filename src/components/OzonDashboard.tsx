@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
-import { ArrowLeft, FileSpreadsheet, BarChart3, Database, Upload, Activity, Zap } from 'lucide-react';
+import { ArrowLeft, FileSpreadsheet, BarChart3, Database, Upload, Activity, TrendingUp } from 'lucide-react';
 import OzonDataImport from './ozon/OzonDataImport';
-import OzonProductAnalysis from './ozon/OzonProductAnalysis';
+import OzonMarketplaceAnalytics from './ozon/OzonMarketplaceAnalytics';
 
-type OzonComponent = 'menu' | 'data-import' | 'product-analysis';
+type OzonComponent = 'menu' | 'data-import' | 'marketplace-analytics';
 
 interface OzonDashboardProps {
   onBack: () => void;
@@ -24,8 +24,8 @@ const OzonDashboard: React.FC<OzonDashboardProps> = ({ onBack }) => {
     switch (activeComponent) {
       case 'data-import':
         return <OzonDataImport onBack={handleBackToMenu} />;
-      case 'product-analysis':
-        return <OzonProductAnalysis onBack={handleBackToMenu} />;
+      case 'marketplace-analytics':
+        return <OzonMarketplaceAnalytics onBack={handleBackToMenu} />;
       default:
         return (
           <div className="min-h-screen bg-black p-6" style={{
@@ -120,45 +120,45 @@ const OzonDashboard: React.FC<OzonDashboardProps> = ({ onBack }) => {
                   </div>
                 </div>
 
-                {/* Product Analysis Module */}
+                {/* Marketplace Analytics Module */}
                 <div
-                  onClick={() => handleSelectComponent('product-analysis')}
+                  onClick={() => handleSelectComponent('marketplace-analytics')}
                   className="bg-gradient-to-br from-gray-900 to-gray-800 rounded-xl border border-cyan-400/30 shadow-xl p-8 cursor-pointer hover:border-cyan-400/60 hover:shadow-cyan-400/20 hover:shadow-2xl transition-all duration-300 relative overflow-hidden"
                 >
-                  <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-purple-400 to-pink-400"></div>
-                  
+                  <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-orange-400 to-amber-400"></div>
+
                   {/* Module ID */}
                   <div className="absolute top-4 right-4">
-                    <span className="bg-gray-800/60 border border-purple-400/30 text-purple-400 text-xs px-2 py-1 rounded font-mono">
+                    <span className="bg-gray-800/60 border border-orange-400/30 text-orange-400 text-xs px-2 py-1 rounded font-mono">
                       TN02
                     </span>
                   </div>
-                  
+
                   {/* Corner Accents */}
-                  <div className="absolute top-6 left-6 w-4 h-4 border-l-2 border-t-2 border-purple-400/40"></div>
-                  <div className="absolute bottom-6 right-6 w-4 h-4 border-r-2 border-b-2 border-purple-400/40"></div>
-                  
+                  <div className="absolute top-6 left-6 w-4 h-4 border-l-2 border-t-2 border-orange-400/40"></div>
+                  <div className="absolute bottom-6 right-6 w-4 h-4 border-r-2 border-b-2 border-orange-400/40"></div>
+
                   <div className="flex flex-col items-center text-center space-y-6">
-                    <div className="w-20 h-20 bg-gradient-to-br from-purple-400 to-pink-500 rounded-xl flex items-center justify-center shadow-lg border border-purple-300 relative">
-                      <BarChart3 className="w-10 h-10 text-black" />
+                    <div className="w-20 h-20 bg-gradient-to-br from-orange-400 to-amber-500 rounded-xl flex items-center justify-center shadow-lg border border-orange-300 relative">
+                      <TrendingUp className="w-10 h-10 text-black" />
                       <div className="absolute -top-1 -right-1 w-5 h-5 bg-cyan-400 rounded-full border-2 border-gray-900 flex items-center justify-center">
-                        <Zap className="w-3 h-3 text-black" />
+                        <BarChart3 className="w-3 h-3 text-black" />
                       </div>
                     </div>
-                    
+
                     <div>
-                      <h3 className="text-2xl font-bold text-purple-300 mb-3 font-mono tracking-wide">
-                        AI PATTERN RECOGNITION
+                      <h3 className="text-2xl font-bold text-orange-300 mb-3 font-mono tracking-wide">
+                        MARKETPLACE ANALYTICS
                       </h3>
-                      <p className="text-purple-400/80 text-sm leading-relaxed font-mono max-w-sm">
-                        Deploy advanced artificial intelligence algorithms to analyze and group similar products from database core intelligence systems.
+                      <p className="text-orange-400/80 text-sm leading-relaxed font-mono max-w-sm">
+                        Advanced marketplace intelligence tools for analyzing categories, suppliers, and market trends across OZON trading networks.
                       </p>
                     </div>
 
-                    <div className="bg-gray-800/50 border border-purple-400/30 rounded-lg px-6 py-3 w-full">
-                      <div className="flex items-center justify-center text-purple-400 text-sm font-mono font-bold space-x-2">
-                        <Zap className="w-4 h-4" />
-                        <span>DEPLOY AI SYSTEMS</span>
+                    <div className="bg-gray-800/50 border border-orange-400/30 rounded-lg px-6 py-3 w-full">
+                      <div className="flex items-center justify-center text-orange-400 text-sm font-mono font-bold space-x-2">
+                        <TrendingUp className="w-4 h-4" />
+                        <span>ACCESS ANALYTICS</span>
                       </div>
                     </div>
                   </div>

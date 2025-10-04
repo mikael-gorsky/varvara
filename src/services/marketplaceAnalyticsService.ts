@@ -154,6 +154,8 @@ class MarketplaceAnalyticsService {
           const totalRevenue = data.products.reduce((sum, p) => sum + (p.ordered_sum || 0), 0);
           const averagePrice = data.products.reduce((sum, p) => sum + (p.average_price || 0), 0) / data.products.length;
 
+          console.log(`Supplier: ${supplier}, Products: ${data.products.length}, Categories Set:`, data.categories);
+
           suppliers.push({
             supplier,
             productCount: data.products.length,

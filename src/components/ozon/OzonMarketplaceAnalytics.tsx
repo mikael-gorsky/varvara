@@ -17,7 +17,7 @@ const OzonMarketplaceAnalytics: React.FC<OzonMarketplaceAnalyticsProps> = ({ onB
   const [error, setError] = useState<string>('');
   const [searchTerm, setSearchTerm] = useState('');
   const [sortBy, setSortBy] = useState<'name' | 'count' | 'revenue' | 'avgDaysOOS'>('revenue');
-  const [minProducts, setMinProducts] = useState<number>(50);
+  const [minProducts, setMinProducts] = useState<number>(100);
 
   useEffect(() => {
     loadOverview();

@@ -108,7 +108,7 @@ const OzonMarketplaceAnalytics: React.FC<OzonMarketplaceAnalyticsProps> = ({ onB
       case 'revenue':
         return filtered.sort((a, b) => b.totalRevenue - a.totalRevenue);
       case 'avgDaysOOS':
-        return filtered.sort((a, b) => b.averagePrice - a.averagePrice);
+        return filtered.sort((a, b) => a.averagePrice - b.averagePrice);
       default:
         return filtered;
     }

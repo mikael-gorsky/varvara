@@ -37,7 +37,12 @@ const OzonDataImport: React.FC<OzonDataImportProps> = ({ onBack }) => {
 
   const handleBatchImport = async () => {
     const filesToImport = validatedFiles
-      .filter(f => f.status === 'valid' || (f.status === 'duplicate' && !skipDuplicates))
+      .filter(f =>
+        f.status === 'valid' ||
+        (f.status === 'duplicate' && !skipDuplicates) ||
+        (f.status === 'database_duplicate' && !skipDuplicates) ||
+        (f.status === 'cross_file_duplicate' && !skipDuplicates)
+      )
       .map(f => f.file);
 
     if (filesToImport.length === 0) return;

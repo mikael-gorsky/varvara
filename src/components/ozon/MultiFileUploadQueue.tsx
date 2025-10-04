@@ -3,19 +3,17 @@ import { Upload, X, AlertTriangle, CheckCircle, Clock, FileSpreadsheet, Database
 import { fileHashService, FileHashInfo } from '../../services/fileHashService';
 import { importHistoryService } from '../../services/importHistoryService';
 import { parseOzonFile, OzonParsedData } from '../../utils/ozonParser';
+import { duplicateDetectionService, DuplicateCheckResult } from '../../services/duplicateDetectionService';
 
 export interface QueuedFile {
   file: File;
   id: string;
-  status: 'pending' | 'validating' | 'valid' | 'invalid' | 'duplicate' | 'processing' | 'success' | 'error';
+  status: 'pending' | 'validating' | 'valid' | 'invalid' | 'duplicate' | 'cross_file_duplicate' | 'database_duplicate' | 'processing' | 'success' | 'error';
   hashInfo?: FileHashInfo;
   parsedData?: OzonParsedData;
   validationErrors: string[];
   isDuplicate: boolean;
-  duplicateInfo?: {
-    previousImportDate: string;
-    previousRecordCount: number;
-  };
+  duplicateInfo?: DuplicateCheckResult;
   progress?: number;
 }
 
@@ -44,6 +42,8 @@ const MultiFileUploadQueue: React.FC<MultiFileUploadQueueProps> = ({ onFilesVali
     for (const queuedFile of newFiles) {
       await validateFile(queuedFile);
     }
+
+    await detectCrossFileDuplicates();
   };
 
   const validateFile = async (queuedFile: QueuedFile) => {
@@ -53,9 +53,7 @@ const MultiFileUploadQueue: React.FC<MultiFileUploadQueueProps> = ({ onFilesVali
 
     try {
       const hashInfo = await fileHashService.getFileInfo(queuedFile.file);
-
       const duplicateRecord = await importHistoryService.checkDuplicateFile(hashInfo.hash);
-
       const parsedData = await parseOzonFile(queuedFile.file);
 
       const validationErrors: string[] = [...parsedData.errors];
@@ -71,8 +69,29 @@ const MultiFileUploadQueue: React.FC<MultiFileUploadQueueProps> = ({ onFilesVali
         validationErrors.push('No valid data rows found in file');
       }
 
-      const isDuplicate = !!duplicateRecord;
-      const status = isDuplicate ? 'duplicate' : validationErrors.length > 0 ? 'invalid' : 'valid';
+      const dbDuplicateCheck = await duplicateDetectionService.checkDatabaseDuplicate(parsedData.metadata);
+
+      let status: QueuedFile['status'] = 'valid';
+      let isDuplicate = false;
+      let duplicateInfo: DuplicateCheckResult | undefined = undefined;
+
+      if (dbDuplicateCheck.isDuplicate) {
+        status = 'database_duplicate';
+        isDuplicate = true;
+        duplicateInfo = dbDuplicateCheck;
+      } else if (duplicateRecord) {
+        status = 'duplicate';
+        isDuplicate = true;
+        duplicateInfo = {
+          isDuplicate: true,
+          matchType: 'database',
+          message: 'File already imported',
+          existingImportDate: duplicateRecord.created_at || '',
+          existingRecordCount: duplicateRecord.records_count
+        };
+      } else if (validationErrors.length > 0) {
+        status = 'invalid';
+      }
 
       setQueuedFiles(prev => {
         const updatedFiles = prev.map(f =>
@@ -84,10 +103,7 @@ const MultiFileUploadQueue: React.FC<MultiFileUploadQueueProps> = ({ onFilesVali
                 parsedData,
                 validationErrors,
                 isDuplicate,
-                duplicateInfo: duplicateRecord ? {
-                  previousImportDate: duplicateRecord.created_at || '',
-                  previousRecordCount: duplicateRecord.records_count
-                } : undefined
+                duplicateInfo
               }
             : f
         );
@@ -109,6 +125,52 @@ const MultiFileUploadQueue: React.FC<MultiFileUploadQueueProps> = ({ onFilesVali
         return updatedFiles;
       });
     }
+  };
+
+  const detectCrossFileDuplicates = async () => {
+    setQueuedFiles(prev => {
+      const validFiles = prev.filter(f => f.parsedData && f.status !== 'invalid' && f.status !== 'error');
+
+      if (validFiles.length < 2) {
+        return prev;
+      }
+
+      const metadataList = validFiles.map(f => f.parsedData!.metadata);
+      const duplicateGroups = duplicateDetectionService.detectCrossFileDuplicates(metadataList);
+
+      if (duplicateGroups.size === 0) {
+        return prev;
+      }
+
+      const filesToKeep = new Set<string>();
+      const filesToMark = new Set<string>();
+
+      duplicateGroups.forEach((indices) => {
+        filesToKeep.add(validFiles[indices[0]].id);
+        for (let i = 1; i < indices.length; i++) {
+          filesToMark.add(validFiles[indices[i]].id);
+        }
+      });
+
+      const updatedFiles = prev.map(f => {
+        if (filesToMark.has(f.id)) {
+          return {
+            ...f,
+            status: 'cross_file_duplicate' as QueuedFile['status'],
+            isDuplicate: true,
+            duplicateInfo: {
+              isDuplicate: true,
+              matchType: 'cross_file' as const,
+              message: 'Duplicated files detected, importing one of those'
+            }
+          };
+        }
+        return f;
+      });
+
+      onFilesValidated(updatedFiles);
+      return updatedFiles;
+    });
   };
 
   const removeFile = (id: string) => {
@@ -144,6 +206,8 @@ const MultiFileUploadQueue: React.FC<MultiFileUploadQueueProps> = ({ onFilesVali
       case 'error':
         return <AlertTriangle className="w-5 h-5 text-red-400" />;
       case 'duplicate':
+      case 'database_duplicate':
+      case 'cross_file_duplicate':
         return <AlertTriangle className="w-5 h-5 text-orange-400" />;
       case 'validating':
         return <Clock className="w-5 h-5 text-cyan-400 animate-spin" />;
@@ -160,6 +224,8 @@ const MultiFileUploadQueue: React.FC<MultiFileUploadQueueProps> = ({ onFilesVali
       case 'error':
         return 'border-red-400/50 bg-red-900/10';
       case 'duplicate':
+      case 'database_duplicate':
+      case 'cross_file_duplicate':
         return 'border-orange-400/50 bg-orange-900/10';
       case 'validating':
         return 'border-cyan-400/50 bg-cyan-900/10';
@@ -257,11 +323,20 @@ const MultiFileUploadQueue: React.FC<MultiFileUploadQueueProps> = ({ onFilesVali
                           </>
                         )}
 
-                        {queuedFile.parsedData?.metadata.reportPeriod && (
+                        {queuedFile.parsedData?.metadata.dateOfReport && (
                           <>
                             <span className="text-cyan-400/40">•</span>
                             <p className="text-cyan-400/60 text-xs font-mono">
-                              {queuedFile.parsedData.metadata.reportPeriod}
+                              {queuedFile.parsedData.metadata.dateOfReport}
+                            </p>
+                          </>
+                        )}
+
+                        {queuedFile.parsedData?.metadata.reportedDays && (
+                          <>
+                            <span className="text-cyan-400/40">•</span>
+                            <p className="text-cyan-400/60 text-xs font-mono">
+                              {queuedFile.parsedData.metadata.reportedDays} days
                             </p>
                           </>
                         )}
@@ -278,11 +353,16 @@ const MultiFileUploadQueue: React.FC<MultiFileUploadQueueProps> = ({ onFilesVali
 
                       {queuedFile.isDuplicate && queuedFile.duplicateInfo && (
                         <div className="mt-2 bg-orange-900/20 border border-orange-400/30 rounded px-3 py-1">
-                          <p className="text-orange-300 text-xs font-mono">
-                            Duplicate: Previously imported on{' '}
-                            {new Date(queuedFile.duplicateInfo.previousImportDate).toLocaleDateString()}
-                            {' '}({queuedFile.duplicateInfo.previousRecordCount} records)
+                          <p className="text-orange-300 text-xs font-mono font-bold">
+                            {queuedFile.duplicateInfo.message}
                           </p>
+                          {queuedFile.duplicateInfo.existingImportDate && (
+                            <p className="text-orange-300 text-xs font-mono mt-1">
+                              Previously imported on{' '}
+                              {new Date(queuedFile.duplicateInfo.existingImportDate).toLocaleDateString()}
+                              {queuedFile.duplicateInfo.existingRecordCount && ` (${queuedFile.duplicateInfo.existingRecordCount} records)`}
+                            </p>
+                          )}
                         </div>
                       )}
 

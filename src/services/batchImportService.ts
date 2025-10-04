@@ -74,6 +74,7 @@ export class BatchImportService {
         if (options.skipDuplicates) {
           const duplicate = await importHistoryService.checkDuplicateFile(hashInfo.hash);
           if (duplicate) {
+            console.log(`[BatchImport] Skipping duplicate file by hash: ${file.name}`);
             result.filesSkipped++;
             continue;
           }

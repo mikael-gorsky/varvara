@@ -162,6 +162,9 @@ function processOzonRawData(rawData: any[][], file: File): OzonParsedData {
   const errors: string[] = [];
   const rows: OzonDataRow[] = [];
 
+  console.log('[OzonParser] Total rows in file:', rawData.length);
+  console.log('[OzonParser] First 5 rows:', rawData.slice(0, 5));
+
   if (rawData.length < 5) {
     return {
       rows: [],
@@ -175,7 +178,28 @@ function processOzonRawData(rawData: any[][], file: File): OzonParsedData {
 
   const metadata = extractFileMetadata(rawData, file);
 
-  const headerRowIndex = 4;
+  let headerRowIndex = -1;
+  for (let i = 0; i < Math.min(10, rawData.length); i++) {
+    const row = rawData[i];
+    if (row && row[0] && String(row[0]).includes('Название товара')) {
+      headerRowIndex = i;
+      break;
+    }
+  }
+
+  if (headerRowIndex === -1) {
+    console.error('[OzonParser] Could not find header row');
+    return {
+      rows: [],
+      headers: [],
+      errors: ['Could not find header row with "Название товара"'],
+      metadata,
+      headerValidation: { isValid: false, missingFields: ['Название товара'], extraFields: [] },
+      stats: { totalRows: 0, validRows: 0, invalidRows: 0 }
+    };
+  }
+
+  console.log('[OzonParser] Found header row at index:', headerRowIndex);
   const headers = rawData[headerRowIndex] || [];
   console.log('Detected headers:', headers);
 
@@ -246,21 +270,32 @@ function extractFileMetadata(rawData: any[][], file: File): OzonFileMetadata {
 
   if (rawData.length < 3) return metadata;
 
-  if (rawData[0] && rawData[0][1]) {
-    const dateStr = String(rawData[0][1]).trim();
-    metadata.dateOfReport = parseDateFromRussianFormat(dateStr);
-  }
+  for (let i = 0; i < Math.min(5, rawData.length); i++) {
+    const row = rawData[i];
+    if (!row || row.length < 2) continue;
 
-  if (rawData[1] && rawData[1][1]) {
-    const periodStr = String(rawData[1][1]).trim();
-    const match = periodStr.match(/(\d+)\s*дн/i);
-    if (match) {
-      metadata.reportedDays = parseInt(match[1], 10);
+    const label = String(row[0] || '').toLowerCase().trim();
+    const value = row[1];
+
+    if (label.includes('дата формирования') || label.includes('дата форм')) {
+      const dateStr = String(value).trim();
+      metadata.dateOfReport = parseDateFromRussianFormat(dateStr);
+      console.log('[OzonParser] Found date of report:', metadata.dateOfReport, 'from', dateStr);
     }
-  }
 
-  if (rawData[2] && rawData[2][1]) {
-    metadata.categoryLevel3 = String(rawData[2][1]).trim();
+    if (label.includes('период отчета') || label.includes('период')) {
+      const periodStr = String(value).trim();
+      const match = periodStr.match(/(\d+)\s*дн/i);
+      if (match) {
+        metadata.reportedDays = parseInt(match[1], 10);
+        console.log('[OzonParser] Found reported days:', metadata.reportedDays);
+      }
+    }
+
+    if (label.includes('категория 3') || label.includes('категория')) {
+      metadata.categoryLevel3 = String(value).trim();
+      console.log('[OzonParser] Found category level 3:', metadata.categoryLevel3);
+    }
   }
 
   return metadata;

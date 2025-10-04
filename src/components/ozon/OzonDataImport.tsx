@@ -15,7 +15,7 @@ const OzonDataImport: React.FC<OzonDataImportProps> = ({ onBack }) => {
   const [importProgress, setImportProgress] = useState<BatchImportProgress | null>(null);
   const [importResult, setImportResult] = useState<BatchImportResult | null>(null);
   const [ozonStats, setOzonStats] = useState<OzonStats | null>(null);
-  const [skipDuplicates, setSkipDuplicates] = useState(true);
+  const skipDuplicates = true;
   const [showHistory, setShowHistory] = useState(false);
 
   const loadOzonStats = async () => {
@@ -37,12 +37,7 @@ const OzonDataImport: React.FC<OzonDataImportProps> = ({ onBack }) => {
 
   const handleBatchImport = async () => {
     const filesToImport = validatedFiles
-      .filter(f =>
-        f.status === 'valid' ||
-        (f.status === 'duplicate' && !skipDuplicates) ||
-        (f.status === 'database_duplicate' && !skipDuplicates) ||
-        (f.status === 'cross_file_duplicate' && !skipDuplicates)
-      )
+      .filter(f => f.status === 'valid')
       .map(f => f.file);
 
     if (filesToImport.length === 0) return;
@@ -195,7 +190,7 @@ const OzonDataImport: React.FC<OzonDataImportProps> = ({ onBack }) => {
 
             <h2 className="text-xl font-bold text-cyan-300 mb-6 flex items-center space-x-3 font-mono tracking-wide">
               <Upload className="w-6 h-6 text-emerald-400" />
-              <span>BATCH IMPORT CONTROL</span>
+              <span>IMPORT CONTROL</span>
             </h2>
 
             <div className="space-y-4">
@@ -204,20 +199,10 @@ const OzonDataImport: React.FC<OzonDataImportProps> = ({ onBack }) => {
                   <p className="text-cyan-300 font-mono font-bold">{validFilesCount} files ready to import</p>
                   {duplicateFilesCount > 0 && (
                     <p className="text-orange-300 text-sm font-mono mt-1">
-                      {duplicateFilesCount} duplicate files detected
+                      {duplicateFilesCount} duplicate files will be skipped
                     </p>
                   )}
                 </div>
-
-                <label className="flex items-center space-x-3">
-                  <input
-                    type="checkbox"
-                    checked={skipDuplicates}
-                    onChange={(e) => setSkipDuplicates(e.target.checked)}
-                    className="w-4 h-4 rounded border-cyan-400"
-                  />
-                  <span className="text-cyan-300 font-mono text-sm">Skip duplicate files</span>
-                </label>
               </div>
 
               {importProgress && (

@@ -22,6 +22,7 @@ export interface MarketplaceOverview {
   totalCategories: number;
   totalSuppliers: number;
   topSuppliers: number;
+  suppliersOver100: number;
   totalProducts: number;
   totalRevenue: number;
 }
@@ -38,6 +39,7 @@ class MarketplaceAnalyticsService {
 
       const uniqueCategories = new Set<string>();
       const supplierRevenue = new Map<string, number>();
+      const supplierProductCount = new Map<string, number>();
       let totalRevenue = 0;
 
       products?.forEach(product => {
@@ -45,17 +47,22 @@ class MarketplaceAnalyticsService {
         if (product.seller) {
           const currentRevenue = supplierRevenue.get(product.seller) || 0;
           supplierRevenue.set(product.seller, currentRevenue + (product.ordered_sum || 0));
+
+          const currentCount = supplierProductCount.get(product.seller) || 0;
+          supplierProductCount.set(product.seller, currentCount + 1);
         }
         totalRevenue += product.ordered_sum || 0;
       });
 
       const threshold = totalRevenue * 0.1;
       const topSuppliers = Array.from(supplierRevenue.values()).filter(rev => rev > threshold).length;
+      const suppliersOver100 = Array.from(supplierProductCount.values()).filter(count => count > 100).length;
 
       return {
         totalCategories: uniqueCategories.size,
         totalSuppliers: supplierRevenue.size,
         topSuppliers,
+        suppliersOver100,
         totalProducts: products?.length || 0,
         totalRevenue
       };

@@ -184,8 +184,8 @@ const OzonMarketplaceAnalytics: React.FC<OzonMarketplaceAnalyticsProps> = ({ onB
                   <Users className="w-4 h-4 text-black" />
                 </div>
               </div>
-              <h3 className="text-xs font-mono text-cyan-400 mb-1 uppercase tracking-wider">Suppliers (top 10%)</h3>
-              <p className="text-2xl font-bold text-emerald-300 font-mono">{overview.topSuppliers}</p>
+              <h3 className="text-xs font-mono text-cyan-400 mb-1 uppercase tracking-wider">Suppliers (100+ products)</h3>
+              <p className="text-2xl font-bold text-emerald-300 font-mono">{overview.suppliersOver100}</p>
             </div>
 
             <div className="bg-gradient-to-br from-gray-900 to-gray-800 rounded-xl border border-cyan-400/30 shadow-xl p-4 relative overflow-hidden">

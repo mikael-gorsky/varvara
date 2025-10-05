@@ -184,8 +184,8 @@ const OzonMarketplaceAnalytics: React.FC<OzonMarketplaceAnalyticsProps> = ({ onB
                   <Users className="w-4 h-4 text-black" />
                 </div>
               </div>
-              <h3 className="text-xs font-mono text-cyan-400 mb-1 uppercase tracking-wider">Suppliers (50+)</h3>
-              <p className="text-2xl font-bold text-emerald-300 font-mono">{suppliers.length || '...'}</p>
+              <h3 className="text-xs font-mono text-cyan-400 mb-1 uppercase tracking-wider">Suppliers (top 10%)</h3>
+              <p className="text-2xl font-bold text-emerald-300 font-mono">{overview.topSuppliers}</p>
             </div>
 
             <div className="bg-gradient-to-br from-gray-900 to-gray-800 rounded-xl border border-cyan-400/30 shadow-xl p-4 relative overflow-hidden">
@@ -207,7 +207,7 @@ const OzonMarketplaceAnalytics: React.FC<OzonMarketplaceAnalyticsProps> = ({ onB
                 </div>
               </div>
               <h3 className="text-xs font-mono text-cyan-400 mb-1 uppercase tracking-wider">Revenue</h3>
-              <p className="text-2xl font-bold text-violet-300 font-mono">{(overview.totalRevenue / 1000000).toFixed(1)}M</p>
+              <p className="text-2xl font-bold text-violet-300 font-mono">{(overview.totalRevenue / 1000000).toFixed(1)} millions</p>
             </div>
           </div>
         )}
@@ -241,7 +241,7 @@ const OzonMarketplaceAnalytics: React.FC<OzonMarketplaceAnalyticsProps> = ({ onB
 
               <div>
                 <h3 className="text-2xl font-bold text-blue-300 mb-3 font-mono tracking-wide">
-                  CATEGORIES ANALYTICS
+                  PRODUCT ANALYTICS
                 </h3>
                 <p className="text-blue-400/80 text-sm leading-relaxed font-mono max-w-sm">
                   Explore all product categories with detailed insights on products, suppliers, and market performance metrics.
@@ -251,7 +251,7 @@ const OzonMarketplaceAnalytics: React.FC<OzonMarketplaceAnalyticsProps> = ({ onB
               <div className="bg-gray-800/50 border border-blue-400/30 rounded-lg px-6 py-3 w-full group-hover:bg-blue-400/10 transition-colors duration-300">
                 <div className="flex items-center justify-center text-blue-400 text-sm font-mono font-bold space-x-2">
                   <ChevronRight className="w-4 h-4" />
-                  <span>EXPLORE CATEGORIES</span>
+                  <span>EXPLORE PRODUCTS</span>
                 </div>
               </div>
             </div>

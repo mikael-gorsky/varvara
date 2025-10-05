@@ -21,6 +21,7 @@ export interface SupplierStats {
 export interface MarketplaceOverview {
   totalCategories: number;
   totalSuppliers: number;
+  topSuppliers: number;
   totalProducts: number;
   totalRevenue: number;
 }
@@ -36,18 +37,25 @@ class MarketplaceAnalyticsService {
       if (error) throw error;
 
       const uniqueCategories = new Set<string>();
-      const uniqueSuppliers = new Set<string>();
+      const supplierRevenue = new Map<string, number>();
       let totalRevenue = 0;
 
       products?.forEach(product => {
         if (product.category_level3) uniqueCategories.add(product.category_level3);
-        if (product.seller) uniqueSuppliers.add(product.seller);
+        if (product.seller) {
+          const currentRevenue = supplierRevenue.get(product.seller) || 0;
+          supplierRevenue.set(product.seller, currentRevenue + (product.ordered_sum || 0));
+        }
         totalRevenue += product.ordered_sum || 0;
       });
 
+      const threshold = totalRevenue * 0.1;
+      const topSuppliers = Array.from(supplierRevenue.values()).filter(rev => rev > threshold).length;
+
       return {
         totalCategories: uniqueCategories.size,
-        totalSuppliers: uniqueSuppliers.size,
+        totalSuppliers: supplierRevenue.size,
+        topSuppliers,
         totalProducts: products?.length || 0,
         totalRevenue
       };

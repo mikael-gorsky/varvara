@@ -1,5 +1,5 @@
 import React from 'react';
-import { BarChart3, FileSpreadsheet, TrendingUp, Users, Eye, Upload, Database } from 'lucide-react';
+import { BarChart3, FileSpreadsheet, TrendingUp, Users, Eye, Upload, Database, Package } from 'lucide-react';
 
 interface AnalyticsModule {
   id: string;
@@ -30,6 +30,14 @@ const MainMenu: React.FC<MainMenuProps> = ({ onSelectModule }) => {
       description: 'Import and analyze marketplace data from OZON e-commerce platform',
       icon: <FileSpreadsheet className="w-8 h-8" />,
       color: 'from-emerald-400 to-teal-500',
+      available: true
+    },
+    {
+      id: 'service-module',
+      title: 'Service Module',
+      description: 'Data processing, imports, exports, and integration service management',
+      icon: <Package className="w-8 h-8" />,
+      color: 'from-cyan-400 to-blue-500',
       available: true
     },
     {

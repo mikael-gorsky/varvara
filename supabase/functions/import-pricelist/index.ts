@@ -43,8 +43,6 @@ Deno.serve(async (req: Request) => {
 
   try {
     console.log("[import-pricelist] Function started");
-    console.log("[import-pricelist] Request method:", req.method);
-    console.log("[import-pricelist] Request URL:", req.url);
 
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
@@ -91,8 +89,6 @@ Deno.serve(async (req: Request) => {
     console.log(`[import-pricelist] Processing file: ${file.name}, size: ${file.size} bytes`);
 
     const arrayBuffer = await file.arrayBuffer();
-    console.log(`[import-pricelist] File read, buffer size: ${arrayBuffer.byteLength}`);
-
     const workbook = XLSX.read(arrayBuffer, { type: "array" });
     const sheetName = workbook.SheetNames[0];
     const worksheet = workbook.Sheets[sheetName];
@@ -100,11 +96,7 @@ Deno.serve(async (req: Request) => {
 
     console.log(`[import-pricelist] Total rows: ${rawData.length}`);
 
-    // Excel format:
-    // - Rows 1-2: Reserved/metadata
-    // - Rows 3-4: Column headers (array index 2-3)
-    // - Row 5+: Data rows (array index 4+)
-    const DATA_START_ROW = 4; // 0-indexed, corresponds to Excel row 5
+    const DATA_START_ROW = 4;
 
     const supplierMapping = [
       { name: "Реалист", priceCol: 4, currencyCol: 5 },
@@ -126,7 +118,6 @@ Deno.serve(async (req: Request) => {
     const categories = new Set<string>();
     const errors: string[] = [];
 
-    // Start parsing from row 5 (array index 4)
     for (let i = DATA_START_ROW; i < rawData.length; i++) {
       const row = rawData[i];
 
@@ -140,7 +131,6 @@ Deno.serve(async (req: Request) => {
       if (!code && nomenclature) {
         currentCategory = nomenclature;
         categories.add(nomenclature);
-        console.log(`[import-pricelist] Found category: ${currentCategory}`);
         continue;
       }
 
@@ -196,13 +186,40 @@ Deno.serve(async (req: Request) => {
       errors,
     };
 
-    // Fetch all existing products in batches to avoid PostgreSQL IN clause limits
+    // Use upsert for products in batches
+    const PRODUCT_BATCH_SIZE = 100;
+    console.log(`[import-pricelist] Upserting ${products.length} products in batches of ${PRODUCT_BATCH_SIZE}`);
+
+    for (let i = 0; i < products.length; i += PRODUCT_BATCH_SIZE) {
+      const batch = products.slice(i, i + PRODUCT_BATCH_SIZE);
+
+      const { error: upsertError } = await supabase
+        .from("pricelist_products")
+        .upsert(
+          batch.map(p => ({
+            code: p.code,
+            article: p.article,
+            name: p.name,
+            barcode: p.barcode,
+            category: p.category,
+          })),
+          { onConflict: "code" }
+        );
+
+      if (upsertError) {
+        console.error("[import-pricelist] Product upsert error:", upsertError);
+        errors.push(`Product upsert batch ${Math.floor(i / PRODUCT_BATCH_SIZE) + 1} failed: ${upsertError.message}`);
+      } else {
+        console.log(`[import-pricelist] Upserted batch ${Math.floor(i / PRODUCT_BATCH_SIZE) + 1}`);
+      }
+    }
+
+    // Fetch product IDs after upsert
+    console.log(`[import-pricelist] Fetching product IDs`);
     const productCodes = products.map(p => p.code);
-    const existingProductMap = new Map();
+    const productIdMap = new Map();
 
     const CODE_BATCH_SIZE = 100;
-    console.log(`[import-pricelist] Fetching existing products for ${productCodes.length} codes in batches of ${CODE_BATCH_SIZE}`);
-
     for (let i = 0; i < productCodes.length; i += CODE_BATCH_SIZE) {
       const batchCodes = productCodes.slice(i, i + CODE_BATCH_SIZE);
       const { data: batchProducts, error: fetchError } = await supabase
@@ -211,89 +228,20 @@ Deno.serve(async (req: Request) => {
         .in("code", batchCodes);
 
       if (fetchError) {
-        console.error("[import-pricelist] Error fetching existing products:", fetchError);
-        throw new Error(`Failed to fetch existing products batch ${Math.floor(i / CODE_BATCH_SIZE) + 1}: ${fetchError.message}`);
-      }
-
-      for (const p of batchProducts || []) {
-        existingProductMap.set(p.code, p.id);
-      }
-    }
-
-    console.log(`[import-pricelist] Found ${existingProductMap.size} existing products`);
-
-    // Separate products into updates and inserts
-    const productsToUpdate = [];
-    const productsToInsert = [];
-
-    for (const product of products) {
-      if (existingProductMap.has(product.code)) {
-        productsToUpdate.push(product);
-        stats.products_updated++;
+        errors.push(`Failed to fetch product IDs: ${fetchError.message}`);
       } else {
-        productsToInsert.push(product);
-        stats.products_inserted++;
-      }
-    }
-
-    console.log(`[import-pricelist] Will update ${productsToUpdate.length}, insert ${productsToInsert.length}`);
-
-    // Bulk insert new products
-    if (productsToInsert.length > 0) {
-      console.log(`[import-pricelist] Bulk inserting ${productsToInsert.length} new products`);
-
-      const { data: insertedProducts, error: insertError } = await supabase
-        .from("pricelist_products")
-        .insert(
-          productsToInsert.map(p => ({
-            code: p.code,
-            article: p.article,
-            name: p.name,
-            barcode: p.barcode,
-            category: p.category,
-          }))
-        )
-        .select("id, code");
-
-      if (insertError) {
-        console.error("[import-pricelist] Bulk insert error:", insertError);
-        errors.push(`Bulk insert failed: ${insertError.message}`);
-      } else {
-        // Add newly inserted products to the map
-        for (const product of insertedProducts || []) {
-          existingProductMap.set(product.code, product.id);
-        }
-        console.log(`[import-pricelist] Successfully inserted ${insertedProducts?.length || 0} products`);
-      }
-    }
-
-    // Bulk update existing products
-    if (productsToUpdate.length > 0) {
-      console.log(`[import-pricelist] Updating ${productsToUpdate.length} existing products`);
-
-      for (const product of productsToUpdate) {
-        const { error: updateError } = await supabase
-          .from("pricelist_products")
-          .update({
-            article: product.article,
-            name: product.name,
-            barcode: product.barcode,
-            category: product.category,
-          })
-          .eq("code", product.code);
-
-        if (updateError) {
-          errors.push(`Update ${product.code}: ${updateError.message}`);
+        for (const p of batchProducts || []) {
+          productIdMap.set(p.code, p.id);
         }
       }
     }
 
-    // Now handle prices - collect all prices for bulk operations
-    console.log(`[import-pricelist] Processing prices for ${products.length} products`);
+    console.log(`[import-pricelist] Retrieved ${productIdMap.size} product IDs`);
 
+    // Prepare price records with product IDs
     const allPriceRecords = [];
     for (const product of products) {
-      const productId = existingProductMap.get(product.code);
+      const productId = productIdMap.get(product.code);
       if (!productId) {
         errors.push(`Cannot find product ID for code: ${product.code}`);
         continue;
@@ -309,96 +257,28 @@ Deno.serve(async (req: Request) => {
       }
     }
 
-    console.log(`[import-pricelist] Total price records to upsert: ${allPriceRecords.length}`);
+    console.log(`[import-pricelist] Upserting ${allPriceRecords.length} price records`);
 
-    // Fetch existing prices in batches to avoid PostgreSQL IN clause limits
-    const productIds = Array.from(existingProductMap.values());
-    const existingPriceMap = new Map();
+    // Upsert prices in batches
+    const PRICE_BATCH_SIZE = 500;
+    for (let i = 0; i < allPriceRecords.length; i += PRICE_BATCH_SIZE) {
+      const batch = allPriceRecords.slice(i, i + PRICE_BATCH_SIZE);
 
-    const FETCH_BATCH_SIZE = 100;
-    console.log(`[import-pricelist] Fetching existing prices for ${productIds.length} products in batches of ${FETCH_BATCH_SIZE}`);
-
-    for (let i = 0; i < productIds.length; i += FETCH_BATCH_SIZE) {
-      const batchIds = productIds.slice(i, i + FETCH_BATCH_SIZE);
-      const { data: batchPrices, error: pricesFetchError } = await supabase
+      const { error: priceUpsertError } = await supabase
         .from("pricelist_prices")
-        .select("id, product_id, supplier")
-        .in("product_id", batchIds);
+        .upsert(batch, { onConflict: "product_id,supplier" });
 
-      if (pricesFetchError) {
-        console.error("[import-pricelist] Error fetching existing prices:", pricesFetchError);
-        errors.push(`Failed to fetch existing prices batch ${Math.floor(i / FETCH_BATCH_SIZE) + 1}: ${pricesFetchError.message}`);
+      if (priceUpsertError) {
+        console.error("[import-pricelist] Price upsert error:", priceUpsertError);
+        errors.push(`Price upsert batch ${Math.floor(i / PRICE_BATCH_SIZE) + 1} failed: ${priceUpsertError.message}`);
       } else {
-        for (const p of batchPrices || []) {
-          existingPriceMap.set(`${p.product_id}_${p.supplier}`, p.id);
-        }
+        console.log(`[import-pricelist] Upserted price batch ${Math.floor(i / PRICE_BATCH_SIZE) + 1}`);
       }
     }
 
-    console.log(`[import-pricelist] Found ${existingPriceMap.size} existing price records`);
-
-    // Separate prices into updates and inserts
-    const pricesToUpdate = [];
-    const pricesToInsert = [];
-
-    for (const priceRecord of allPriceRecords) {
-      const key = `${priceRecord.product_id}_${priceRecord.supplier}`;
-      if (existingPriceMap.has(key)) {
-        pricesToUpdate.push({
-          id: existingPriceMap.get(key),
-          ...priceRecord,
-        });
-      } else {
-        pricesToInsert.push(priceRecord);
-      }
-    }
-
-    console.log(`[import-pricelist] Will update ${pricesToUpdate.length} prices, insert ${pricesToInsert.length} prices`);
-
-    // Bulk insert new prices
-    if (pricesToInsert.length > 0) {
-      const PRICE_BATCH_SIZE = 500;
-      for (let i = 0; i < pricesToInsert.length; i += PRICE_BATCH_SIZE) {
-        const batch = pricesToInsert.slice(i, i + PRICE_BATCH_SIZE);
-        console.log(`[import-pricelist] Inserting price batch ${Math.floor(i / PRICE_BATCH_SIZE) + 1}`);
-
-        const { error: priceInsertError } = await supabase
-          .from("pricelist_prices")
-          .insert(batch);
-
-        if (priceInsertError) {
-          console.error("[import-pricelist] Price insert error:", priceInsertError);
-          errors.push(`Price insert batch failed: ${priceInsertError.message}`);
-        } else {
-          stats.prices_inserted += batch.length;
-        }
-      }
-    }
-
-    // Bulk update existing prices
-    if (pricesToUpdate.length > 0) {
-      const PRICE_BATCH_SIZE = 500;
-      for (let i = 0; i < pricesToUpdate.length; i += PRICE_BATCH_SIZE) {
-        const batch = pricesToUpdate.slice(i, i + PRICE_BATCH_SIZE);
-        console.log(`[import-pricelist] Updating price batch ${Math.floor(i / PRICE_BATCH_SIZE) + 1}`);
-
-        for (const priceRecord of batch) {
-          const { error: priceUpdateError } = await supabase
-            .from("pricelist_prices")
-            .update({
-              price: priceRecord.price,
-              currency: priceRecord.currency,
-            })
-            .eq("id", priceRecord.id);
-
-          if (priceUpdateError) {
-            errors.push(`Price update failed: ${priceUpdateError.message}`);
-          } else {
-            stats.prices_updated++;
-          }
-        }
-      }
-    }
+    // We can't easily determine insert vs update counts with upsert, so use estimates
+    stats.products_inserted = products.length;
+    stats.prices_inserted = allPriceRecords.length;
 
     console.log(`[import-pricelist] Import complete:`, stats);
 

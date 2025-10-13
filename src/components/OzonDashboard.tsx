@@ -55,10 +55,10 @@ const OzonDashboard: React.FC<OzonDashboardProps> = ({ onBack }) => {
                       </div>
                       <div>
                         <h1 className="text-2xl font-bold text-cyan-300 font-mono tracking-wider">
-                          OZON TRADE NETWORKS
+                          ANALYTICS
                         </h1>
                         <p className="text-cyan-400/80 text-sm font-mono">
-                          Marketplace Intelligence Division
+                          Ozon Marketplace Intelligence
                         </p>
                       </div>
                     </div>
@@ -104,10 +104,10 @@ const OzonDashboard: React.FC<OzonDashboardProps> = ({ onBack }) => {
                     
                     <div>
                       <h3 className="text-2xl font-bold text-emerald-300 mb-3 font-mono tracking-wide">
-                        DATA STREAM INTEGRATION
+                        Ozon data import
                       </h3>
                       <p className="text-emerald-400/80 text-sm leading-relaxed font-mono max-w-sm">
-                        Upload and process marketplace intelligence data from OZON trading networks directly into galactic database core systems.
+                        Upload and process marketplace data from OZON platform directly into database systems.
                       </p>
                     </div>
 
@@ -148,10 +148,10 @@ const OzonDashboard: React.FC<OzonDashboardProps> = ({ onBack }) => {
 
                     <div>
                       <h3 className="text-2xl font-bold text-orange-300 mb-3 font-mono tracking-wide">
-                        MARKETPLACE ANALYTICS
+                        Ozon analytics
                       </h3>
                       <p className="text-orange-400/80 text-sm leading-relaxed font-mono max-w-sm">
-                        Advanced marketplace intelligence tools for analyzing categories, suppliers, and market trends across OZON trading networks.
+                        Analyze categories, suppliers, and market trends across OZON marketplace data.
                       </p>
                     </div>
 
@@ -171,7 +171,7 @@ const OzonDashboard: React.FC<OzonDashboardProps> = ({ onBack }) => {
                 <div className="flex items-center justify-center space-x-6">
                   <div className="flex items-center space-x-2">
                     <div className="w-3 h-3 bg-cyan-400 rounded-full animate-pulse shadow-lg shadow-cyan-400/50"></div>
-                    <span className="text-cyan-300 font-mono font-bold text-sm">OZON MARKETPLACE ANALYTICS</span>
+                    <span className="text-cyan-300 font-mono font-bold text-sm">ANALYTICS</span>
                   </div>
                   <div className="text-cyan-400/60 font-mono text-sm">|</div>
                   <div className="flex items-center space-x-2">

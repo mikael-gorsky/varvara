@@ -26,8 +26,8 @@ const MainMenu: React.FC<MainMenuProps> = ({ onSelectModule }) => {
     },
     {
       id: 'ozon-dashboard',
-      title: 'OZON Marketplace Analytics',
-      description: 'Import and analyze marketplace data from OZON e-commerce platform',
+      title: 'Analytics',
+      description: 'Analyze marketplace data and performance metrics',
       icon: <FileSpreadsheet className="w-8 h-8" />,
       color: 'from-emerald-400 to-teal-500',
       available: true

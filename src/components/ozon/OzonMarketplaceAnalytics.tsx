@@ -152,7 +152,7 @@ const OzonMarketplaceAnalytics: React.FC<OzonMarketplaceAnalyticsProps> = ({ onB
                 </div>
                 <div>
                   <h1 className="text-2xl font-bold text-cyan-300 font-mono tracking-wider">
-                    MARKETPLACE ANALYTICS
+                    Ozon analytics
                   </h1>
                   <p className="text-cyan-400/80 text-sm font-mono">
                     Intelligence & Insights Dashboard

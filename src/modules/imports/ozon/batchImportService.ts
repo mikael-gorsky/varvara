@@ -1,7 +1,7 @@
 import { ozonImportService } from './ozonImportService';
 import { importHistoryService, ImportHistoryRecord } from './importHistoryService';
 import { fileHashService } from './fileHashService';
-import { parseOzonFile, OzonParsedData } from '../utils/ozonParser';
+import { parseOzonFile, OzonParsedData } from './ozonParser';
 
 export interface BatchImportProgress {
   currentFile: string;

@@ -1,5 +1,5 @@
 import { supabase } from '../lib/supabase';
-import { OzonFileMetadata } from '../utils/ozonParser';
+import { OzonFileMetadata } from '../modules/imports/ozon/ozonParser';
 
 export interface DuplicateCheckResult {
   isDuplicate: boolean;

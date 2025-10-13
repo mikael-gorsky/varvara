@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Clock, CheckCircle, XCircle, AlertTriangle, FileSpreadsheet, Calendar, Database } from 'lucide-react';
-import { importHistoryService, ImportHistoryRecord } from '../../services/importHistoryService';
+import { importHistoryService, ImportHistoryRecord } from '../../modules/imports/ozon/importHistoryService';
 
 interface ImportHistoryViewerProps {
   onRefresh?: () => void;

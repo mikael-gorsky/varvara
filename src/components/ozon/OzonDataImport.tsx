@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { ArrowLeft, Upload, BarChart3, Database, Activity, Zap, CheckCircle, XCircle } from 'lucide-react';
-import { ozonImportService, OzonStats } from '../../services/ozonImportService';
-import { batchImportService, BatchImportProgress, BatchImportResult } from '../../services/batchImportService';
+import { ozonImportService, OzonStats } from '../../modules/imports/ozon/ozonImportService';
+import { batchImportService, BatchImportProgress, BatchImportResult } from '../../modules/imports/ozon/batchImportService';
 import MultiFileUploadQueue, { QueuedFile } from './MultiFileUploadQueue';
 import ImportHistoryViewer from './ImportHistoryViewer';
 

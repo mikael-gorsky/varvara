@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
 import { Upload, X, AlertTriangle, CheckCircle, Clock, FileSpreadsheet, Database } from 'lucide-react';
-import { fileHashService, FileHashInfo } from '../../services/fileHashService';
-import { importHistoryService } from '../../services/importHistoryService';
-import { parseOzonFile, OzonParsedData } from '../../utils/ozonParser';
+import { fileHashService, FileHashInfo } from '../../modules/imports/ozon/fileHashService';
+import { importHistoryService } from '../../modules/imports/ozon/importHistoryService';
+import { parseOzonFile, OzonParsedData } from '../../modules/imports/ozon/ozonParser';
 import { duplicateDetectionService, DuplicateCheckResult } from '../../services/duplicateDetectionService';
 
 export interface QueuedFile {

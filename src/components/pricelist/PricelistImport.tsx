@@ -306,8 +306,9 @@ const PricelistImport: React.FC = () => {
         <h3 className="text-lg font-bold text-cyan-300 font-mono mb-3">FILE FORMAT REQUIREMENTS</h3>
         <div className="space-y-2 text-cyan-400/80 text-sm font-mono">
           <p>• Excel file format (.xls or .xlsx)</p>
-          <p>• First 3 rows reserved for headers</p>
-          <p>• Row 4 onwards contains data</p>
+          <p>• Rows 1-2: Reserved for metadata</p>
+          <p>• Rows 3-4: Column headers</p>
+          <p>• Row 5 onwards: Product data</p>
           <p>• Column 0: Product Code (required)</p>
           <p>• Column 1: Article Number</p>
           <p>• Column 2: Product Name</p>

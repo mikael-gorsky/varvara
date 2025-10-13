@@ -100,6 +100,12 @@ Deno.serve(async (req: Request) => {
 
     console.log(`[import-pricelist] Total rows: ${rawData.length}`);
 
+    // Excel format:
+    // - Rows 1-2: Reserved/metadata
+    // - Rows 3-4: Column headers (array index 2-3)
+    // - Row 5+: Data rows (array index 4+)
+    const DATA_START_ROW = 4; // 0-indexed, corresponds to Excel row 5
+
     const supplierMapping = [
       { name: "Реалист", priceCol: 4, currencyCol: 5 },
       { name: "Поставщик 1", priceCol: 6, currencyCol: 7 },
@@ -120,7 +126,8 @@ Deno.serve(async (req: Request) => {
     const categories = new Set<string>();
     const errors: string[] = [];
 
-    for (let i = 4; i < rawData.length; i++) {
+    // Start parsing from row 5 (array index 4)
+    for (let i = DATA_START_ROW; i < rawData.length; i++) {
       const row = rawData[i];
 
       if (!row || row.length === 0) {

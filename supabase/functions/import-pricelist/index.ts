@@ -196,102 +196,192 @@ Deno.serve(async (req: Request) => {
       errors,
     };
 
-    const BATCH_SIZE = 50;
-    for (let i = 0; i < products.length; i += BATCH_SIZE) {
-      const batch = products.slice(i, i + BATCH_SIZE);
-      console.log(`[import-pricelist] Processing batch ${i / BATCH_SIZE + 1}, products ${i + 1} to ${Math.min(i + BATCH_SIZE, products.length)}`);
+    // Fetch all existing products in one query
+    const productCodes = products.map(p => p.code);
+    console.log(`[import-pricelist] Fetching existing products for ${productCodes.length} codes`);
 
-      for (const product of batch) {
-        try {
-          const { data: existingProduct } = await supabase
-            .from("pricelist_products")
-            .select("id")
-            .eq("code", product.code)
-            .maybeSingle();
+    const { data: existingProducts, error: fetchError } = await supabase
+      .from("pricelist_products")
+      .select("id, code")
+      .in("code", productCodes);
 
-          let productId: string;
+    if (fetchError) {
+      console.error("[import-pricelist] Error fetching existing products:", fetchError);
+      throw new Error(`Failed to fetch existing products: ${fetchError.message}`);
+    }
 
-          if (existingProduct) {
-            const { error: updateError } = await supabase
-              .from("pricelist_products")
-              .update({
-                article: product.article,
-                name: product.name,
-                barcode: product.barcode,
-                category: product.category,
-              })
-              .eq("code", product.code);
+    const existingProductMap = new Map(
+      (existingProducts || []).map(p => [p.code, p.id])
+    );
 
-            if (updateError) {
-              errors.push(`Product ${product.code}: ${updateError.message}`);
-              continue;
-            }
+    console.log(`[import-pricelist] Found ${existingProductMap.size} existing products`);
 
-            productId = existingProduct.id;
-            stats.products_updated++;
+    // Separate products into updates and inserts
+    const productsToUpdate = [];
+    const productsToInsert = [];
+
+    for (const product of products) {
+      if (existingProductMap.has(product.code)) {
+        productsToUpdate.push(product);
+        stats.products_updated++;
+      } else {
+        productsToInsert.push(product);
+        stats.products_inserted++;
+      }
+    }
+
+    console.log(`[import-pricelist] Will update ${productsToUpdate.length}, insert ${productsToInsert.length}`);
+
+    // Bulk insert new products
+    if (productsToInsert.length > 0) {
+      console.log(`[import-pricelist] Bulk inserting ${productsToInsert.length} new products`);
+
+      const { data: insertedProducts, error: insertError } = await supabase
+        .from("pricelist_products")
+        .insert(
+          productsToInsert.map(p => ({
+            code: p.code,
+            article: p.article,
+            name: p.name,
+            barcode: p.barcode,
+            category: p.category,
+          }))
+        )
+        .select("id, code");
+
+      if (insertError) {
+        console.error("[import-pricelist] Bulk insert error:", insertError);
+        errors.push(`Bulk insert failed: ${insertError.message}`);
+      } else {
+        // Add newly inserted products to the map
+        for (const product of insertedProducts || []) {
+          existingProductMap.set(product.code, product.id);
+        }
+        console.log(`[import-pricelist] Successfully inserted ${insertedProducts?.length || 0} products`);
+      }
+    }
+
+    // Bulk update existing products
+    if (productsToUpdate.length > 0) {
+      console.log(`[import-pricelist] Updating ${productsToUpdate.length} existing products`);
+
+      for (const product of productsToUpdate) {
+        const { error: updateError } = await supabase
+          .from("pricelist_products")
+          .update({
+            article: product.article,
+            name: product.name,
+            barcode: product.barcode,
+            category: product.category,
+          })
+          .eq("code", product.code);
+
+        if (updateError) {
+          errors.push(`Update ${product.code}: ${updateError.message}`);
+        }
+      }
+    }
+
+    // Now handle prices - collect all prices for bulk operations
+    console.log(`[import-pricelist] Processing prices for ${products.length} products`);
+
+    const allPriceRecords = [];
+    for (const product of products) {
+      const productId = existingProductMap.get(product.code);
+      if (!productId) {
+        errors.push(`Cannot find product ID for code: ${product.code}`);
+        continue;
+      }
+
+      for (const priceData of product.prices) {
+        allPriceRecords.push({
+          product_id: productId,
+          supplier: priceData.supplier,
+          price: priceData.price,
+          currency: priceData.currency,
+        });
+      }
+    }
+
+    console.log(`[import-pricelist] Total price records to upsert: ${allPriceRecords.length}`);
+
+    // Fetch existing prices
+    const productIds = Array.from(existingProductMap.values());
+    const { data: existingPrices, error: pricesFetchError } = await supabase
+      .from("pricelist_prices")
+      .select("id, product_id, supplier")
+      .in("product_id", productIds);
+
+    if (pricesFetchError) {
+      console.error("[import-pricelist] Error fetching existing prices:", pricesFetchError);
+      errors.push(`Failed to fetch existing prices: ${pricesFetchError.message}`);
+    }
+
+    const existingPriceMap = new Map(
+      (existingPrices || []).map(p => [`${p.product_id}_${p.supplier}`, p.id])
+    );
+
+    console.log(`[import-pricelist] Found ${existingPriceMap.size} existing price records`);
+
+    // Separate prices into updates and inserts
+    const pricesToUpdate = [];
+    const pricesToInsert = [];
+
+    for (const priceRecord of allPriceRecords) {
+      const key = `${priceRecord.product_id}_${priceRecord.supplier}`;
+      if (existingPriceMap.has(key)) {
+        pricesToUpdate.push({
+          id: existingPriceMap.get(key),
+          ...priceRecord,
+        });
+      } else {
+        pricesToInsert.push(priceRecord);
+      }
+    }
+
+    console.log(`[import-pricelist] Will update ${pricesToUpdate.length} prices, insert ${pricesToInsert.length} prices`);
+
+    // Bulk insert new prices
+    if (pricesToInsert.length > 0) {
+      const PRICE_BATCH_SIZE = 500;
+      for (let i = 0; i < pricesToInsert.length; i += PRICE_BATCH_SIZE) {
+        const batch = pricesToInsert.slice(i, i + PRICE_BATCH_SIZE);
+        console.log(`[import-pricelist] Inserting price batch ${Math.floor(i / PRICE_BATCH_SIZE) + 1}`);
+
+        const { error: priceInsertError } = await supabase
+          .from("pricelist_prices")
+          .insert(batch);
+
+        if (priceInsertError) {
+          console.error("[import-pricelist] Price insert error:", priceInsertError);
+          errors.push(`Price insert batch failed: ${priceInsertError.message}`);
+        } else {
+          stats.prices_inserted += batch.length;
+        }
+      }
+    }
+
+    // Bulk update existing prices
+    if (pricesToUpdate.length > 0) {
+      const PRICE_BATCH_SIZE = 500;
+      for (let i = 0; i < pricesToUpdate.length; i += PRICE_BATCH_SIZE) {
+        const batch = pricesToUpdate.slice(i, i + PRICE_BATCH_SIZE);
+        console.log(`[import-pricelist] Updating price batch ${Math.floor(i / PRICE_BATCH_SIZE) + 1}`);
+
+        for (const priceRecord of batch) {
+          const { error: priceUpdateError } = await supabase
+            .from("pricelist_prices")
+            .update({
+              price: priceRecord.price,
+              currency: priceRecord.currency,
+            })
+            .eq("id", priceRecord.id);
+
+          if (priceUpdateError) {
+            errors.push(`Price update failed: ${priceUpdateError.message}`);
           } else {
-            const { data: newProduct, error: insertError } = await supabase
-              .from("pricelist_products")
-              .insert({
-                code: product.code,
-                article: product.article,
-                name: product.name,
-                barcode: product.barcode,
-                category: product.category,
-              })
-              .select("id")
-              .single();
-
-            if (insertError || !newProduct) {
-              errors.push(`Product ${product.code}: ${insertError?.message || "Insert failed"}`);
-              continue;
-            }
-
-            productId = newProduct.id;
-            stats.products_inserted++;
+            stats.prices_updated++;
           }
-
-          for (const priceData of product.prices) {
-            const { data: existingPrice } = await supabase
-              .from("pricelist_prices")
-              .select("id")
-              .eq("product_id", productId)
-              .eq("supplier", priceData.supplier)
-              .maybeSingle();
-
-            if (existingPrice) {
-              const { error: priceUpdateError } = await supabase
-                .from("pricelist_prices")
-                .update({
-                  price: priceData.price,
-                  currency: priceData.currency,
-                })
-                .eq("id", existingPrice.id);
-
-              if (priceUpdateError) {
-                errors.push(`Price ${product.code}/${priceData.supplier}: ${priceUpdateError.message}`);
-              } else {
-                stats.prices_updated++;
-              }
-            } else {
-              const { error: priceInsertError } = await supabase
-                .from("pricelist_prices")
-                .insert({
-                  product_id: productId,
-                  supplier: priceData.supplier,
-                  price: priceData.price,
-                  currency: priceData.currency,
-                });
-
-              if (priceInsertError) {
-                errors.push(`Price ${product.code}/${priceData.supplier}: ${priceInsertError.message}`);
-              } else {
-                stats.prices_inserted++;
-              }
-            }
-          }
-        } catch (error) {
-          errors.push(`Product ${product.code}: ${error instanceof Error ? error.message : "Unknown error"}`);
         }
       }
     }

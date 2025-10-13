@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { ArrowLeft, Package, Upload, Database, Zap, FileSpreadsheet, ShoppingCart, Store } from 'lucide-react';
+import { ArrowLeft, Package, Upload, Database, Zap, FileSpreadsheet } from 'lucide-react';
 import OzonDashboard from './OzonDashboard';
 
 interface ServiceModuleProps {
@@ -71,22 +71,6 @@ const ServiceModule: React.FC<ServiceModuleProps> = ({ onBack }) => {
       icon: <FileSpreadsheet className="w-8 h-8" />,
       color: 'from-emerald-400 to-teal-500',
       available: true
-    },
-    {
-      id: 'wildberries',
-      name: 'Wildberries',
-      description: 'Import product and sales data from Wildberries marketplace',
-      icon: <ShoppingCart className="w-8 h-8" />,
-      color: 'from-purple-400 to-pink-500',
-      available: false
-    },
-    {
-      id: 'yandex-market',
-      name: 'Yandex.Market',
-      description: 'Import product and sales data from Yandex.Market platform',
-      icon: <Store className="w-8 h-8" />,
-      color: 'from-orange-400 to-red-500',
-      available: false
     }
   ];
 

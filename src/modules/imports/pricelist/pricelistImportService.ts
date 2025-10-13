@@ -50,8 +50,13 @@ export interface ImportResult {
 export class PricelistImportService {
   async importFile(file: File): Promise<ImportResult> {
     try {
+      console.log('[PricelistImportService] Starting import for file:', file.name);
+
       const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
       const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+
+      console.log('[PricelistImportService] Supabase URL:', supabaseUrl);
+      console.log('[PricelistImportService] Anon key present:', !!supabaseAnonKey);
 
       if (!supabaseUrl || !supabaseAnonKey) {
         throw new Error('Supabase configuration missing');
@@ -61,7 +66,9 @@ export class PricelistImportService {
       formData.append('file', file);
 
       const apiUrl = `${supabaseUrl}/functions/v1/import-pricelist`;
+      console.log('[PricelistImportService] API URL:', apiUrl);
 
+      console.log('[PricelistImportService] Sending request...');
       const response = await fetch(apiUrl, {
         method: 'POST',
         headers: {
@@ -70,12 +77,27 @@ export class PricelistImportService {
         body: formData,
       });
 
-      const result = await response.json();
+      console.log('[PricelistImportService] Response status:', response.status);
+      console.log('[PricelistImportService] Response ok:', response.ok);
+
+      let result;
+      const contentType = response.headers.get('content-type');
+      console.log('[PricelistImportService] Content type:', contentType);
+
+      if (contentType && contentType.includes('application/json')) {
+        result = await response.json();
+        console.log('[PricelistImportService] Response data:', result);
+      } else {
+        const text = await response.text();
+        console.error('[PricelistImportService] Non-JSON response:', text);
+        throw new Error(`Unexpected response format: ${text.substring(0, 100)}`);
+      }
 
       if (!response.ok) {
         throw new Error(result.error || `Import failed with status ${response.status}`);
       }
 
+      console.log('[PricelistImportService] Import successful');
       return result;
     } catch (error) {
       console.error('[PricelistImportService] Import error:', error);

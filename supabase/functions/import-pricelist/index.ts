@@ -196,23 +196,29 @@ Deno.serve(async (req: Request) => {
       errors,
     };
 
-    // Fetch all existing products in one query
+    // Fetch all existing products in batches to avoid PostgreSQL IN clause limits
     const productCodes = products.map(p => p.code);
-    console.log(`[import-pricelist] Fetching existing products for ${productCodes.length} codes`);
+    const existingProductMap = new Map();
 
-    const { data: existingProducts, error: fetchError } = await supabase
-      .from("pricelist_products")
-      .select("id, code")
-      .in("code", productCodes);
+    const CODE_BATCH_SIZE = 100;
+    console.log(`[import-pricelist] Fetching existing products for ${productCodes.length} codes in batches of ${CODE_BATCH_SIZE}`);
 
-    if (fetchError) {
-      console.error("[import-pricelist] Error fetching existing products:", fetchError);
-      throw new Error(`Failed to fetch existing products: ${fetchError.message}`);
+    for (let i = 0; i < productCodes.length; i += CODE_BATCH_SIZE) {
+      const batchCodes = productCodes.slice(i, i + CODE_BATCH_SIZE);
+      const { data: batchProducts, error: fetchError } = await supabase
+        .from("pricelist_products")
+        .select("id, code")
+        .in("code", batchCodes);
+
+      if (fetchError) {
+        console.error("[import-pricelist] Error fetching existing products:", fetchError);
+        throw new Error(`Failed to fetch existing products batch ${Math.floor(i / CODE_BATCH_SIZE) + 1}: ${fetchError.message}`);
+      }
+
+      for (const p of batchProducts || []) {
+        existingProductMap.set(p.code, p.id);
+      }
     }
-
-    const existingProductMap = new Map(
-      (existingProducts || []).map(p => [p.code, p.id])
-    );
 
     console.log(`[import-pricelist] Found ${existingProductMap.size} existing products`);
 
@@ -305,21 +311,29 @@ Deno.serve(async (req: Request) => {
 
     console.log(`[import-pricelist] Total price records to upsert: ${allPriceRecords.length}`);
 
-    // Fetch existing prices
+    // Fetch existing prices in batches to avoid PostgreSQL IN clause limits
     const productIds = Array.from(existingProductMap.values());
-    const { data: existingPrices, error: pricesFetchError } = await supabase
-      .from("pricelist_prices")
-      .select("id, product_id, supplier")
-      .in("product_id", productIds);
+    const existingPriceMap = new Map();
 
-    if (pricesFetchError) {
-      console.error("[import-pricelist] Error fetching existing prices:", pricesFetchError);
-      errors.push(`Failed to fetch existing prices: ${pricesFetchError.message}`);
+    const FETCH_BATCH_SIZE = 100;
+    console.log(`[import-pricelist] Fetching existing prices for ${productIds.length} products in batches of ${FETCH_BATCH_SIZE}`);
+
+    for (let i = 0; i < productIds.length; i += FETCH_BATCH_SIZE) {
+      const batchIds = productIds.slice(i, i + FETCH_BATCH_SIZE);
+      const { data: batchPrices, error: pricesFetchError } = await supabase
+        .from("pricelist_prices")
+        .select("id, product_id, supplier")
+        .in("product_id", batchIds);
+
+      if (pricesFetchError) {
+        console.error("[import-pricelist] Error fetching existing prices:", pricesFetchError);
+        errors.push(`Failed to fetch existing prices batch ${Math.floor(i / FETCH_BATCH_SIZE) + 1}: ${pricesFetchError.message}`);
+      } else {
+        for (const p of batchPrices || []) {
+          existingPriceMap.set(`${p.product_id}_${p.supplier}`, p.id);
+        }
+      }
     }
-
-    const existingPriceMap = new Map(
-      (existingPrices || []).map(p => [`${p.product_id}_${p.supplier}`, p.id])
-    );
 
     console.log(`[import-pricelist] Found ${existingPriceMap.size} existing price records`);
 

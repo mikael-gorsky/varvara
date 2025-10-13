@@ -43,15 +43,36 @@ Deno.serve(async (req: Request) => {
 
   try {
     console.log("[import-pricelist] Function started");
+    console.log("[import-pricelist] Request method:", req.method);
+    console.log("[import-pricelist] Request URL:", req.url);
 
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+
+    if (!supabaseUrl || !supabaseServiceKey) {
+      console.error("[import-pricelist] Missing environment variables");
+      return new Response(
+        JSON.stringify({
+          success: false,
+          error: "Server configuration error: Missing environment variables",
+        }),
+        {
+          status: 500,
+          headers: {
+            "Content-Type": "application/json",
+            ...corsHeaders,
+          },
+        }
+      );
+    }
+
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
     const formData = await req.formData();
     const file = formData.get("file") as File;
 
     if (!file) {
+      console.error("[import-pricelist] No file in request");
       return new Response(
         JSON.stringify({
           success: false,
@@ -67,9 +88,11 @@ Deno.serve(async (req: Request) => {
       );
     }
 
-    console.log(`[import-pricelist] Processing file: ${file.name}`);
+    console.log(`[import-pricelist] Processing file: ${file.name}, size: ${file.size} bytes`);
 
     const arrayBuffer = await file.arrayBuffer();
+    console.log(`[import-pricelist] File read, buffer size: ${arrayBuffer.byteLength}`);
+
     const workbook = XLSX.read(arrayBuffer, { type: "array" });
     const sheetName = workbook.SheetNames[0];
     const worksheet = workbook.Sheets[sheetName];

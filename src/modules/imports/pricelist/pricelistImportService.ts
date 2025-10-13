@@ -69,13 +69,35 @@ export class PricelistImportService {
       console.log('[PricelistImportService] API URL:', apiUrl);
 
       console.log('[PricelistImportService] Sending request...');
-      const response = await fetch(apiUrl, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${supabaseAnonKey}`,
-        },
-        body: formData,
-      });
+
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 120000);
+
+      let response;
+      try {
+        response = await fetch(apiUrl, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${supabaseAnonKey}`,
+          },
+          body: formData,
+          signal: controller.signal,
+        });
+        clearTimeout(timeoutId);
+      } catch (fetchError) {
+        clearTimeout(timeoutId);
+        console.error('[PricelistImportService] Fetch error:', fetchError);
+
+        if (fetchError instanceof Error) {
+          if (fetchError.name === 'AbortError') {
+            throw new Error('Request timed out after 2 minutes. The file may be too large or the server is not responding.');
+          }
+          if (fetchError.message.includes('Failed to fetch')) {
+            throw new Error('Cannot connect to server. Please check:\n1. Your internet connection\n2. The Supabase Edge Function is deployed\n3. CORS is properly configured');
+          }
+        }
+        throw fetchError;
+      }
 
       console.log('[PricelistImportService] Response status:', response.status);
       console.log('[PricelistImportService] Response ok:', response.ok);

@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
-import { ArrowLeft, Package, Upload, Database, Zap, FileSpreadsheet } from 'lucide-react';
+import { ArrowLeft, Package, Upload, Database, Zap, FileSpreadsheet, DollarSign } from 'lucide-react';
 import OzonDashboard from './OzonDashboard';
+import PricelistDashboard from './PricelistDashboard';
 
 interface ServiceModuleProps {
   onBack: () => void;
@@ -71,11 +72,23 @@ const ServiceModule: React.FC<ServiceModuleProps> = ({ onBack }) => {
       icon: <FileSpreadsheet className="w-8 h-8" />,
       color: 'from-emerald-400 to-teal-500',
       available: true
+    },
+    {
+      id: 'pricelist',
+      name: 'Product Pricelist',
+      description: 'Import Excel pricelists with multi-supplier pricing data',
+      icon: <DollarSign className="w-8 h-8" />,
+      color: 'from-cyan-400 to-blue-500',
+      available: true
     }
   ];
 
   if (selectedImportSource === 'ozon') {
     return <OzonDashboard onBack={() => setSelectedImportSource(null)} />;
+  }
+
+  if (selectedImportSource === 'pricelist') {
+    return <PricelistDashboard onBack={() => setSelectedImportSource(null)} />;
   }
 
   if (selectedCategory === 'imports') {

@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { ArrowLeft, Package, Upload, Database, Zap, FileSpreadsheet, DollarSign } from 'lucide-react';
 import OzonDashboard from './OzonDashboard';
 import PricelistDashboard from './PricelistDashboard';
+import ImportStatusDisplay from './ImportStatusDisplay';
 
 interface ServiceModuleProps {
   onBack: () => void;
@@ -128,6 +129,12 @@ const ServiceModule: React.FC<ServiceModuleProps> = ({ onBack }) => {
               </div>
             </div>
           </div>
+
+          {/* Import Status Display */}
+          <ImportStatusDisplay
+            onNavigateToOzon={() => setSelectedImportSource('ozon')}
+            onNavigateToPricelist={() => setSelectedImportSource('pricelist')}
+          />
 
           {/* Import Sources Grid */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">

@@ -1,4 +1,4 @@
-import { supabase } from '../../../lib/supabase';
+import { supabase, supabaseAdmin } from '../../../lib/supabase';
 
 export interface OzonRecord {
   product_name: string;
@@ -63,7 +63,7 @@ export class OzonImportService {
     });
 
     try {
-      const { error } = await supabase
+      const { error } = await supabaseAdmin
         .from('ozon_data')
         .insert(data);
 
@@ -97,7 +97,7 @@ export class OzonImportService {
     for (let i = 0; i < data.length; i++) {
       const record = data[i];
       try {
-        const { error } = await supabase
+        const { error } = await supabaseAdmin
           .from('ozon_data')
           .insert([record]);
 
@@ -179,7 +179,7 @@ export class OzonImportService {
   }
 
   async clearData(): Promise<void> {
-    const { error } = await supabase
+    const { error } = await supabaseAdmin
       .from('ozon_data')
       .delete()
       .neq('id', '00000000-0000-0000-0000-000000000000'); // Delete all records

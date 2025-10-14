@@ -1,4 +1,4 @@
-import { supabase } from '../../../lib/supabase';
+import { supabase, supabaseAdmin } from '../../../lib/supabase';
 
 export interface PricelistProduct {
   id?: string;
@@ -202,7 +202,7 @@ export class PricelistImportService {
   }
 
   async clearAllData(): Promise<void> {
-    const { error: pricesError } = await supabase
+    const { error: pricesError } = await supabaseAdmin
       .from('pricelist_prices')
       .delete()
       .neq('id', '00000000-0000-0000-0000-000000000000');
@@ -211,7 +211,7 @@ export class PricelistImportService {
       throw new Error(`Failed to clear prices: ${pricesError.message}`);
     }
 
-    const { error: productsError } = await supabase
+    const { error: productsError } = await supabaseAdmin
       .from('pricelist_products')
       .delete()
       .neq('id', '00000000-0000-0000-0000-000000000000');

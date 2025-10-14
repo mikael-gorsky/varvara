@@ -1,4 +1,4 @@
-import { supabase } from '../../../lib/supabase';
+import { supabase, supabaseAdmin } from '../../../lib/supabase';
 
 export interface ImportHistoryRecord {
   id?: string;
@@ -45,7 +45,7 @@ export class ImportHistoryService {
   }
 
   async createImportRecord(record: Omit<ImportHistoryRecord, 'id' | 'created_at'>): Promise<string | null> {
-    const { data, error } = await supabase
+    const { data, error } = await supabaseAdmin
       .from('ozon_import_history')
       .insert(record)
       .select('id')
@@ -60,7 +60,7 @@ export class ImportHistoryService {
   }
 
   async updateImportRecord(id: string, updates: Partial<ImportHistoryRecord>): Promise<boolean> {
-    const { error } = await supabase
+    const { error } = await supabaseAdmin
       .from('ozon_import_history')
       .update(updates)
       .eq('id', id);
@@ -141,7 +141,7 @@ export class ImportHistoryService {
   }
 
   async deleteImportRecord(id: string): Promise<boolean> {
-    const { error } = await supabase
+    const { error } = await supabaseAdmin
       .from('ozon_import_history')
       .delete()
       .eq('id', id);

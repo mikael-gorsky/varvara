@@ -34,14 +34,19 @@ export interface ImportFilesStatus {
 
 export class ImportStatusService {
   async getOzonImportsStatus(): Promise<OzonImportsStatusResult> {
-    const { data, error } = await supabase
-      .from('ozon_import_history')
-      .select('*')
-      .eq('import_status', 'success')
-      .order('created_at', { ascending: false });
+    const [historyResponse, countResponse] = await Promise.all([
+      supabase
+        .from('ozon_import_history')
+        .select('*')
+        .in('import_status', ['success', 'partial'])
+        .order('created_at', { ascending: false }),
+      supabase
+        .from('ozon_data')
+        .select('*', { count: 'exact', head: true })
+    ]);
 
-    if (error) {
-      console.error('Error fetching Ozon import status:', error);
+    if (historyResponse.error) {
+      console.error('Error fetching Ozon import status:', historyResponse.error);
       return {
         imports: [],
         totalImports: 0,
@@ -51,11 +56,18 @@ export class ImportStatusService {
       };
     }
 
+    if (countResponse.error) {
+      console.error('Error fetching Ozon data count:', countResponse.error);
+    }
+
+    const data = historyResponse.data;
+    const actualTotalRecords = countResponse.count || 0;
+
     if (!data || data.length === 0) {
       return {
         imports: [],
         totalImports: 0,
-        totalRecords: 0,
+        totalRecords: actualTotalRecords,
         earliestDate: null,
         latestDate: null,
       };
@@ -74,15 +86,13 @@ export class ImportStatusService {
       return {
         id: record.id,
         filename: record.filename,
-        recordsCount: record.records_count || 0,
+        recordsCount: record.actual_records_imported || record.records_count || 0,
         dateRangeStart: record.date_range_start,
         dateRangeEnd: record.date_range_end,
         durationDays,
         importTimestamp: record.created_at,
       };
     });
-
-    const totalRecords = imports.reduce((sum, imp) => sum + imp.recordsCount, 0);
 
     const allDates = data
       .flatMap(record => [record.date_range_start, record.date_range_end])
@@ -92,7 +102,7 @@ export class ImportStatusService {
     return {
       imports,
       totalImports: imports.length,
-      totalRecords,
+      totalRecords: actualTotalRecords,
       earliestDate: allDates.length > 0 ? allDates[0] : null,
       latestDate: allDates.length > 0 ? allDates[allDates.length - 1] : null,
     };

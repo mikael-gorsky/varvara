@@ -6,6 +6,9 @@ export interface ImportHistoryRecord {
   file_hash: string;
   file_size: number;
   records_count: number;
+  actual_records_imported: number;
+  records_skipped_duplicates: number;
+  records_failed: number;
   date_range_start: string | null;
   date_range_end: string | null;
   validation_status: 'valid' | 'invalid' | 'warning';
@@ -13,6 +16,7 @@ export interface ImportHistoryRecord {
   import_status: 'pending' | 'success' | 'error' | 'partial';
   error_message?: string;
   import_duration_ms?: number;
+  data_purged_at?: string | null;
   created_at?: string;
 }
 

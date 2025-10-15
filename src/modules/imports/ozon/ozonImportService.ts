@@ -48,8 +48,14 @@ export interface OzonStats {
   }>;
 }
 
+export interface ImportResult {
+  successCount: number;
+  failureCount: number;
+  duplicateCount: number;
+}
+
 export class OzonImportService {
-  async importData(data: OzonRecord[]): Promise<void> {
+  async importData(data: OzonRecord[]): Promise<ImportResult> {
     if (!data || data.length === 0) {
       throw new Error('No data provided for import');
     }
@@ -77,21 +83,26 @@ export class OzonImportService {
         });
 
         console.log(`[OzonImportService] Attempting row-by-row import to identify problematic record...`);
-        await this.importDataRowByRow(data);
-        return;
+        return await this.importDataRowByRow(data);
       }
 
       console.log(`[OzonImportService] ✅ Successfully inserted ${data.length} records`);
+      return {
+        successCount: data.length,
+        failureCount: 0,
+        duplicateCount: 0
+      };
     } catch (error) {
       console.error(`[OzonImportService] ❌ Unexpected error during import:`, error);
       throw error;
     }
   }
 
-  private async importDataRowByRow(data: OzonRecord[]): Promise<void> {
+  private async importDataRowByRow(data: OzonRecord[]): Promise<ImportResult> {
     console.log(`[OzonImportService] Starting row-by-row import for ${data.length} records...`);
     let successCount = 0;
     let errorCount = 0;
+    let duplicateCount = 0;
     const errors: Array<{ rowIndex: number; error: any; record: any }> = [];
 
     for (let i = 0; i < data.length; i++) {
@@ -102,14 +113,19 @@ export class OzonImportService {
           .insert([record]);
 
         if (error) {
-          errorCount++;
-          console.error(`[OzonImportService] ❌ Row ${i + 1} failed:`, {
-            error: error.message,
-            code: error.code,
-            details: error.details,
-            record: JSON.stringify(record, null, 2)
-          });
-          errors.push({ rowIndex: i, error, record });
+          if (error.code === '23505') {
+            duplicateCount++;
+            console.log(`[OzonImportService] ⚠️ Row ${i + 1} skipped (duplicate)`);
+          } else {
+            errorCount++;
+            console.error(`[OzonImportService] ❌ Row ${i + 1} failed:`, {
+              error: error.message,
+              code: error.code,
+              details: error.details,
+              record: JSON.stringify(record, null, 2)
+            });
+            errors.push({ rowIndex: i, error, record });
+          }
         } else {
           successCount++;
           if (successCount % 100 === 0) {
@@ -126,6 +142,7 @@ export class OzonImportService {
 
     console.log(`[OzonImportService] Row-by-row import complete:`);
     console.log(`[OzonImportService] ✅ Success: ${successCount} rows`);
+    console.log(`[OzonImportService] ⚠️ Duplicates: ${duplicateCount} rows`);
     console.log(`[OzonImportService] ❌ Failed: ${errorCount} rows`);
 
     if (errors.length > 0) {
@@ -136,9 +153,13 @@ export class OzonImportService {
           record
         });
       });
-
-      throw new Error(`Import completed with ${errorCount} errors. Successfully imported ${successCount} records. Check console for details.`);
     }
+
+    return {
+      successCount,
+      failureCount: errorCount,
+      duplicateCount
+    };
   }
 
   async getStats(): Promise<OzonStats> {
@@ -179,13 +200,27 @@ export class OzonImportService {
   }
 
   async clearData(): Promise<void> {
-    const { error } = await supabaseAdmin
+    const { error: deleteError } = await supabaseAdmin
       .from('ozon_data')
       .delete()
       .neq('id', '00000000-0000-0000-0000-000000000000'); // Delete all records
 
-    if (error) {
-      throw new Error(`Failed to clear data: ${error.message}`);
+    if (deleteError) {
+      throw new Error(`Failed to clear data: ${deleteError.message}`);
+    }
+
+    const { error: updateError } = await supabaseAdmin
+      .from('ozon_import_history')
+      .update({
+        actual_records_imported: 0,
+        data_purged_at: new Date().toISOString()
+      })
+      .is('data_purged_at', null);
+
+    if (updateError) {
+      console.error('Failed to update import history after purge:', updateError);
+    } else {
+      console.log('[OzonImportService] Import history updated to reflect data purge');
     }
   }
 

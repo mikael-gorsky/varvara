@@ -1,4 +1,4 @@
-import { ozonImportService } from './ozonImportService';
+import { ozonImportService, ImportResult } from './ozonImportService';
 import { importHistoryService, ImportHistoryRecord } from './importHistoryService';
 import { fileHashService } from './fileHashService';
 import { parseOzonFile, OzonParsedData } from './ozonParser';
@@ -125,20 +125,26 @@ export class BatchImportService {
           continue;
         }
 
+        let importResult: ImportResult;
         if (parsedData.rows.length > 0) {
           console.log(`[BatchImport] Importing ${parsedData.rows.length} rows to database...`);
-          await ozonImportService.importData(parsedData.rows);
-          console.log(`[BatchImport] Successfully imported ${parsedData.rows.length} rows`);
+          importResult = await ozonImportService.importData(parsedData.rows);
+          console.log(`[BatchImport] Import result:`, importResult);
         } else {
           console.warn(`[BatchImport] No rows to import from ${file.name}`);
+          importResult = {
+            successCount: 0,
+            failureCount: 0,
+            duplicateCount: 0
+          };
         }
 
         const fileDuration = Date.now() - fileStartTime;
 
-        await this.createSuccessImportRecord(file, hashInfo.hash, parsedData, fileDuration);
+        await this.createSuccessImportRecord(file, hashInfo.hash, parsedData, fileDuration, importResult);
 
         result.filesProcessed++;
-        result.totalRecordsImported += parsedData.stats.validRows;
+        result.totalRecordsImported += importResult.successCount;
 
         if (options.onProgress) {
           options.onProgress({
@@ -184,18 +190,24 @@ export class BatchImportService {
     file: File,
     fileHash: string,
     parsedData: OzonParsedData,
-    duration: number
+    duration: number,
+    importResult: ImportResult
   ): Promise<void> {
+    const importStatus = importResult.failureCount > 0 ? 'partial' : 'success';
+
     const record: Omit<ImportHistoryRecord, 'id' | 'created_at'> = {
       filename: file.name,
       file_hash: fileHash,
       file_size: file.size,
       records_count: parsedData.stats.validRows,
+      actual_records_imported: importResult.successCount,
+      records_skipped_duplicates: importResult.duplicateCount,
+      records_failed: importResult.failureCount,
       date_range_start: parsedData.metadata.dateRangeStart,
       date_range_end: parsedData.metadata.dateRangeEnd,
       validation_status: this.getValidationStatus(parsedData),
       validation_errors: parsedData.errors,
-      import_status: 'success',
+      import_status: importStatus,
       import_duration_ms: duration
     };
 
@@ -213,6 +225,9 @@ export class BatchImportService {
       file_hash: fileHash,
       file_size: file.size,
       records_count: 0,
+      actual_records_imported: 0,
+      records_skipped_duplicates: 0,
+      records_failed: 0,
       date_range_start: parsedData.metadata.dateRangeStart,
       date_range_end: parsedData.metadata.dateRangeEnd,
       validation_status: 'invalid',

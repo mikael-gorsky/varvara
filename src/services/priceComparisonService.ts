@@ -35,6 +35,45 @@ class PriceComparisonService {
     return name.toLowerCase().trim().replace(/\s+/g, ' ');
   }
 
+  private extractModelNumber(name: string): string | null {
+    const patterns = [
+      /\b([LS]\d{4})\b/i,
+      /\b([A-Z]\d{3,4}[A-Z]?)\b/i,
+      /office\s*kit\s*([A-Z]?\d{3,4}[A-Z]?)/i,
+    ];
+
+    for (const pattern of patterns) {
+      const match = name.match(pattern);
+      if (match) {
+        return match[1].toUpperCase();
+      }
+    }
+    return null;
+  }
+
+  private findBestMatch(plName: string, ozonProducts: any[]): any | null {
+    const plModelNumber = this.extractModelNumber(plName);
+
+    if (plModelNumber) {
+      for (const ozonProduct of ozonProducts) {
+        const ozonModelNumber = this.extractModelNumber(ozonProduct.product_name);
+        if (ozonModelNumber && ozonModelNumber === plModelNumber) {
+          return ozonProduct;
+        }
+      }
+    }
+
+    const normalizedPlName = this.normalizeProductName(plName);
+    for (const ozonProduct of ozonProducts) {
+      const normalizedOzonName = this.normalizeProductName(ozonProduct.product_name);
+      if (normalizedOzonName === normalizedPlName) {
+        return ozonProduct;
+      }
+    }
+
+    return null;
+  }
+
   async getComparison(searchTerm?: string): Promise<PriceComparisonProduct[]> {
     let pricelistQuery = supabase
       .from('pricelist_products')
@@ -68,15 +107,9 @@ class PriceComparisonService {
       throw new Error(`Failed to fetch Ozon products: ${ozonError.message}`);
     }
 
-    const ozonMap = new Map<string, any>();
-    (ozonProducts || []).forEach((product) => {
-      if (product.product_name && product.average_price) {
-        const normalizedName = this.normalizeProductName(product.product_name);
-        if (!ozonMap.has(normalizedName)) {
-          ozonMap.set(normalizedName, product);
-        }
-      }
-    });
+    const validOzonProducts = (ozonProducts || []).filter(
+      (p) => p.product_name && p.average_price
+    );
 
     const comparisons: PriceComparisonProduct[] = [];
 
@@ -85,8 +118,7 @@ class PriceComparisonService {
 
       if (!pricelistPrice) return;
 
-      const normalizedPlName = this.normalizeProductName(plProduct.name);
-      const ozonProduct = ozonMap.get(normalizedPlName);
+      const ozonProduct = this.findBestMatch(plProduct.name, validOzonProducts);
 
       if (ozonProduct && ozonProduct.average_price) {
         const ozonPriceRub = ozonProduct.average_price;

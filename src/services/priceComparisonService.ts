@@ -31,6 +31,10 @@ class PriceComparisonService {
     return priceRub / EXCHANGE_RATE_USD_TO_RUB;
   }
 
+  private normalizeProductName(name: string): string {
+    return name.toLowerCase().trim().replace(/\s+/g, ' ');
+  }
+
   async getComparison(searchTerm?: string): Promise<PriceComparisonProduct[]> {
     let pricelistQuery = supabase
       .from('pricelist_products')
@@ -56,9 +60,9 @@ class PriceComparisonService {
     }
 
     const { data: ozonProducts, error: ozonError } = await supabase
-      .from('products')
-      .select('external_id, name, category, price, supplier')
-      .eq('supplier', OFFICE_KIT_SUPPLIER);
+      .from('ozon_data')
+      .select('product_name, seller, brand, category_level1, average_price')
+      .eq('seller', OFFICE_KIT_SUPPLIER);
 
     if (ozonError) {
       throw new Error(`Failed to fetch Ozon products: ${ozonError.message}`);
@@ -66,8 +70,9 @@ class PriceComparisonService {
 
     const ozonMap = new Map<string, any>();
     (ozonProducts || []).forEach((product) => {
-      if (product.external_id) {
-        ozonMap.set(product.external_id.toLowerCase().trim(), product);
+      if (product.product_name) {
+        const normalizedName = this.normalizeProductName(product.product_name);
+        ozonMap.set(normalizedName, product);
       }
     });
 
@@ -78,18 +83,11 @@ class PriceComparisonService {
 
       if (!pricelistPrice) return;
 
-      const codeKey = plProduct.code?.toLowerCase().trim();
-      const articleKey = plProduct.article?.toLowerCase().trim();
+      const normalizedPlName = this.normalizeProductName(plProduct.name);
+      const ozonProduct = ozonMap.get(normalizedPlName);
 
-      let ozonProduct = null;
-      if (codeKey && ozonMap.has(codeKey)) {
-        ozonProduct = ozonMap.get(codeKey);
-      } else if (articleKey && ozonMap.has(articleKey)) {
-        ozonProduct = ozonMap.get(articleKey);
-      }
-
-      if (ozonProduct && ozonProduct.price) {
-        const ozonPriceRub = ozonProduct.price;
+      if (ozonProduct && ozonProduct.average_price) {
+        const ozonPriceRub = ozonProduct.average_price;
         const ozonPriceUSD = this.convertRubToUSD(ozonPriceRub);
         const priceDifferenceUSD = ozonPriceUSD - pricelistPrice;
         const priceDifferencePercent = ((priceDifferenceUSD / pricelistPrice) * 100);
@@ -105,7 +103,7 @@ class PriceComparisonService {
           ozonPriceUSD,
           priceDifferenceUSD,
           priceDifferencePercent,
-          ozonProductName: ozonProduct.name,
+          ozonProductName: ozonProduct.product_name,
         });
       }
     });

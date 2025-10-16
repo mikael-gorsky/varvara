@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
-import { ArrowLeft, TrendingUp, BarChart3 } from 'lucide-react';
+import { ArrowLeft, TrendingUp, BarChart3, DollarSign } from 'lucide-react';
 import OzonMarketplaceAnalytics from './ozon/OzonMarketplaceAnalytics';
+import PricelistAnalytics from './pricelist/PricelistAnalytics';
 
-type AnalyticsComponent = 'menu' | 'ozon-analytics';
+type AnalyticsComponent = 'menu' | 'ozon-analytics' | 'pricelist-analytics';
 
 interface OzonDashboardProps {
   onBack: () => void;
@@ -19,6 +20,8 @@ const OzonDashboard: React.FC<OzonDashboardProps> = ({ onBack }) => {
     switch (activeComponent) {
       case 'ozon-analytics':
         return <OzonMarketplaceAnalytics onBack={handleBackToMenu} />;
+      case 'pricelist-analytics':
+        return <PricelistAnalytics onBack={handleBackToMenu} />;
       default:
         return (
           <div className="min-h-screen bg-black p-6" style={{
@@ -121,6 +124,58 @@ const OzonDashboard: React.FC<OzonDashboardProps> = ({ onBack }) => {
                   </div>
                 </div>
 
+                {/* Pricelist Analytics */}
+                <div
+                  onClick={() => setActiveComponent('pricelist-analytics')}
+                  className="bg-gradient-to-br from-gray-900 to-gray-800 rounded-xl border border-cyan-400/30 shadow-xl p-8 cursor-pointer hover:border-cyan-400/60 hover:shadow-cyan-400/20 hover:shadow-2xl transition-all duration-300 relative overflow-hidden"
+                >
+                  <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-cyan-400 to-blue-400"></div>
+
+                  {/* Module ID */}
+                  <div className="absolute top-4 right-4">
+                    <span className="bg-gray-800/60 border border-cyan-400/30 text-cyan-400 text-xs px-2 py-1 rounded font-mono">
+                      A02
+                    </span>
+                  </div>
+
+                  {/* Status Badge */}
+                  <div className="absolute top-4 left-4">
+                    <div className="flex items-center space-x-1">
+                      <div className="w-2 h-2 bg-emerald-400 rounded-full animate-pulse"></div>
+                      <span className="text-emerald-400 text-xs font-mono">READY</span>
+                    </div>
+                  </div>
+
+                  {/* Corner Accents */}
+                  <div className="absolute bottom-6 left-6 w-4 h-4 border-l-2 border-b-2 border-cyan-400/40"></div>
+                  <div className="absolute bottom-6 right-6 w-4 h-4 border-r-2 border-b-2 border-cyan-400/40"></div>
+
+                  <div className="flex flex-col items-center text-center space-y-6 mt-8">
+                    <div className="w-20 h-20 bg-gradient-to-br from-cyan-400 to-blue-500 rounded-xl flex items-center justify-center shadow-lg border border-cyan-300 relative">
+                      <DollarSign className="w-10 h-10 text-black" />
+                      <div className="absolute -top-1 -right-1 w-5 h-5 bg-emerald-400 rounded-full border-2 border-gray-900 flex items-center justify-center">
+                        <BarChart3 className="w-3 h-3 text-black" />
+                      </div>
+                    </div>
+
+                    <div>
+                      <h3 className="text-2xl font-bold text-cyan-300 mb-3 font-mono tracking-wide">
+                        Pricelist Analytics
+                      </h3>
+                      <p className="text-cyan-400/80 text-sm leading-relaxed font-mono max-w-sm">
+                        Analyze customer pricing, product distribution, and category performance metrics.
+                      </p>
+                    </div>
+
+                    <div className="bg-gray-800/50 border border-cyan-400/30 rounded-lg px-6 py-3 w-full">
+                      <div className="flex items-center justify-center text-cyan-400 text-sm font-mono font-bold space-x-2">
+                        <DollarSign className="w-4 h-4" />
+                        <span>ACCESS ANALYTICS</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
               </div>
 
               {/* Status Footer */}
@@ -134,7 +189,7 @@ const OzonDashboard: React.FC<OzonDashboardProps> = ({ onBack }) => {
                   <div className="text-cyan-400/60 font-mono text-sm">|</div>
                   <div className="flex items-center space-x-2">
                     <span className="text-cyan-400/80 font-mono text-sm">AVAILABLE TOOLS:</span>
-                    <span className="text-emerald-400 font-mono font-bold">1</span>
+                    <span className="text-emerald-400 font-mono font-bold">2</span>
                   </div>
                   <div className="text-cyan-400/60 font-mono text-sm">|</div>
                   <div className="flex items-center space-x-2">

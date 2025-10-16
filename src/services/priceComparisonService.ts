@@ -36,9 +36,9 @@ class PriceComparisonService {
 
   private extractModelNumber(name: string): string | null {
     const patterns = [
-      /\b([LS]\d{4})\b/i,
-      /\b([A-Z]\d{3,4}[A-Z]?)\b/i,
-      /office\s*kit\s*([A-Z]?\d{3,4}[A-Z]?)/i,
+      /\b([LS]\d{4})[A-Z]?\b/i,
+      /\b([A-Z]\d{3,4})[A-Z]?\b/i,
+      /office\s*kit\s*([A-Z]?\d{3,4})[A-Z]?/i,
     ];
 
     for (const pattern of patterns) {
@@ -50,9 +50,33 @@ class PriceComparisonService {
     return null;
   }
 
-  private findBestMatch(plName: string, ozonProducts: any[]): { product: any; matchType: 'model_number' | 'normalized_name' } | null {
-    const plModelNumber = this.extractModelNumber(plName);
+  private extractArticleFromName(name: string): string | null {
+    const match = name.match(/office\s*kit\s*([A-Z]?\d{3,4}[A-Z]?)/i);
+    return match ? match[1].toUpperCase() : null;
+  }
 
+  private findBestMatch(plProduct: any, ozonProducts: any[]): { product: any; matchType: 'model_number' | 'normalized_name' } | null {
+    const plArticle = plProduct.article;
+    const plName = plProduct.name;
+
+    if (plArticle) {
+      const plBaseModel = this.extractModelNumber(plArticle);
+
+      for (const ozonProduct of ozonProducts) {
+        const ozonModelNumber = this.extractModelNumber(ozonProduct.product_name);
+        const ozonArticle = this.extractArticleFromName(ozonProduct.product_name);
+
+        if (plArticle && ozonArticle && plArticle.toUpperCase() === ozonArticle.toUpperCase()) {
+          return { product: ozonProduct, matchType: 'model_number' };
+        }
+
+        if (plBaseModel && ozonModelNumber && plBaseModel === ozonModelNumber) {
+          return { product: ozonProduct, matchType: 'model_number' };
+        }
+      }
+    }
+
+    const plModelNumber = this.extractModelNumber(plName);
     if (plModelNumber) {
       for (const ozonProduct of ozonProducts) {
         const ozonModelNumber = this.extractModelNumber(ozonProduct.product_name);
@@ -117,7 +141,7 @@ class PriceComparisonService {
 
       if (!pricelistPriceUSD) return;
 
-      const matchResult = this.findBestMatch(plProduct.name, validOzonProducts);
+      const matchResult = this.findBestMatch(plProduct, validOzonProducts);
 
       if (matchResult && matchResult.product.average_price) {
         const ozonPriceRub = matchResult.product.average_price;

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { ArrowLeft, DollarSign, Package, Search, ChevronRight } from 'lucide-react';
+import { ArrowLeft, DollarSign, Package, Search, ChevronRight, BarChart3 } from 'lucide-react';
 import {
   pricelistAnalyticsService,
   PricelistOverview,

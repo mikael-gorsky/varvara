@@ -6,17 +6,16 @@ export interface PriceComparisonProduct {
   article?: string;
   name: string;
   category?: string;
-  pricelistPrice?: number;
+  pricelistPriceUSD?: number;
+  pricelistPriceRub?: number;
   ozonPrice?: number;
-  ozonPriceUSD?: number;
-  priceDifferenceUSD?: number;
   priceDifferencePercent?: number;
   ozonProductName?: string;
+  matchType?: 'model_number' | 'normalized_name';
 }
 
 export interface ComparisonOverview {
   totalMatched: number;
-  avgPriceDifferenceUSD: number;
   avgPriceDifferencePercent: number;
   productsWithHigherOzonPrice: number;
   productsWithLowerOzonPrice: number;
@@ -27,8 +26,8 @@ const EXCHANGE_RATE_USD_TO_RUB = 88;
 const OFFICE_KIT_SUPPLIER = 'ООО «Офис Кит»';
 
 class PriceComparisonService {
-  private convertRubToUSD(priceRub: number): number {
-    return priceRub / EXCHANGE_RATE_USD_TO_RUB;
+  private convertUSDToRub(priceUSD: number): number {
+    return priceUSD * EXCHANGE_RATE_USD_TO_RUB;
   }
 
   private normalizeProductName(name: string): string {
@@ -51,14 +50,14 @@ class PriceComparisonService {
     return null;
   }
 
-  private findBestMatch(plName: string, ozonProducts: any[]): any | null {
+  private findBestMatch(plName: string, ozonProducts: any[]): { product: any; matchType: 'model_number' | 'normalized_name' } | null {
     const plModelNumber = this.extractModelNumber(plName);
 
     if (plModelNumber) {
       for (const ozonProduct of ozonProducts) {
         const ozonModelNumber = this.extractModelNumber(ozonProduct.product_name);
         if (ozonModelNumber && ozonModelNumber === plModelNumber) {
-          return ozonProduct;
+          return { product: ozonProduct, matchType: 'model_number' };
         }
       }
     }
@@ -67,7 +66,7 @@ class PriceComparisonService {
     for (const ozonProduct of ozonProducts) {
       const normalizedOzonName = this.normalizeProductName(ozonProduct.product_name);
       if (normalizedOzonName === normalizedPlName) {
-        return ozonProduct;
+        return { product: ozonProduct, matchType: 'normalized_name' };
       }
     }
 
@@ -114,17 +113,16 @@ class PriceComparisonService {
     const comparisons: PriceComparisonProduct[] = [];
 
     (pricelistProducts || []).forEach((plProduct: any) => {
-      const pricelistPrice = plProduct.pricelist_prices?.[0]?.price;
+      const pricelistPriceUSD = plProduct.pricelist_prices?.[0]?.price;
 
-      if (!pricelistPrice) return;
+      if (!pricelistPriceUSD) return;
 
-      const ozonProduct = this.findBestMatch(plProduct.name, validOzonProducts);
+      const matchResult = this.findBestMatch(plProduct.name, validOzonProducts);
 
-      if (ozonProduct && ozonProduct.average_price) {
-        const ozonPriceRub = ozonProduct.average_price;
-        const ozonPriceUSD = this.convertRubToUSD(ozonPriceRub);
-        const priceDifferenceUSD = ozonPriceUSD - pricelistPrice;
-        const priceDifferencePercent = ((priceDifferenceUSD / pricelistPrice) * 100);
+      if (matchResult && matchResult.product.average_price) {
+        const ozonPriceRub = matchResult.product.average_price;
+        const pricelistPriceRub = this.convertUSDToRub(pricelistPriceUSD);
+        const priceDifferencePercent = ((ozonPriceRub - pricelistPriceRub) / pricelistPriceRub) * 100;
 
         comparisons.push({
           id: plProduct.id,
@@ -132,12 +130,12 @@ class PriceComparisonService {
           article: plProduct.article,
           name: plProduct.name,
           category: plProduct.category,
-          pricelistPrice,
+          pricelistPriceUSD,
+          pricelistPriceRub,
           ozonPrice: ozonPriceRub,
-          ozonPriceUSD,
-          priceDifferenceUSD,
           priceDifferencePercent,
-          ozonProductName: ozonProduct.product_name,
+          ozonProductName: matchResult.product.product_name,
+          matchType: matchResult.matchType,
         });
       }
     });
@@ -155,7 +153,6 @@ class PriceComparisonService {
     if (comparisons.length === 0) {
       return {
         totalMatched: 0,
-        avgPriceDifferenceUSD: 0,
         avgPriceDifferencePercent: 0,
         productsWithHigherOzonPrice: 0,
         productsWithLowerOzonPrice: 0,
@@ -163,16 +160,14 @@ class PriceComparisonService {
       };
     }
 
-    const totalDifferenceUSD = comparisons.reduce((sum, p) => sum + (p.priceDifferenceUSD || 0), 0);
     const totalDifferencePercent = comparisons.reduce((sum, p) => sum + (p.priceDifferencePercent || 0), 0);
 
-    const productsWithHigherOzonPrice = comparisons.filter(p => (p.priceDifferenceUSD || 0) > 0.5).length;
-    const productsWithLowerOzonPrice = comparisons.filter(p => (p.priceDifferenceUSD || 0) < -0.5).length;
-    const productsWithEqualPrice = comparisons.filter(p => Math.abs(p.priceDifferenceUSD || 0) <= 0.5).length;
+    const productsWithHigherOzonPrice = comparisons.filter(p => (p.priceDifferencePercent || 0) > 1).length;
+    const productsWithLowerOzonPrice = comparisons.filter(p => (p.priceDifferencePercent || 0) < -1).length;
+    const productsWithEqualPrice = comparisons.filter(p => Math.abs(p.priceDifferencePercent || 0) <= 1).length;
 
     return {
       totalMatched: comparisons.length,
-      avgPriceDifferenceUSD: totalDifferenceUSD / comparisons.length,
       avgPriceDifferencePercent: totalDifferencePercent / comparisons.length,
       productsWithHigherOzonPrice,
       productsWithLowerOzonPrice,

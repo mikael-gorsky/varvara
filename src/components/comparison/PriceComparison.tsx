@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { ArrowLeft, TrendingUp, TrendingDown, Minus, Search, DollarSign, BarChart3, Package, AlertCircle } from 'lucide-react';
+import { ArrowLeft, TrendingUp, TrendingDown, Minus, Search, BarChart3, Package, AlertCircle, Hash, FileText } from 'lucide-react';
 import { priceComparisonService, PriceComparisonProduct, ComparisonOverview } from '../../services/priceComparisonService';
 
 interface PriceComparisonProps {
@@ -61,10 +61,10 @@ const PriceComparison: React.FC<PriceComparisonProps> = ({ onBack }) => {
 
     switch (filterType) {
       case 'higher':
-        filtered = filtered.filter(p => (p.priceDifferenceUSD || 0) > 0.5);
+        filtered = filtered.filter(p => (p.priceDifferencePercent || 0) > 1);
         break;
       case 'lower':
-        filtered = filtered.filter(p => (p.priceDifferenceUSD || 0) < -0.5);
+        filtered = filtered.filter(p => (p.priceDifferencePercent || 0) < -1);
         break;
       case 'significant':
         filtered = filtered.filter(p => Math.abs(p.priceDifferencePercent || 0) >= minDifference);
@@ -76,16 +76,28 @@ const PriceComparison: React.FC<PriceComparisonProps> = ({ onBack }) => {
 
   const getPriceDifferenceIcon = (difference?: number) => {
     if (!difference) return <Minus className="w-4 h-4" />;
-    if (difference > 0.5) return <TrendingUp className="w-4 h-4" />;
-    if (difference < -0.5) return <TrendingDown className="w-4 h-4" />;
+    if (difference > 1) return <TrendingUp className="w-4 h-4" />;
+    if (difference < -1) return <TrendingDown className="w-4 h-4" />;
     return <Minus className="w-4 h-4" />;
   };
 
   const getPriceDifferenceColor = (difference?: number) => {
     if (!difference) return 'text-gray-400';
-    if (difference > 0.5) return 'text-red-400';
-    if (difference < -0.5) return 'text-emerald-400';
+    if (difference > 1) return 'text-red-400';
+    if (difference < -1) return 'text-emerald-400';
     return 'text-cyan-400';
+  };
+
+  const getMatchTypeColor = (matchType?: string) => {
+    if (matchType === 'model_number') return 'border-l-4 border-blue-400 bg-blue-400/5';
+    if (matchType === 'normalized_name') return 'border-l-4 border-green-400 bg-green-400/5';
+    return '';
+  };
+
+  const getMatchTypeIcon = (matchType?: string) => {
+    if (matchType === 'model_number') return <Hash className="w-3 h-3 text-blue-400" />;
+    if (matchType === 'normalized_name') return <FileText className="w-3 h-3 text-green-400" />;
+    return null;
   };
 
   if (isLoading && !overview) {
@@ -128,7 +140,7 @@ const PriceComparison: React.FC<PriceComparisonProps> = ({ onBack }) => {
                     PL VS OZON COMPARISON
                   </h1>
                   <p className="text-cyan-400/80 text-sm font-mono">
-                    Price Analysis: Pricelist (USD) vs Ozon Marketplace (RUB → USD)
+                    Price Analysis: Pricelist (USD → RUB) vs Ozon Marketplace (RUB)
                   </p>
                 </div>
               </div>
@@ -169,19 +181,6 @@ const PriceComparison: React.FC<PriceComparisonProps> = ({ onBack }) => {
               </div>
               <h3 className="text-xs font-mono text-cyan-400 mb-1 uppercase tracking-wider">Ozon Lower</h3>
               <p className="text-2xl font-bold text-emerald-300 font-mono">{overview.productsWithLowerOzonPrice}</p>
-            </div>
-
-            <div className="bg-gradient-to-br from-gray-900 to-gray-800 rounded-xl border border-cyan-400/30 shadow-xl p-4 relative overflow-hidden">
-              <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-violet-400 to-fuchsia-400"></div>
-              <div className="flex items-center justify-between mb-3">
-                <div className="w-8 h-8 bg-gradient-to-br from-violet-400 to-fuchsia-500 rounded-lg flex items-center justify-center shadow-lg border border-violet-300">
-                  <DollarSign className="w-4 h-4 text-black" />
-                </div>
-              </div>
-              <h3 className="text-xs font-mono text-cyan-400 mb-1 uppercase tracking-wider">Avg Diff USD</h3>
-              <p className={`text-2xl font-bold font-mono ${overview.avgPriceDifferenceUSD > 0 ? 'text-red-300' : 'text-emerald-300'}`}>
-                {overview.avgPriceDifferenceUSD > 0 ? '+' : ''}{overview.avgPriceDifferenceUSD.toFixed(2)}
-              </p>
             </div>
 
             <div className="bg-gradient-to-br from-gray-900 to-gray-800 rounded-xl border border-cyan-400/30 shadow-xl p-4 relative overflow-hidden">
@@ -261,33 +260,28 @@ const PriceComparison: React.FC<PriceComparisonProps> = ({ onBack }) => {
               <table className="w-full">
                 <thead className="bg-gray-800/80 sticky top-0">
                   <tr>
-                    <th className="px-4 py-3 text-left text-xs font-mono text-cyan-400 uppercase tracking-wider border-b border-cyan-400/30">Code</th>
                     <th className="px-4 py-3 text-left text-xs font-mono text-cyan-400 uppercase tracking-wider border-b border-cyan-400/30">Product Name</th>
-                    <th className="px-4 py-3 text-left text-xs font-mono text-cyan-400 uppercase tracking-wider border-b border-cyan-400/30">Category</th>
-                    <th className="px-4 py-3 text-right text-xs font-mono text-cyan-400 uppercase tracking-wider border-b border-cyan-400/30">PL Price (USD)</th>
+                    <th className="px-4 py-3 text-right text-xs font-mono text-cyan-400 uppercase tracking-wider border-b border-cyan-400/30">PL Price (RUB)</th>
                     <th className="px-4 py-3 text-right text-xs font-mono text-cyan-400 uppercase tracking-wider border-b border-cyan-400/30">Ozon (RUB)</th>
-                    <th className="px-4 py-3 text-right text-xs font-mono text-cyan-400 uppercase tracking-wider border-b border-cyan-400/30">Ozon (USD)</th>
-                    <th className="px-4 py-3 text-right text-xs font-mono text-cyan-400 uppercase tracking-wider border-b border-cyan-400/30">Diff (USD)</th>
                     <th className="px-4 py-3 text-right text-xs font-mono text-cyan-400 uppercase tracking-wider border-b border-cyan-400/30">Diff (%)</th>
                   </tr>
                 </thead>
                 <tbody>
                   {filteredProducts.map((product, idx) => (
-                    <tr key={product.id} className={`hover:bg-gray-800/50 transition-colors duration-200 ${idx % 2 === 0 ? 'bg-gray-900/30' : ''}`}>
-                      <td className="px-4 py-3 text-sm font-mono text-cyan-300 border-b border-cyan-400/10">{product.code}</td>
-                      <td className="px-4 py-3 text-sm font-mono text-cyan-300 border-b border-cyan-400/10 max-w-xs truncate">{product.name}</td>
-                      <td className="px-4 py-3 text-sm font-mono text-orange-300 border-b border-cyan-400/10">{product.category || '-'}</td>
-                      <td className="px-4 py-3 text-sm font-mono text-cyan-300 text-right border-b border-cyan-400/10">${product.pricelistPrice?.toFixed(2)}</td>
-                      <td className="px-4 py-3 text-sm font-mono text-cyan-300 text-right border-b border-cyan-400/10">{product.ozonPrice?.toFixed(2)} ₽</td>
-                      <td className="px-4 py-3 text-sm font-mono text-cyan-300 text-right border-b border-cyan-400/10">${product.ozonPriceUSD?.toFixed(2)}</td>
-                      <td className={`px-4 py-3 text-sm font-mono text-right border-b border-cyan-400/10 font-bold ${getPriceDifferenceColor(product.priceDifferenceUSD)}`}>
-                        <div className="flex items-center justify-end space-x-1">
-                          {getPriceDifferenceIcon(product.priceDifferenceUSD)}
-                          <span>${Math.abs(product.priceDifferenceUSD || 0).toFixed(2)}</span>
+                    <tr key={product.id} className={`hover:bg-gray-800/50 transition-colors duration-200 ${idx % 2 === 0 ? 'bg-gray-900/30' : ''} ${getMatchTypeColor(product.matchType)}`}>
+                      <td className="px-4 py-3 text-sm font-mono text-cyan-300 border-b border-cyan-400/10">
+                        <div className="flex items-center space-x-2">
+                          {getMatchTypeIcon(product.matchType)}
+                          <span className="max-w-md truncate">{product.name}</span>
                         </div>
                       </td>
-                      <td className={`px-4 py-3 text-sm font-mono text-right border-b border-cyan-400/10 font-bold ${getPriceDifferenceColor(product.priceDifferenceUSD)}`}>
-                        {product.priceDifferencePercent && product.priceDifferencePercent > 0 ? '+' : ''}{product.priceDifferencePercent?.toFixed(1)}%
+                      <td className="px-4 py-3 text-sm font-mono text-cyan-300 text-right border-b border-cyan-400/10">{product.pricelistPriceRub?.toFixed(2)} ₽</td>
+                      <td className="px-4 py-3 text-sm font-mono text-cyan-300 text-right border-b border-cyan-400/10">{product.ozonPrice?.toFixed(2)} ₽</td>
+                      <td className={`px-4 py-3 text-sm font-mono text-right border-b border-cyan-400/10 font-bold ${getPriceDifferenceColor(product.priceDifferencePercent)}`}>
+                        <div className="flex items-center justify-end space-x-1">
+                          {getPriceDifferenceIcon(product.priceDifferencePercent)}
+                          <span>{product.priceDifferencePercent && product.priceDifferencePercent > 0 ? '+' : ''}{product.priceDifferencePercent?.toFixed(1)}%</span>
+                        </div>
                       </td>
                     </tr>
                   ))}
@@ -309,20 +303,29 @@ const PriceComparison: React.FC<PriceComparisonProps> = ({ onBack }) => {
           <div className="bg-gradient-to-br from-gray-900 to-gray-800 rounded-xl border border-cyan-400/30 shadow-xl p-4">
             <div className="flex flex-wrap items-center justify-center gap-6 text-sm font-mono">
               <div className="flex items-center space-x-2">
+                <Hash className="w-4 h-4 text-blue-400" />
+                <span className="text-blue-400">Model Number Match</span>
+              </div>
+              <div className="flex items-center space-x-2">
+                <FileText className="w-4 h-4 text-green-400" />
+                <span className="text-green-400">Name Match</span>
+              </div>
+              <div className="text-cyan-400/60">|</div>
+              <div className="flex items-center space-x-2">
                 <div className="w-3 h-3 bg-red-400 rounded"></div>
-                <span className="text-red-400">Ozon Price Higher (unfavorable)</span>
+                <span className="text-red-400">Ozon Higher</span>
               </div>
               <div className="flex items-center space-x-2">
                 <div className="w-3 h-3 bg-emerald-400 rounded"></div>
-                <span className="text-emerald-400">Ozon Price Lower (favorable)</span>
+                <span className="text-emerald-400">Ozon Lower</span>
               </div>
               <div className="flex items-center space-x-2">
                 <div className="w-3 h-3 bg-cyan-400 rounded"></div>
-                <span className="text-cyan-400">Similar Prices</span>
+                <span className="text-cyan-400">Similar</span>
               </div>
               <div className="text-cyan-400/60">|</div>
               <div className="text-cyan-400/80">
-                Exchange Rate: <span className="text-cyan-300 font-bold">88 RUB = 1 USD</span>
+                Exchange Rate: <span className="text-cyan-300 font-bold">1 USD = 88 RUB</span>
               </div>
               <div className="text-cyan-400/60">|</div>
               <div className="text-cyan-400/80">

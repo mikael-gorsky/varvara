@@ -62,7 +62,7 @@ class PriceComparisonService {
     const { data: ozonProducts, error: ozonError } = await supabase
       .from('ozon_data')
       .select('product_name, seller, brand, category_level1, average_price')
-      .eq('seller', OFFICE_KIT_SUPPLIER);
+      .ilike('seller', `%Офис Кит%`);
 
     if (ozonError) {
       throw new Error(`Failed to fetch Ozon products: ${ozonError.message}`);
@@ -70,9 +70,11 @@ class PriceComparisonService {
 
     const ozonMap = new Map<string, any>();
     (ozonProducts || []).forEach((product) => {
-      if (product.product_name) {
+      if (product.product_name && product.average_price) {
         const normalizedName = this.normalizeProductName(product.product_name);
-        ozonMap.set(normalizedName, product);
+        if (!ozonMap.has(normalizedName)) {
+          ozonMap.set(normalizedName, product);
+        }
       }
     });
 

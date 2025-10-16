@@ -24,7 +24,7 @@ export interface ComparisonOverview {
 }
 
 const EXCHANGE_RATE_USD_TO_RUB = 88;
-const OFFICE_KIT_SUPPLIER = 'ООО "Офис Кит"';
+const OFFICE_KIT_SUPPLIER = 'ООО «Офис Кит»';
 
 class PriceComparisonService {
   private convertRubToUSD(priceRub: number): number {
@@ -62,7 +62,7 @@ class PriceComparisonService {
     const { data: ozonProducts, error: ozonError } = await supabase
       .from('ozon_data')
       .select('product_name, seller, brand, category_level1, average_price')
-      .ilike('seller', `%Офис Кит%`);
+      .eq('seller', OFFICE_KIT_SUPPLIER);
 
     if (ozonError) {
       throw new Error(`Failed to fetch Ozon products: ${ozonError.message}`);

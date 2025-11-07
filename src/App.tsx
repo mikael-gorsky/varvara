@@ -43,13 +43,7 @@ function App() {
 
   const renderContent = () => {
     if (!activeL1) {
-      return (
-        <div style={{ paddingLeft: '20px', paddingRight: '20px', paddingTop: '48px' }}>
-          <p className="text-subsection uppercase" style={{ color: 'var(--text-tertiary)' }}>
-            SELECT A MODULE FROM THE MENU ABOVE
-          </p>
-        </div>
-      );
+      return null;
     }
 
     switch (activeL1) {

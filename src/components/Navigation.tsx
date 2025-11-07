@@ -79,10 +79,11 @@ const Navigation: React.FC<NavigationProps> = ({
       className="fixed left-0 right-0 z-40"
       style={{
         top: `${headerHeight}px`,
-        backgroundColor: 'var(--bg-primary)'
+        backgroundColor: '#000000',
+        borderBottom: '1px solid #333333'
       }}
     >
-      <div className="h-14 flex items-center overflow-x-auto scrollbar-hide border-b" style={{ borderColor: 'var(--divider-standard)' }}>
+      <div className="h-14 flex items-center overflow-x-auto scrollbar-hide">
         <div className="flex items-center gap-0 px-5 md:px-8 lg:px-12">
           {l1Items.map((item) => {
             const isActive = activeL1 === item;
@@ -92,16 +93,19 @@ const Navigation: React.FC<NavigationProps> = ({
                 onClick={() => handleL1Click(item)}
                 className="text-menu-l1 uppercase px-8 h-14 relative transition-colors duration-fast whitespace-nowrap"
                 style={{
-                  color: isActive ? '#E91E63' : 'var(--text-tertiary)',
+                  color: isActive ? '#E91E63' : '#666666',
+                  fontWeight: 600,
+                  fontSize: '13px',
+                  letterSpacing: '0.5px'
                 }}
                 onMouseEnter={(e) => {
                   if (!isActive) {
-                    e.currentTarget.style.color = 'var(--text-secondary)';
+                    e.currentTarget.style.color = '#AAAAAA';
                   }
                 }}
                 onMouseLeave={(e) => {
                   if (!isActive) {
-                    e.currentTarget.style.color = 'var(--text-tertiary)';
+                    e.currentTarget.style.color = '#666666';
                   }
                 }}
               >
@@ -121,7 +125,7 @@ const Navigation: React.FC<NavigationProps> = ({
       {isL2Visible && currentL2Items && (
         <div
           className="h-12 flex items-center overflow-x-auto scrollbar-hide border-b transition-all duration-normal"
-          style={{ borderColor: 'var(--divider-standard)' }}
+          style={{ borderColor: '#222222' }}
         >
           <div className="flex items-center gap-0 px-5 md:px-8 lg:px-12">
             {currentL2Items.map((item) => {
@@ -132,16 +136,18 @@ const Navigation: React.FC<NavigationProps> = ({
                   onClick={() => onL2Change(item)}
                   className="text-menu-l2 capitalize px-6 h-12 relative transition-colors duration-fast whitespace-nowrap"
                   style={{
-                    color: isActive ? 'var(--text-primary)' : 'var(--text-tertiary)',
+                    color: isActive ? '#FFFFFF' : '#666666',
+                    fontWeight: 500,
+                    fontSize: '12px'
                   }}
                   onMouseEnter={(e) => {
                     if (!isActive) {
-                      e.currentTarget.style.color = 'var(--text-secondary)';
+                      e.currentTarget.style.color = '#AAAAAA';
                     }
                   }}
                   onMouseLeave={(e) => {
                     if (!isActive) {
-                      e.currentTarget.style.color = 'var(--text-tertiary)';
+                      e.currentTarget.style.color = '#666666';
                     }
                   }}
                 >

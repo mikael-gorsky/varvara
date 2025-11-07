@@ -22,8 +22,8 @@ const ImportModule: React.FC<ImportModuleProps> = ({ activeL2 }) => {
     switch (activeL2) {
       case 'Marketplaces':
         return (
-          <div className="px-5 md:px-8 lg:px-12 py-6 md:py-8 lg:py-10">
-            <h2 className="text-page-title-mobile md:text-page-title-desktop uppercase mb-8" style={{ color: '#E91E63' }}>
+          <div>
+            <h2 className="text-page-title-mobile md:text-page-title-desktop uppercase mb-8" style={{ color: 'var(--accent)' }}>
               MARKETPLACE IMPORT
             </h2>
             <ImportStatusDisplay
@@ -34,8 +34,8 @@ const ImportModule: React.FC<ImportModuleProps> = ({ activeL2 }) => {
         );
       case 'Price Lists':
         return (
-          <div className="px-5 md:px-8 lg:px-12 py-6 md:py-8 lg:py-10">
-            <h2 className="text-page-title-mobile md:text-page-title-desktop uppercase mb-8" style={{ color: '#E91E63' }}>
+          <div>
+            <h2 className="text-page-title-mobile md:text-page-title-desktop uppercase mb-8" style={{ color: 'var(--accent)' }}>
               PRICE LIST IMPORT
             </h2>
             <div
@@ -54,8 +54,8 @@ const ImportModule: React.FC<ImportModuleProps> = ({ activeL2 }) => {
         );
       case 'Accounting':
         return (
-          <div className="px-5 md:px-8 lg:px-12 py-6 md:py-8 lg:py-10">
-            <h2 className="text-page-title-mobile md:text-page-title-desktop uppercase mb-8" style={{ color: '#E91E63' }}>
+          <div>
+            <h2 className="text-page-title-mobile md:text-page-title-desktop uppercase mb-8" style={{ color: 'var(--accent)' }}>
               ACCOUNTING IMPORT
             </h2>
             <p className="text-body" style={{ color: 'var(--text-secondary)' }}>
@@ -65,8 +65,8 @@ const ImportModule: React.FC<ImportModuleProps> = ({ activeL2 }) => {
         );
       default:
         return (
-          <div className="px-5 md:px-8 lg:px-12 py-6 md:py-8 lg:py-10">
-            <h2 className="text-page-title-mobile md:text-page-title-desktop uppercase mb-8" style={{ color: '#E91E63' }}>
+          <div>
+            <h2 className="text-page-title-mobile md:text-page-title-desktop uppercase mb-8" style={{ color: 'var(--accent)' }}>
               IMPORT
             </h2>
             <p className="text-body" style={{ color: 'var(--text-secondary)' }}>

@@ -77,7 +77,7 @@ const DashboardModule: React.FC = () => {
   };
 
   return (
-    <div style={{ paddingLeft: '20px', paddingRight: '20px', paddingTop: '24px', paddingBottom: '32px' }}>
+    <div>
       <div style={{ marginBottom: '48px' }}>
         <h2
           className="text-page-title-mobile md:text-page-title-desktop uppercase"

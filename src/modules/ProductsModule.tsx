@@ -9,8 +9,8 @@ const ProductsModule: React.FC<ProductsModuleProps> = ({ activeL2 }) => {
     switch (activeL2) {
       case 'Catalog':
         return (
-          <div className="px-5 md:px-8 lg:px-12 py-6 md:py-8 lg:py-10">
-            <h2 className="text-page-title-mobile md:text-page-title-desktop uppercase mb-8" style={{ color: '#E91E63' }}>
+          <div>
+            <h2 className="text-page-title-mobile md:text-page-title-desktop uppercase mb-8" style={{ color: 'var(--accent)' }}>
               PRODUCT CATALOG
             </h2>
             <p className="text-body" style={{ color: 'var(--text-secondary)' }}>
@@ -20,8 +20,8 @@ const ProductsModule: React.FC<ProductsModuleProps> = ({ activeL2 }) => {
         );
       case 'Performance':
         return (
-          <div className="px-5 md:px-8 lg:px-12 py-6 md:py-8 lg:py-10">
-            <h2 className="text-page-title-mobile md:text-page-title-desktop uppercase mb-8" style={{ color: '#E91E63' }}>
+          <div>
+            <h2 className="text-page-title-mobile md:text-page-title-desktop uppercase mb-8" style={{ color: 'var(--accent)' }}>
               PRODUCT PERFORMANCE
             </h2>
             <p className="text-body" style={{ color: 'var(--text-secondary)' }}>
@@ -31,8 +31,8 @@ const ProductsModule: React.FC<ProductsModuleProps> = ({ activeL2 }) => {
         );
       case 'Inventory':
         return (
-          <div className="px-5 md:px-8 lg:px-12 py-6 md:py-8 lg:py-10">
-            <h2 className="text-page-title-mobile md:text-page-title-desktop uppercase mb-8" style={{ color: '#E91E63' }}>
+          <div>
+            <h2 className="text-page-title-mobile md:text-page-title-desktop uppercase mb-8" style={{ color: 'var(--accent)' }}>
               INVENTORY
             </h2>
             <p className="text-body" style={{ color: 'var(--text-secondary)' }}>
@@ -42,8 +42,8 @@ const ProductsModule: React.FC<ProductsModuleProps> = ({ activeL2 }) => {
         );
       case 'Categories':
         return (
-          <div className="px-5 md:px-8 lg:px-12 py-6 md:py-8 lg:py-10">
-            <h2 className="text-page-title-mobile md:text-page-title-desktop uppercase mb-8" style={{ color: '#E91E63' }}>
+          <div>
+            <h2 className="text-page-title-mobile md:text-page-title-desktop uppercase mb-8" style={{ color: 'var(--accent)' }}>
               CATEGORIES
             </h2>
             <p className="text-body" style={{ color: 'var(--text-secondary)' }}>
@@ -53,8 +53,8 @@ const ProductsModule: React.FC<ProductsModuleProps> = ({ activeL2 }) => {
         );
       default:
         return (
-          <div className="px-5 md:px-8 lg:px-12 py-6 md:py-8 lg:py-10">
-            <h2 className="text-page-title-mobile md:text-page-title-desktop uppercase mb-8" style={{ color: '#E91E63' }}>
+          <div>
+            <h2 className="text-page-title-mobile md:text-page-title-desktop uppercase mb-8" style={{ color: 'var(--accent)' }}>
               PRODUCTS
             </h2>
             <p className="text-body" style={{ color: 'var(--text-secondary)' }}>

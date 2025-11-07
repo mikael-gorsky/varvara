@@ -12,8 +12,8 @@ const SettingsModule: React.FC<SettingsModuleProps> = ({ activeL2 }) => {
     switch (activeL2) {
       case 'Theme':
         return (
-          <div className="px-5 md:px-8 lg:px-12 py-6 md:py-8 lg:py-10">
-            <h2 className="text-page-title-mobile md:text-page-title-desktop uppercase mb-8" style={{ color: '#E91E63' }}>
+          <div>
+            <h2 className="text-page-title-mobile md:text-page-title-desktop uppercase mb-8" style={{ color: 'var(--accent)' }}>
               THEME
             </h2>
             <div className="space-y-4">
@@ -49,8 +49,8 @@ const SettingsModule: React.FC<SettingsModuleProps> = ({ activeL2 }) => {
         );
       case 'Language':
         return (
-          <div className="px-5 md:px-8 lg:px-12 py-6 md:py-8 lg:py-10">
-            <h2 className="text-page-title-mobile md:text-page-title-desktop uppercase mb-8" style={{ color: '#E91E63' }}>
+          <div>
+            <h2 className="text-page-title-mobile md:text-page-title-desktop uppercase mb-8" style={{ color: 'var(--accent)' }}>
               LANGUAGE
             </h2>
             <p className="text-body" style={{ color: 'var(--text-secondary)' }}>
@@ -60,8 +60,8 @@ const SettingsModule: React.FC<SettingsModuleProps> = ({ activeL2 }) => {
         );
       case 'Users':
         return (
-          <div className="px-5 md:px-8 lg:px-12 py-6 md:py-8 lg:py-10">
-            <h2 className="text-page-title-mobile md:text-page-title-desktop uppercase mb-8" style={{ color: '#E91E63' }}>
+          <div>
+            <h2 className="text-page-title-mobile md:text-page-title-desktop uppercase mb-8" style={{ color: 'var(--accent)' }}>
               USERS
             </h2>
             <p className="text-body" style={{ color: 'var(--text-secondary)' }}>
@@ -71,8 +71,8 @@ const SettingsModule: React.FC<SettingsModuleProps> = ({ activeL2 }) => {
         );
       default:
         return (
-          <div className="px-5 md:px-8 lg:px-12 py-6 md:py-8 lg:py-10">
-            <h2 className="text-page-title-mobile md:text-page-title-desktop uppercase mb-8" style={{ color: '#E91E63' }}>
+          <div>
+            <h2 className="text-page-title-mobile md:text-page-title-desktop uppercase mb-8" style={{ color: 'var(--accent)' }}>
               SETTINGS
             </h2>
             <p className="text-body" style={{ color: 'var(--text-secondary)' }}>

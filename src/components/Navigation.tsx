@@ -110,25 +110,32 @@ const Navigation: React.FC<NavigationProps> = ({
         <div>
           <button
             onClick={onBack}
+            className="text-menu-l1 uppercase whitespace-nowrap"
             style={{
-              color: 'rgba(255, 255, 255, 0.6)',
+              color: 'var(--accent)',
               paddingTop: '16px',
               paddingBottom: '16px',
+              paddingLeft: '0',
+              paddingRight: '0',
               fontWeight: 400,
-              fontSize: '14px',
+              letterSpacing: '0.02em',
+              lineHeight: 1.2,
               border: 'none',
               background: 'transparent',
               cursor: 'pointer',
+              display: 'block',
+              width: '100%',
+              textAlign: 'left',
               marginBottom: '8px',
             }}
             onMouseEnter={(e) => {
               e.currentTarget.style.color = 'rgba(255, 255, 255, 0.85)';
             }}
             onMouseLeave={(e) => {
-              e.currentTarget.style.color = 'rgba(255, 255, 255, 0.6)';
+              e.currentTarget.style.color = 'var(--accent)';
             }}
           >
-            ← Back
+            {activeL1}
           </button>
           {currentL2Items!.map((item) => {
             const isActive = activeL2 === item;

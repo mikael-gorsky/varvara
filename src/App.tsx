@@ -81,18 +81,18 @@ function App() {
 
       {/* Zone 3: Menus or Action Content */}
       <div style={{ flex: 1 }}>
-        {!showContent ? (
-          <Navigation
-            activeL1={activeL1}
-            activeL2={activeL2}
-            onL1Change={setActiveL1}
-            onL2Change={setActiveL2}
-            onBack={handleBack}
-          />
-        ) : (
+        <Navigation
+          activeL1={activeL1}
+          activeL2={activeL2}
+          onL1Change={setActiveL1}
+          onL2Change={setActiveL2}
+          onBack={handleBack}
+        />
+        {showContent && (
           <div style={{
             paddingLeft: '20px',
             paddingRight: '20px',
+            marginTop: '24px',
           }}>
             {renderContent()}
           </div>

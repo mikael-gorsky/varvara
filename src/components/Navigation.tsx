@@ -97,16 +97,17 @@ const Navigation: React.FC<NavigationProps> = ({
       <div
         style={{
           borderBottom: '1px solid var(--divider-standard)',
+          minHeight: 'fit-content',
         }}
       >
-        <div className="px-5 md:px-8 lg:px-12">
+        <div className="px-5 md:px-8 lg:px-12" style={{ paddingTop: 0 }}>
           {l1Items.map((item) => {
             const isActive = activeL1 === item;
             return (
               <button
                 key={item}
                 onClick={() => handleL1Click(item)}
-                className="text-menu-l1 uppercase whitespace-nowrap relative w-full text-left"
+                className="text-menu-l1 uppercase whitespace-nowrap relative text-left"
                 style={{
                   color: isActive ? 'var(--accent)' : 'rgba(255, 255, 255, 0.6)',
                   paddingTop: '16px',
@@ -121,6 +122,8 @@ const Navigation: React.FC<NavigationProps> = ({
                   background: 'transparent',
                   cursor: 'pointer',
                   display: 'block',
+                  width: '100%',
+                  boxSizing: 'border-box',
                 }}
                 onMouseEnter={(e) => {
                   if (!isActive) {

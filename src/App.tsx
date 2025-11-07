@@ -20,7 +20,6 @@ function App() {
     const updateHeaderHeight = () => {
       if (headerRef.current) {
         const height = headerRef.current.offsetHeight;
-        console.log('Header height:', height);
         setHeaderHeight(height);
       }
     };

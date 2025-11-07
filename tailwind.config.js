@@ -104,6 +104,7 @@ export default {
       },
       borderRadius: {
         none: '0px',
+        DEFAULT: '0px',
       },
       transitionDuration: {
         instant: '100ms',

@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import { TrendingUp, Users, Package, DollarSign, BarChart3, Activity, ChevronRight } from 'lucide-react';
 
 interface Client {
   id: string;
@@ -51,13 +50,6 @@ const DashboardModule: React.FC = () => {
     { id: '5', name: 'ВсеИнструменты.ру', sales: 239115, growth: 39, industry: 'E-commerce' },
     { id: '6', name: 'АРВАДА', sales: 192300, growth: 24, industry: 'Retail' },
     { id: '7', name: 'ДНС Ритейл', sales: 164424, growth: 44, industry: 'Electronics' },
-    { id: '8', name: 'ОнЛайн Трейд', sales: 164407, growth: 38, industry: 'E-commerce' },
-    { id: '9', name: 'Компсервис', sales: 134523, growth: 40, industry: 'IT Services' },
-    { id: '10', name: 'АЛЬФАПРИНТ МЕНЕДЖМЕНТ', sales: 130450, growth: 44, industry: 'Printing' },
-    { id: '11', name: 'Мишин Александр Николаевич ИП', sales: 76356, growth: 44, industry: 'Individual' },
-    { id: '12', name: 'Сибирский успех', sales: 66374, growth: 44, industry: 'Regional' },
-    { id: '13', name: 'Павлов Николай Александрович ИП', sales: 59917, growth: 43, industry: 'Individual' },
-    { id: '14', name: 'Триовист', sales: 53876, growth: 33, industry: 'Consulting' }
   ];
 
   const topProducts: Product[] = [
@@ -71,9 +63,9 @@ const DashboardModule: React.FC = () => {
   ];
 
   const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('en-US', {
+    return new Intl.NumberFormat('ru-RU', {
       style: 'currency',
-      currency: 'USD',
+      currency: 'RUB',
       minimumFractionDigits: 0,
       maximumFractionDigits: 0,
     }).format(amount);
@@ -81,173 +73,302 @@ const DashboardModule: React.FC = () => {
 
   const formatPercentage = (value: number, total: number) => {
     const percentage = (value / total) * 100;
-    return percentage.toFixed(1);
+    return percentage.toFixed(1).replace('.', ',');
   };
 
   return (
-    <div className="px-5 md:px-8 lg:px-12 py-6 md:py-8 lg:py-10">
-      <div className="mb-8 flex items-center justify-between">
-        <h2 className="text-page-title-mobile md:text-page-title-desktop uppercase" style={{ color: '#E91E63' }}>
+    <div style={{ paddingLeft: '20px', paddingRight: '20px', paddingTop: '24px', paddingBottom: '32px' }}>
+      <div style={{ marginBottom: '48px' }}>
+        <h2
+          className="text-page-title-mobile md:text-page-title-desktop uppercase"
+          style={{
+            color: 'var(--accent)',
+            fontWeight: 400,
+            letterSpacing: '0.03em',
+            marginBottom: '0'
+          }}
+        >
           DASHBOARD
         </h2>
-        <div className="text-right">
-          <p className="text-xl font-bold" style={{ color: '#FFFFFF' }}>
-            {currentTime.toLocaleTimeString()}
+      </div>
+
+      <div
+        style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+          gap: '16px',
+          marginBottom: '48px'
+        }}
+      >
+        <div
+          style={{
+            backgroundColor: 'var(--bg-secondary)',
+            padding: '24px',
+            minHeight: '140px',
+            display: 'flex',
+            flexDirection: 'column',
+            justifyContent: 'space-between'
+          }}
+        >
+          <p
+            className="text-label uppercase"
+            style={{
+              color: 'var(--text-tertiary)',
+              letterSpacing: '0.05em',
+              marginBottom: '16px'
+            }}
+          >
+            TOTAL REVENUE
           </p>
-          <p style={{ color: '#666666' }} className="text-sm">
-            {currentTime.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+          <p
+            className="text-kpi-value-mobile md:text-kpi-value-desktop"
+            style={{
+              color: 'var(--text-primary)',
+              fontWeight: 300,
+              letterSpacing: '-0.01em',
+              marginBottom: '8px'
+            }}
+          >
+            {formatCurrency(kpiData.totalRevenue)}
           </p>
+          <p style={{ fontSize: '20px', color: '#76FF03', marginBottom: '4px' }}>+44%</p>
+          <p className="text-label-lg" style={{ color: 'var(--text-tertiary)' }}>vs last period</p>
+        </div>
+
+        <div
+          style={{
+            backgroundColor: 'var(--bg-secondary)',
+            padding: '24px',
+            minHeight: '140px',
+            display: 'flex',
+            flexDirection: 'column',
+            justifyContent: 'space-between'
+          }}
+        >
+          <p
+            className="text-label uppercase"
+            style={{
+              color: 'var(--text-tertiary)',
+              letterSpacing: '0.05em',
+              marginBottom: '16px'
+            }}
+          >
+            TOP PRODUCTS SHARE
+          </p>
+          <p
+            className="text-kpi-value-mobile md:text-kpi-value-desktop"
+            style={{
+              color: 'var(--text-primary)',
+              fontWeight: 300,
+              letterSpacing: '-0.01em',
+              marginBottom: '8px'
+            }}
+          >
+            {kpiData.topProductsShare.toFixed(1).replace('.', ',')}%
+          </p>
+          <p style={{ fontSize: '20px', color: '#76FF03', marginBottom: '4px' }}>+2.1%</p>
+          <p className="text-label-lg" style={{ color: 'var(--text-tertiary)' }}>vs last period</p>
+        </div>
+
+        <div
+          style={{
+            backgroundColor: 'var(--bg-secondary)',
+            padding: '24px',
+            minHeight: '140px',
+            display: 'flex',
+            flexDirection: 'column',
+            justifyContent: 'space-between'
+          }}
+        >
+          <p
+            className="text-label uppercase"
+            style={{
+              color: 'var(--text-tertiary)',
+              letterSpacing: '0.05em',
+              marginBottom: '16px'
+            }}
+          >
+            MAJOR CLIENTS SHARE
+          </p>
+          <p
+            className="text-kpi-value-mobile md:text-kpi-value-desktop"
+            style={{
+              color: 'var(--text-primary)',
+              fontWeight: 300,
+              letterSpacing: '-0.01em',
+              marginBottom: '8px'
+            }}
+          >
+            {kpiData.majorClientsShare.toFixed(1).replace('.', ',')}%
+          </p>
+          <p style={{ fontSize: '20px', color: '#76FF03', marginBottom: '4px' }}>+5.3%</p>
+          <p className="text-label-lg" style={{ color: 'var(--text-tertiary)' }}>vs last period</p>
+        </div>
+
+        <div
+          style={{
+            backgroundColor: 'var(--bg-secondary)',
+            padding: '24px',
+            minHeight: '140px',
+            display: 'flex',
+            flexDirection: 'column',
+            justifyContent: 'space-between'
+          }}
+        >
+          <p
+            className="text-label uppercase"
+            style={{
+              color: 'var(--text-tertiary)',
+              letterSpacing: '0.05em',
+              marginBottom: '16px'
+            }}
+          >
+            AVG PRODUCT MARGIN
+          </p>
+          <p
+            className="text-kpi-value-mobile md:text-kpi-value-desktop"
+            style={{
+              color: 'var(--text-primary)',
+              fontWeight: 300,
+              letterSpacing: '-0.01em',
+              marginBottom: '8px'
+            }}
+          >
+            {kpiData.averageProductMargin.toFixed(1).replace('.', ',')}%
+          </p>
+          <p style={{ fontSize: '20px', color: '#76FF03', marginBottom: '4px' }}>+1.2%</p>
+          <p className="text-label-lg" style={{ color: 'var(--text-tertiary)' }}>vs last period</p>
         </div>
       </div>
 
-      {/* KPI Cards */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-        <div className="p-6 rounded-lg" style={{ backgroundColor: '#0A0A0A', border: '1px solid #222222' }}>
-          <div className="flex items-center justify-between mb-3">
-            <div className="w-10 h-10 rounded-lg flex items-center justify-center" style={{ backgroundColor: '#E91E63' }}>
-              <DollarSign className="w-5 h-5 text-white" />
-            </div>
-            <TrendingUp className="w-4 h-4" style={{ color: '#4ADE80' }} />
-          </div>
-          <p className="text-2xl font-bold mb-1" style={{ color: '#FFFFFF' }}>{formatCurrency(kpiData.totalRevenue)}</p>
-          <p style={{ color: '#666666' }} className="text-sm">Total Revenue</p>
-        </div>
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '32px', maxWidth: '1800px' }}>
+        <div style={{ backgroundColor: 'var(--bg-secondary)', padding: '24px' }}>
+          <h3
+            className="text-subsection uppercase"
+            style={{
+              color: 'var(--text-secondary)',
+              fontWeight: 400,
+              letterSpacing: '0.03em',
+              marginBottom: '24px'
+            }}
+          >
+            TOP CLIENTS
+          </h3>
 
-        <div className="p-6 rounded-lg" style={{ backgroundColor: '#0A0A0A', border: '1px solid #222222' }}>
-          <div className="flex items-center justify-between mb-3">
-            <div className="w-10 h-10 rounded-lg flex items-center justify-center" style={{ backgroundColor: '#E91E63' }}>
-              <Package className="w-5 h-5 text-white" />
+          <div>
+            <div
+              style={{
+                display: 'grid',
+                gridTemplateColumns: '1fr auto auto',
+                gap: '20px',
+                paddingBottom: '16px',
+                borderBottom: '1px solid var(--divider-standard)'
+              }}
+            >
+              <p className="text-label uppercase" style={{ color: 'var(--text-tertiary)' }}>CLIENT</p>
+              <p className="text-label uppercase" style={{ color: 'var(--text-tertiary)', textAlign: 'right' }}>REVENUE</p>
+              <p className="text-label uppercase" style={{ color: 'var(--text-tertiary)', textAlign: 'right' }}>GROWTH</p>
             </div>
-            <BarChart3 className="w-4 h-4" style={{ color: '#4ADE80' }} />
-          </div>
-          <p className="text-2xl font-bold mb-1" style={{ color: '#FFFFFF' }}>{kpiData.topProductsShare}%</p>
-          <p style={{ color: '#666666' }} className="text-sm">Top Products</p>
-        </div>
 
-        <div className="p-6 rounded-lg" style={{ backgroundColor: '#0A0A0A', border: '1px solid #222222' }}>
-          <div className="flex items-center justify-between mb-3">
-            <div className="w-10 h-10 rounded-lg flex items-center justify-center" style={{ backgroundColor: '#E91E63' }}>
-              <Users className="w-5 h-5 text-white" />
-            </div>
-            <TrendingUp className="w-4 h-4" style={{ color: '#4ADE80' }} />
-          </div>
-          <p className="text-2xl font-bold mb-1" style={{ color: '#FFFFFF' }}>{kpiData.majorClientsShare}%</p>
-          <p style={{ color: '#666666' }} className="text-sm">Major Clients</p>
-        </div>
-
-        <div className="p-6 rounded-lg" style={{ backgroundColor: '#0A0A0A', border: '1px solid #222222' }}>
-          <div className="flex items-center justify-between mb-3">
-            <div className="w-10 h-10 rounded-lg flex items-center justify-center" style={{ backgroundColor: '#E91E63' }}>
-              <Activity className="w-5 h-5 text-white" />
-            </div>
-            <TrendingUp className="w-4 h-4" style={{ color: '#4ADE80' }} />
-          </div>
-          <p className="text-2xl font-bold mb-1" style={{ color: '#FFFFFF' }}>{kpiData.averageProductMargin}%</p>
-          <p style={{ color: '#666666' }} className="text-sm">Profit Margin</p>
-        </div>
-      </div>
-
-      {/* Data Tables */}
-      <div className="grid lg:grid-cols-2 gap-6">
-        {/* Top Clients */}
-        <div className="rounded-lg p-6" style={{ backgroundColor: '#0A0A0A', border: '1px solid #222222' }}>
-          <div className="flex items-center gap-3 mb-6">
-            <div className="w-10 h-10 rounded-lg flex items-center justify-center" style={{ backgroundColor: '#E91E63' }}>
-              <Users className="w-5 h-5 text-white" />
-            </div>
-            <div>
-              <h3 className="text-lg font-bold uppercase" style={{ color: '#FFFFFF' }}>Top Clients</h3>
-              <p style={{ color: '#666666' }} className="text-sm">Revenue by Customer</p>
-            </div>
-          </div>
-
-          <div className="space-y-3">
-            {topClients.slice(0, 7).map((client, index) => (
+            {topClients.map((client) => (
               <div
                 key={client.id}
-                className="p-4 rounded-lg"
-                style={{ backgroundColor: '#000000', border: '1px solid #1A1A1A' }}
+                style={{
+                  display: 'grid',
+                  gridTemplateColumns: '1fr auto auto',
+                  gap: '20px',
+                  padding: '20px 0',
+                  borderBottom: '1px solid var(--divider-standard)',
+                  cursor: 'pointer',
+                  transition: 'background-color 200ms ease'
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.backgroundColor = 'var(--surface-1)';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.backgroundColor = 'transparent';
+                }}
               >
-                <div className="flex items-start gap-3">
-                  <div className="w-6 h-6 rounded flex items-center justify-center flex-shrink-0 text-white font-bold text-xs" style={{ backgroundColor: '#E91E63' }}>
-                    {index + 1}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <h4 className="font-semibold text-sm mb-2" style={{ color: '#FFFFFF' }}>
-                      {client.name}
-                    </h4>
-                    <div className="flex items-center gap-2 text-xs mb-2">
-                      <span className="px-2 py-1 rounded" style={{ backgroundColor: '#1A1A1A', color: '#888888' }}>
-                        {client.industry}
-                      </span>
-                      <span style={{ color: '#666666' }}>•</span>
-                      <span style={{ color: '#AAAAAA' }}>{formatPercentage(client.sales, kpiData.totalRevenue)}%</span>
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <div className="font-bold text-sm" style={{ color: '#FFFFFF' }}>
-                        {formatCurrency(client.sales)}
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <span className="text-xs px-2 py-1 rounded" style={{ backgroundColor: '#0F3A2E', color: '#4ADE80' }}>
-                          +{client.growth}%
-                        </span>
-                        <ChevronRight className="w-3 h-3" style={{ color: '#666666' }} />
-                      </div>
-                    </div>
-                  </div>
+                <div>
+                  <p className="text-body" style={{ color: 'var(--text-primary)', marginBottom: '4px' }}>
+                    {client.name}
+                  </p>
+                  <p className="text-micro" style={{ color: 'var(--text-tertiary)' }}>
+                    {client.industry}
+                  </p>
                 </div>
+                <p className="text-body" style={{ color: 'var(--text-primary)', textAlign: 'right' }}>
+                  {formatCurrency(client.sales)}
+                </p>
+                <p style={{ fontSize: '16px', color: '#76FF03', textAlign: 'right' }}>
+                  +{client.growth}%
+                </p>
               </div>
             ))}
           </div>
         </div>
 
-        {/* Top Products */}
-        <div className="rounded-lg p-6" style={{ backgroundColor: '#0A0A0A', border: '1px solid #222222' }}>
-          <div className="flex items-center gap-3 mb-6">
-            <div className="w-10 h-10 rounded-lg flex items-center justify-center" style={{ backgroundColor: '#E91E63' }}>
-              <Package className="w-5 h-5 text-white" />
-            </div>
-            <div>
-              <h3 className="text-lg font-bold uppercase" style={{ color: '#FFFFFF' }}>Top Products</h3>
-              <p style={{ color: '#666666' }} className="text-sm">Best Sellers</p>
-            </div>
-          </div>
+        <div style={{ backgroundColor: 'var(--bg-secondary)', padding: '24px' }}>
+          <h3
+            className="text-subsection uppercase"
+            style={{
+              color: 'var(--text-secondary)',
+              fontWeight: 400,
+              letterSpacing: '0.03em',
+              marginBottom: '24px'
+            }}
+          >
+            TOP PRODUCTS
+          </h3>
 
-          <div className="space-y-3">
-            {topProducts.map((product, index) => (
+          <div>
+            <div
+              style={{
+                display: 'grid',
+                gridTemplateColumns: '1fr auto auto',
+                gap: '20px',
+                paddingBottom: '16px',
+                borderBottom: '1px solid var(--divider-standard)'
+              }}
+            >
+              <p className="text-label uppercase" style={{ color: 'var(--text-tertiary)' }}>PRODUCT</p>
+              <p className="text-label uppercase" style={{ color: 'var(--text-tertiary)', textAlign: 'right' }}>REVENUE</p>
+              <p className="text-label uppercase" style={{ color: 'var(--text-tertiary)', textAlign: 'right' }}>GROWTH</p>
+            </div>
+
+            {topProducts.map((product) => (
               <div
                 key={product.id}
-                className="p-4 rounded-lg"
-                style={{ backgroundColor: '#000000', border: '1px solid #1A1A1A' }}
+                style={{
+                  display: 'grid',
+                  gridTemplateColumns: '1fr auto auto',
+                  gap: '20px',
+                  padding: '20px 0',
+                  borderBottom: '1px solid var(--divider-standard)',
+                  cursor: 'pointer',
+                  transition: 'background-color 200ms ease'
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.backgroundColor = 'var(--surface-1)';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.backgroundColor = 'transparent';
+                }}
               >
-                <div className="flex items-start gap-3">
-                  <div className="w-6 h-6 rounded flex items-center justify-center flex-shrink-0 text-white font-bold text-xs" style={{ backgroundColor: '#E91E63' }}>
-                    {index + 1}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <h4 className="font-semibold text-sm mb-2" style={{ color: '#FFFFFF' }}>
-                      {product.name}
-                    </h4>
-                    <div className="flex items-center gap-2 text-xs mb-2">
-                      <span className="px-2 py-1 rounded" style={{ backgroundColor: '#1A1A1A', color: '#888888' }}>
-                        {product.category}
-                      </span>
-                      <span style={{ color: '#666666' }}>•</span>
-                      <span style={{ color: '#AAAAAA' }}>{formatPercentage(product.sales, kpiData.totalRevenue)}%</span>
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <div className="font-bold text-sm" style={{ color: '#FFFFFF' }}>
-                        {formatCurrency(product.sales)}
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <span className="text-xs px-2 py-1 rounded" style={{ backgroundColor: '#0F3A2E', color: '#4ADE80' }}>
-                          +{product.growth.toFixed(1)}%
-                        </span>
-                        <ChevronRight className="w-3 h-3" style={{ color: '#666666' }} />
-                      </div>
-                    </div>
-                  </div>
+                <div>
+                  <p className="text-body" style={{ color: 'var(--text-primary)', marginBottom: '4px' }}>
+                    {product.name}
+                  </p>
+                  <p className="text-micro" style={{ color: 'var(--text-tertiary)' }}>
+                    {product.category}
+                  </p>
                 </div>
+                <p className="text-body" style={{ color: 'var(--text-primary)', textAlign: 'right' }}>
+                  {formatCurrency(product.sales)}
+                </p>
+                <p style={{ fontSize: '16px', color: '#76FF03', textAlign: 'right' }}>
+                  +{product.growth.toFixed(1).replace('.', ',')}%
+                </p>
               </div>
             ))}
           </div>

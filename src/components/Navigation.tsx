@@ -36,8 +36,6 @@ const Navigation: React.FC<NavigationProps> = ({
   onL2Change,
   headerHeight,
 }) => {
-  console.log('Navigation rendering, headerHeight:', headerHeight);
-
   const l1Items: Level1MenuItem[] = [
     'DASHBOARD',
     'CHANNELS',
@@ -50,13 +48,24 @@ const Navigation: React.FC<NavigationProps> = ({
   ];
 
   const [isL2Visible, setIsL2Visible] = useState(false);
+  const [isTransitioning, setIsTransitioning] = useState(false);
   const currentL2Items = level2Items[activeL1];
 
   useEffect(() => {
     if (currentL2Items) {
-      setIsL2Visible(true);
+      setIsTransitioning(true);
+      setTimeout(() => {
+        setIsL2Visible(true);
+        setIsTransitioning(false);
+      }, 300);
     } else {
-      setIsL2Visible(false);
+      if (isL2Visible) {
+        setIsTransitioning(true);
+        setTimeout(() => {
+          setIsL2Visible(false);
+          setIsTransitioning(false);
+        }, 300);
+      }
     }
   }, [activeL1, currentL2Items]);
 
@@ -79,41 +88,58 @@ const Navigation: React.FC<NavigationProps> = ({
       className="fixed left-0 right-0 z-40"
       style={{
         top: `${headerHeight}px`,
-        backgroundColor: '#000000',
-        borderBottom: '1px solid #333333'
+        backgroundColor: 'var(--bg-primary)',
       }}
     >
-      <div className="h-14 flex items-center overflow-x-auto scrollbar-hide">
-        <div className="flex items-center gap-0 px-5 md:px-8 lg:px-12">
+      {/* Level 1 Menu */}
+      <div
+        className="overflow-x-auto scrollbar-hide"
+        style={{
+          height: '56px',
+          borderBottom: '1px solid var(--divider-standard)',
+        }}
+      >
+        <div className="flex items-center h-full px-5 md:px-8 lg:px-12">
           {l1Items.map((item) => {
             const isActive = activeL1 === item;
             return (
               <button
                 key={item}
                 onClick={() => handleL1Click(item)}
-                className="text-menu-l1 uppercase px-8 h-14 relative transition-colors duration-fast whitespace-nowrap"
+                className="text-menu-l1 uppercase whitespace-nowrap relative"
                 style={{
-                  color: isActive ? '#E91E63' : '#666666',
-                  fontWeight: 600,
-                  fontSize: '13px',
-                  letterSpacing: '0.5px'
+                  color: isActive ? 'var(--accent)' : 'rgba(255, 255, 255, 0.6)',
+                  paddingLeft: '32px',
+                  paddingRight: '32px',
+                  height: '56px',
+                  fontWeight: 400,
+                  letterSpacing: '0.02em',
+                  lineHeight: 1.2,
+                  transition: 'color 300ms ease',
+                  border: 'none',
+                  background: 'transparent',
+                  cursor: 'pointer',
                 }}
                 onMouseEnter={(e) => {
                   if (!isActive) {
-                    e.currentTarget.style.color = '#AAAAAA';
+                    e.currentTarget.style.color = 'rgba(255, 255, 255, 0.85)';
                   }
                 }}
                 onMouseLeave={(e) => {
                   if (!isActive) {
-                    e.currentTarget.style.color = '#666666';
+                    e.currentTarget.style.color = 'rgba(255, 255, 255, 0.6)';
                   }
                 }}
               >
                 {item}
                 {isActive && (
                   <div
-                    className="absolute bottom-0 left-0 right-0 h-[3px] transition-all duration-normal"
-                    style={{ backgroundColor: '#E91E63' }}
+                    className="absolute bottom-0 left-0 right-0"
+                    style={{
+                      height: '3px',
+                      backgroundColor: 'var(--accent)',
+                      transition: 'all 300ms ease',
+                    }}
                   />
                 )}
               </button>
@@ -122,40 +148,59 @@ const Navigation: React.FC<NavigationProps> = ({
         </div>
       </div>
 
-      {isL2Visible && currentL2Items && (
+      {/* Level 2 Menu - Slide Animation */}
+      {currentL2Items && (
         <div
-          className="h-12 flex items-center overflow-x-auto scrollbar-hide border-b transition-all duration-normal"
-          style={{ borderColor: '#222222' }}
+          className="overflow-x-auto scrollbar-hide"
+          style={{
+            height: '48px',
+            borderBottom: '1px solid var(--divider-standard)',
+            transform: isL2Visible ? 'translateX(0)' : 'translateX(100%)',
+            opacity: isL2Visible ? 1 : 0,
+            transition: 'transform 300ms cubic-bezier(0.4, 0.0, 0.2, 1), opacity 300ms cubic-bezier(0.4, 0.0, 0.2, 1)',
+          }}
         >
-          <div className="flex items-center gap-0 px-5 md:px-8 lg:px-12">
+          <div className="flex items-center h-full px-5 md:px-8 lg:px-12">
             {currentL2Items.map((item) => {
               const isActive = activeL2 === item;
               return (
                 <button
                   key={item}
                   onClick={() => onL2Change(item)}
-                  className="text-menu-l2 capitalize px-6 h-12 relative transition-colors duration-fast whitespace-nowrap"
+                  className="text-menu-l2 whitespace-nowrap relative"
                   style={{
-                    color: isActive ? '#FFFFFF' : '#666666',
-                    fontWeight: 500,
-                    fontSize: '12px'
+                    color: isActive ? 'var(--text-primary)' : 'rgba(255, 255, 255, 0.5)',
+                    paddingLeft: '24px',
+                    paddingRight: '24px',
+                    height: '48px',
+                    fontWeight: 400,
+                    letterSpacing: '0.01em',
+                    lineHeight: 1.3,
+                    transition: 'color 300ms ease',
+                    border: 'none',
+                    background: 'transparent',
+                    cursor: 'pointer',
                   }}
                   onMouseEnter={(e) => {
                     if (!isActive) {
-                      e.currentTarget.style.color = '#AAAAAA';
+                      e.currentTarget.style.color = 'rgba(255, 255, 255, 0.75)';
                     }
                   }}
                   onMouseLeave={(e) => {
                     if (!isActive) {
-                      e.currentTarget.style.color = '#666666';
+                      e.currentTarget.style.color = 'rgba(255, 255, 255, 0.5)';
                     }
                   }}
                 >
                   {item}
                   {isActive && (
                     <div
-                      className="absolute bottom-0 left-0 right-0 h-[2px] transition-all duration-normal"
-                      style={{ backgroundColor: '#E91E63' }}
+                      className="absolute bottom-0 left-0 right-0"
+                      style={{
+                        height: '2px',
+                        backgroundColor: 'var(--accent)',
+                        transition: 'all 300ms ease',
+                      }}
                     />
                   )}
                 </button>

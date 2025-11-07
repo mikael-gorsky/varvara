@@ -13,22 +13,33 @@ import SettingsModule from './modules/SettingsModule';
 function App() {
   const [activeL1, setActiveL1] = useState<Level1MenuItem>('DASHBOARD');
   const [activeL2, setActiveL2] = useState<string | null>(null);
-  const [headerHeight, setHeaderHeight] = useState(100);
+  const [headerHeight, setHeaderHeight] = useState(80);
   const headerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    if (headerRef.current) {
-      setHeaderHeight(headerRef.current.offsetHeight);
-    }
-
-    const handleResize = () => {
+    const updateHeaderHeight = () => {
       if (headerRef.current) {
-        setHeaderHeight(headerRef.current.offsetHeight);
+        const height = headerRef.current.offsetHeight;
+        console.log('Header height:', height);
+        setHeaderHeight(height);
       }
     };
 
+    // Initial measurement
+    updateHeaderHeight();
+
+    // Measure after a short delay to ensure styles are applied
+    const timer = setTimeout(updateHeaderHeight, 100);
+
+    const handleResize = () => {
+      updateHeaderHeight();
+    };
+
     window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
+    return () => {
+      window.removeEventListener('resize', handleResize);
+      clearTimeout(timer);
+    };
   }, []);
 
   const renderContent = () => {
@@ -56,7 +67,7 @@ function App() {
 
   const hasL2Menu = ['CHANNELS', 'PRODUCTS', 'PLAN', 'IMPORT', 'SETTINGS'].includes(activeL1);
   const navHeight = hasL2Menu ? 104 : 56;
-  const totalOffset = headerHeight + navHeight;
+  const totalOffset = Math.max(headerHeight, 80) + navHeight;
 
   return (
     <div className="min-h-screen" style={{ backgroundColor: 'var(--bg-primary)' }}>

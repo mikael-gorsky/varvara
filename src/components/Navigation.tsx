@@ -36,6 +36,8 @@ const Navigation: React.FC<NavigationProps> = ({
   onL2Change,
   headerHeight,
 }) => {
+  console.log('Navigation rendering, headerHeight:', headerHeight);
+
   const l1Items: Level1MenuItem[] = [
     'DASHBOARD',
     'CHANNELS',

@@ -16,9 +16,9 @@
   --surface-1: rgba(255, 255, 255, 0.05);
   --surface-2: rgba(255, 255, 255, 0.08);
   --surface-3: rgba(255, 255, 255, 0.11);
-  --accent: #E91E63;
-  --accent-hover: #F06292;
-  --accent-pressed: #C2185B;
+  --accent: #90CAF9;
+  --accent-hover: #BBDEFB;
+  --accent-pressed: #64B5F6;
 }
 
 .light-theme {
@@ -35,9 +35,9 @@
   --surface-1: rgba(0, 0, 0, 0.03);
   --surface-2: rgba(0, 0, 0, 0.05);
   --surface-3: rgba(0, 0, 0, 0.08);
-  --accent: #D81B60;
-  --accent-hover: #E91E63;
-  --accent-pressed: #C2185B;
+  --accent: #42A5F5;
+  --accent-hover: #64B5F6;
+  --accent-pressed: #2196F3;
 }
 
 body {

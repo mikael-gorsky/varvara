@@ -20,13 +20,13 @@ interface NavigationProps {
 
 const level2Items: Record<Level1MenuItem, string[] | null> = {
   DASHBOARD: null,
-  CHANNELS: ['Cumulative', 'Ozon', 'Wildberries', 'Yandex', 'Resellers', 'Tenders'],
+  CHANNELS: ['CUMULATIVE', 'OZON', 'WILDBERRIES', 'YANDEX', 'RESELLERS', 'TENDERS'],
   MOTIVATION: null,
   FINANCE: null,
-  PRODUCTS: ['Catalog', 'Performance', 'Inventory', 'Categories'],
-  PLAN: ['Sales Plans', 'Budget', 'Targets', 'Timeline'],
-  IMPORT: ['Marketplaces', 'Price Lists', 'Accounting'],
-  SETTINGS: ['Theme', 'Language', 'Users'],
+  PRODUCTS: ['CATALOG', 'PERFORMANCE', 'INVENTORY', 'CATEGORIES'],
+  PLAN: ['SALES PLANS', 'BUDGET', 'TARGETS', 'TIMELINE'],
+  IMPORT: ['MARKETPLACES', 'PRICE LISTS', 'ACCOUNTING'],
+  SETTINGS: ['THEME', 'LANGUAGE', 'USERS'],
 };
 
 const Navigation: React.FC<NavigationProps> = ({

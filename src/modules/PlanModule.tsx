@@ -7,7 +7,7 @@ interface PlanModuleProps {
 const PlanModule: React.FC<PlanModuleProps> = ({ activeL2 }) => {
   const renderContent = () => {
     switch (activeL2) {
-      case 'Sales Plans':
+      case 'SALES PLANS':
         return (
           <div>
             <h2 className="text-page-title-mobile md:text-page-title-desktop uppercase mb-8" style={{ color: 'var(--accent)' }}>
@@ -18,7 +18,7 @@ const PlanModule: React.FC<PlanModuleProps> = ({ activeL2 }) => {
             </p>
           </div>
         );
-      case 'Budget':
+      case 'BUDGET':
         return (
           <div>
             <h2 className="text-page-title-mobile md:text-page-title-desktop uppercase mb-8" style={{ color: 'var(--accent)' }}>
@@ -29,7 +29,7 @@ const PlanModule: React.FC<PlanModuleProps> = ({ activeL2 }) => {
             </p>
           </div>
         );
-      case 'Targets':
+      case 'TARGETS':
         return (
           <div>
             <h2 className="text-page-title-mobile md:text-page-title-desktop uppercase mb-8" style={{ color: 'var(--accent)' }}>
@@ -40,7 +40,7 @@ const PlanModule: React.FC<PlanModuleProps> = ({ activeL2 }) => {
             </p>
           </div>
         );
-      case 'Timeline':
+      case 'TIMELINE':
         return (
           <div>
             <h2 className="text-page-title-mobile md:text-page-title-desktop uppercase mb-8" style={{ color: 'var(--accent)' }}>

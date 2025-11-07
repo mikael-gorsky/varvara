@@ -7,7 +7,7 @@ interface ProductsModuleProps {
 const ProductsModule: React.FC<ProductsModuleProps> = ({ activeL2 }) => {
   const renderContent = () => {
     switch (activeL2) {
-      case 'Catalog':
+      case 'CATALOG':
         return (
           <div>
             <h2 className="text-page-title-mobile md:text-page-title-desktop uppercase mb-8" style={{ color: 'var(--accent)' }}>
@@ -18,7 +18,7 @@ const ProductsModule: React.FC<ProductsModuleProps> = ({ activeL2 }) => {
             </p>
           </div>
         );
-      case 'Performance':
+      case 'PERFORMANCE':
         return (
           <div>
             <h2 className="text-page-title-mobile md:text-page-title-desktop uppercase mb-8" style={{ color: 'var(--accent)' }}>
@@ -29,7 +29,7 @@ const ProductsModule: React.FC<ProductsModuleProps> = ({ activeL2 }) => {
             </p>
           </div>
         );
-      case 'Inventory':
+      case 'INVENTORY':
         return (
           <div>
             <h2 className="text-page-title-mobile md:text-page-title-desktop uppercase mb-8" style={{ color: 'var(--accent)' }}>
@@ -40,7 +40,7 @@ const ProductsModule: React.FC<ProductsModuleProps> = ({ activeL2 }) => {
             </p>
           </div>
         );
-      case 'Categories':
+      case 'CATEGORIES':
         return (
           <div>
             <h2 className="text-page-title-mobile md:text-page-title-desktop uppercase mb-8" style={{ color: 'var(--accent)' }}>

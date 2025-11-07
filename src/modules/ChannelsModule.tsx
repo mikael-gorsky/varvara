@@ -10,13 +10,13 @@ interface ChannelsModuleProps {
 const ChannelsModule: React.FC<ChannelsModuleProps> = ({ activeL2 }) => {
   const renderContent = () => {
     switch (activeL2) {
-      case 'Ozon':
+      case 'OZON':
         return <OzonMarketplaceAnalytics onBack={() => {}} />;
-      case 'Cumulative':
-      case 'Wildberries':
-      case 'Yandex':
-      case 'Resellers':
-      case 'Tenders':
+      case 'CUMULATIVE':
+      case 'WILDBERRIES':
+      case 'YANDEX':
+      case 'RESELLERS':
+      case 'TENDERS':
         return (
           <div>
             <h2 className="text-page-title-mobile md:text-page-title-desktop uppercase mb-8" style={{ color: 'var(--accent)' }}>

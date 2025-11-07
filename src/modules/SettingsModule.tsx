@@ -10,7 +10,7 @@ const SettingsModule: React.FC<SettingsModuleProps> = ({ activeL2 }) => {
 
   const renderContent = () => {
     switch (activeL2) {
-      case 'Theme':
+      case 'THEME':
         return (
           <div>
             <h2 className="text-page-title-mobile md:text-page-title-desktop uppercase mb-8" style={{ color: 'var(--accent)' }}>
@@ -47,7 +47,7 @@ const SettingsModule: React.FC<SettingsModuleProps> = ({ activeL2 }) => {
             </div>
           </div>
         );
-      case 'Language':
+      case 'LANGUAGE':
         return (
           <div>
             <h2 className="text-page-title-mobile md:text-page-title-desktop uppercase mb-8" style={{ color: 'var(--accent)' }}>
@@ -58,7 +58,7 @@ const SettingsModule: React.FC<SettingsModuleProps> = ({ activeL2 }) => {
             </p>
           </div>
         );
-      case 'Users':
+      case 'USERS':
         return (
           <div>
             <h2 className="text-page-title-mobile md:text-page-title-desktop uppercase mb-8" style={{ color: 'var(--accent)' }}>

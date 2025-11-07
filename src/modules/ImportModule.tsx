@@ -20,7 +20,7 @@ const ImportModule: React.FC<ImportModuleProps> = ({ activeL2 }) => {
 
   const renderContent = () => {
     switch (activeL2) {
-      case 'Marketplaces':
+      case 'MARKETPLACES':
         return (
           <div>
             <h2 className="text-page-title-mobile md:text-page-title-desktop uppercase mb-8" style={{ color: 'var(--accent)' }}>
@@ -32,7 +32,7 @@ const ImportModule: React.FC<ImportModuleProps> = ({ activeL2 }) => {
             />
           </div>
         );
-      case 'Price Lists':
+      case 'PRICE LISTS':
         return (
           <div>
             <h2 className="text-page-title-mobile md:text-page-title-desktop uppercase mb-8" style={{ color: 'var(--accent)' }}>
@@ -52,7 +52,7 @@ const ImportModule: React.FC<ImportModuleProps> = ({ activeL2 }) => {
             </div>
           </div>
         );
-      case 'Accounting':
+      case 'ACCOUNTING':
         return (
           <div>
             <h2 className="text-page-title-mobile md:text-page-title-desktop uppercase mb-8" style={{ color: 'var(--accent)' }}>

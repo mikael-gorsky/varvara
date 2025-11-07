@@ -89,6 +89,8 @@ const Navigation: React.FC<NavigationProps> = ({
       style={{
         top: `${headerHeight}px`,
         backgroundColor: 'var(--bg-primary)',
+        maxHeight: `calc(100vh - ${headerHeight}px)`,
+        overflowY: 'auto',
       }}
     >
       {/* Level 1 Menu */}

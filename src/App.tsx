@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState } from 'react';
 import VarvaraHeader from './components/VarvaraHeader';
 import Navigation, { Level1MenuItem } from './components/Navigation';
 import DashboardModule from './modules/DashboardModule';
@@ -13,33 +13,12 @@ import SettingsModule from './modules/SettingsModule';
 function App() {
   const [activeL1, setActiveL1] = useState<Level1MenuItem | null>(null);
   const [activeL2, setActiveL2] = useState<string | null>(null);
-  const [headerHeight, setHeaderHeight] = useState(80);
-  const headerRef = useRef<HTMLDivElement>(null);
+  const [serviceMessage] = useState<string>('');
 
-  useEffect(() => {
-    const updateHeaderHeight = () => {
-      if (headerRef.current) {
-        const height = headerRef.current.offsetHeight;
-        setHeaderHeight(height);
-      }
-    };
-
-    // Initial measurement
-    updateHeaderHeight();
-
-    // Measure after a short delay to ensure styles are applied
-    const timer = setTimeout(updateHeaderHeight, 100);
-
-    const handleResize = () => {
-      updateHeaderHeight();
-    };
-
-    window.addEventListener('resize', handleResize);
-    return () => {
-      window.removeEventListener('resize', handleResize);
-      clearTimeout(timer);
-    };
-  }, []);
+  const handleBack = () => {
+    setActiveL1(null);
+    setActiveL2(null);
+  };
 
   const renderContent = () => {
     if (!activeL1) {
@@ -68,26 +47,57 @@ function App() {
     }
   };
 
-  const hasL2Menu = activeL1 && ['CHANNELS', 'PRODUCTS', 'PLAN', 'IMPORT', 'SETTINGS'].includes(activeL1);
-  const l1MenuHeight = 8 * 48;
-  const l2MenuHeight = hasL2Menu ? 48 : 0;
-  const totalOffset = Math.max(headerHeight, 80) + l1MenuHeight + l2MenuHeight;
+  const showContent = activeL1 !== null;
 
   return (
-    <div className="min-h-screen" style={{ backgroundColor: 'var(--bg-primary)' }}>
-      <div ref={headerRef}>
+    <div
+      className="min-h-screen flex flex-col"
+      style={{ backgroundColor: 'var(--bg-primary)' }}
+    >
+      {/* Zone 1: App Name + Version */}
+      <div style={{ paddingBottom: '24px' }}>
         <VarvaraHeader />
       </div>
-      <Navigation
-        activeL1={activeL1}
-        activeL2={activeL2}
-        onL1Change={setActiveL1}
-        onL2Change={setActiveL2}
-        headerHeight={headerHeight}
-      />
-      <main style={{ paddingTop: `${totalOffset}px` }}>
-        {renderContent()}
-      </main>
+
+      {/* Zone 2: Service Messages */}
+      <div
+        style={{
+          minHeight: '40px',
+          paddingLeft: '20px',
+          paddingRight: '20px',
+          paddingBottom: '24px',
+        }}
+      >
+        {serviceMessage && (
+          <div style={{
+            color: 'var(--accent)',
+            fontSize: '14px',
+            fontStyle: 'italic',
+          }}>
+            {serviceMessage}
+          </div>
+        )}
+      </div>
+
+      {/* Zone 3: Menus or Action Content */}
+      <div style={{ flex: 1 }}>
+        {!showContent ? (
+          <Navigation
+            activeL1={activeL1}
+            activeL2={activeL2}
+            onL1Change={setActiveL1}
+            onL2Change={setActiveL2}
+            onBack={handleBack}
+          />
+        ) : (
+          <div style={{
+            paddingLeft: '20px',
+            paddingRight: '20px',
+          }}>
+            {renderContent()}
+          </div>
+        )}
+      </div>
     </div>
   );
 }

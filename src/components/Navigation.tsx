@@ -147,7 +147,7 @@ const Navigation: React.FC<NavigationProps> = ({
             onClick={onBack}
             className="text-menu-l1 uppercase whitespace-nowrap"
             style={{
-              color: 'var(--accent)',
+              color: 'rgba(255, 255, 255, 1)',
               paddingTop: '16px',
               paddingBottom: '16px',
               paddingLeft: '0',
@@ -163,12 +163,6 @@ const Navigation: React.FC<NavigationProps> = ({
               textAlign: 'left',
               marginBottom: '8px',
             }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.color = 'rgba(255, 255, 255, 0.85)';
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.color = 'var(--accent)';
-            }}
           >
             {activeL1}
           </button>
@@ -178,7 +172,7 @@ const Navigation: React.FC<NavigationProps> = ({
               <button
                 key={item}
                 onClick={() => onL2Change(item)}
-                className="text-menu-l2 whitespace-nowrap"
+                className="text-menu-l1 uppercase whitespace-nowrap"
                 style={{
                   color: isActive ? 'var(--accent)' : 'rgba(255, 255, 255, 0.6)',
                   paddingTop: '16px',
@@ -186,8 +180,8 @@ const Navigation: React.FC<NavigationProps> = ({
                   paddingLeft: '0',
                   paddingRight: '0',
                   fontWeight: 400,
-                  letterSpacing: '0.01em',
-                  lineHeight: 1.3,
+                  letterSpacing: '0.02em',
+                  lineHeight: 1.2,
                   transition: 'color 300ms ease',
                   border: 'none',
                   background: 'transparent',

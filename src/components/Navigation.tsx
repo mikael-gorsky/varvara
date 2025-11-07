@@ -50,6 +50,7 @@ const Navigation: React.FC<NavigationProps> = ({
   const currentL2Items = activeL1 ? level2Items[activeL1] : null;
   const showL2Menu = activeL1 && currentL2Items;
   const showL1Menu = !activeL1;
+  const showActionableL1 = activeL1 && !currentL2Items;
 
   const handleL1Click = (item: Level1MenuItem) => {
     const hasL2 = level2Items[item] !== null;
@@ -102,6 +103,40 @@ const Navigation: React.FC<NavigationProps> = ({
               {item}
             </button>
           ))}
+        </div>
+      )}
+
+      {/* Actionable L1 Item (no L2 submenu) */}
+      {showActionableL1 && (
+        <div>
+          <button
+            onClick={onBack}
+            className="text-menu-l1 uppercase whitespace-nowrap"
+            style={{
+              color: 'var(--accent)',
+              paddingTop: '16px',
+              paddingBottom: '16px',
+              paddingLeft: '0',
+              paddingRight: '0',
+              fontWeight: 400,
+              letterSpacing: '0.02em',
+              lineHeight: 1.2,
+              border: 'none',
+              background: 'transparent',
+              cursor: 'pointer',
+              display: 'block',
+              width: '100%',
+              textAlign: 'left',
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.color = 'rgba(255, 255, 255, 0.85)';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.color = 'var(--accent)';
+            }}
+          >
+            {activeL1}
+          </button>
         </div>
       )}
 

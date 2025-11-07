@@ -11,7 +11,7 @@ import ImportModule from './modules/ImportModule';
 import SettingsModule from './modules/SettingsModule';
 
 function App() {
-  const [activeL1, setActiveL1] = useState<Level1MenuItem>('DASHBOARD');
+  const [activeL1, setActiveL1] = useState<Level1MenuItem | null>(null);
   const [activeL2, setActiveL2] = useState<string | null>(null);
   const [headerHeight, setHeaderHeight] = useState(80);
   const headerRef = useRef<HTMLDivElement>(null);
@@ -42,6 +42,16 @@ function App() {
   }, []);
 
   const renderContent = () => {
+    if (!activeL1) {
+      return (
+        <div style={{ paddingLeft: '20px', paddingRight: '20px', paddingTop: '48px' }}>
+          <p className="text-subsection uppercase" style={{ color: 'var(--text-tertiary)' }}>
+            SELECT A MODULE FROM THE MENU ABOVE
+          </p>
+        </div>
+      );
+    }
+
     switch (activeL1) {
       case 'DASHBOARD':
         return <DashboardModule />;
@@ -60,11 +70,11 @@ function App() {
       case 'SETTINGS':
         return <SettingsModule activeL2={activeL2} />;
       default:
-        return <DashboardModule />;
+        return null;
     }
   };
 
-  const hasL2Menu = ['CHANNELS', 'PRODUCTS', 'PLAN', 'IMPORT', 'SETTINGS'].includes(activeL1);
+  const hasL2Menu = activeL1 && ['CHANNELS', 'PRODUCTS', 'PLAN', 'IMPORT', 'SETTINGS'].includes(activeL1);
   const navHeight = hasL2Menu ? 104 : 56;
   const totalOffset = Math.max(headerHeight, 80) + navHeight;
 

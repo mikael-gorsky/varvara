@@ -11,7 +11,7 @@ export type Level1MenuItem =
   | 'SETTINGS';
 
 interface NavigationProps {
-  activeL1: Level1MenuItem;
+  activeL1: Level1MenuItem | null;
   activeL2: string | null;
   onL1Change: (item: Level1MenuItem) => void;
   onL2Change: (item: string) => void;
@@ -49,7 +49,7 @@ const Navigation: React.FC<NavigationProps> = ({
 
   const [isL2Visible, setIsL2Visible] = useState(false);
   const [isTransitioning, setIsTransitioning] = useState(false);
-  const currentL2Items = level2Items[activeL1];
+  const currentL2Items = activeL1 ? level2Items[activeL1] : null;
 
   useEffect(() => {
     if (currentL2Items) {

@@ -113,7 +113,7 @@ const Navigation: React.FC<NavigationProps> = ({
             onClick={onBack}
             className="text-menu-l1 uppercase whitespace-nowrap"
             style={{
-              color: 'var(--accent)',
+              color: 'rgba(255, 255, 255, 1)',
               paddingTop: '16px',
               paddingBottom: '16px',
               paddingLeft: '0',
@@ -127,12 +127,6 @@ const Navigation: React.FC<NavigationProps> = ({
               display: 'block',
               width: '100%',
               textAlign: 'left',
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.color = 'rgba(255, 255, 255, 0.85)';
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.color = 'var(--accent)';
             }}
           >
             {activeL1}
@@ -174,7 +168,7 @@ const Navigation: React.FC<NavigationProps> = ({
                 onClick={() => onL2Change(item)}
                 className="text-menu-l1 uppercase whitespace-nowrap"
                 style={{
-                  color: isActive ? 'var(--accent)' : 'rgba(255, 255, 255, 0.6)',
+                  color: isActive ? 'rgba(255, 255, 255, 1)' : 'rgba(255, 255, 255, 0.6)',
                   paddingTop: '16px',
                   paddingBottom: '16px',
                   paddingLeft: '0',

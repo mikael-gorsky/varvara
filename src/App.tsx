@@ -75,8 +75,9 @@ function App() {
   };
 
   const hasL2Menu = activeL1 && ['CHANNELS', 'PRODUCTS', 'PLAN', 'IMPORT', 'SETTINGS'].includes(activeL1);
-  const navHeight = hasL2Menu ? 104 : 56;
-  const totalOffset = Math.max(headerHeight, 80) + navHeight;
+  const l1MenuHeight = 8 * 48;
+  const l2MenuHeight = hasL2Menu ? 48 : 0;
+  const totalOffset = Math.max(headerHeight, 80) + l1MenuHeight + l2MenuHeight;
 
   return (
     <div className="min-h-screen" style={{ backgroundColor: 'var(--bg-primary)' }}>

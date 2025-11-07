@@ -93,25 +93,24 @@ const Navigation: React.FC<NavigationProps> = ({
     >
       {/* Level 1 Menu */}
       <div
-        className="overflow-x-auto scrollbar-hide"
         style={{
-          height: '56px',
           borderBottom: '1px solid var(--divider-standard)',
         }}
       >
-        <div className="flex items-center h-full px-5 md:px-8 lg:px-12">
+        <div className="px-5 md:px-8 lg:px-12">
           {l1Items.map((item) => {
             const isActive = activeL1 === item;
             return (
               <button
                 key={item}
                 onClick={() => handleL1Click(item)}
-                className="text-menu-l1 uppercase whitespace-nowrap relative"
+                className="text-menu-l1 uppercase whitespace-nowrap relative w-full text-left"
                 style={{
                   color: isActive ? 'var(--accent)' : 'rgba(255, 255, 255, 0.6)',
-                  paddingLeft: '32px',
-                  paddingRight: '32px',
-                  height: '56px',
+                  paddingTop: '16px',
+                  paddingBottom: '16px',
+                  paddingLeft: '0',
+                  paddingRight: '0',
                   fontWeight: 400,
                   letterSpacing: '0.02em',
                   lineHeight: 1.2,
@@ -119,6 +118,7 @@ const Navigation: React.FC<NavigationProps> = ({
                   border: 'none',
                   background: 'transparent',
                   cursor: 'pointer',
+                  display: 'block',
                 }}
                 onMouseEnter={(e) => {
                   if (!isActive) {
@@ -132,16 +132,6 @@ const Navigation: React.FC<NavigationProps> = ({
                 }}
               >
                 {item}
-                {isActive && (
-                  <div
-                    className="absolute bottom-0 left-0 right-0"
-                    style={{
-                      height: '3px',
-                      backgroundColor: 'var(--accent)',
-                      transition: 'all 300ms ease',
-                    }}
-                  />
-                )}
               </button>
             );
           })}

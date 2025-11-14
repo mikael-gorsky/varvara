@@ -26,6 +26,42 @@ export const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey || sup
 export type Database = {
   public: {
     Tables: {
+      user_style_preferences: {
+        Row: {
+          id: string;
+          user_id: string;
+          color_scheme: {
+            accent: string;
+            accentHover: string;
+            accentPressed: string;
+          };
+          density: string;
+          font_family: string;
+          font_size_scale: number;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          color_scheme?: any;
+          density?: string;
+          font_family?: string;
+          font_size_scale?: number;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          user_id?: string;
+          color_scheme?: any;
+          density?: string;
+          font_family?: string;
+          font_size_scale?: number;
+          created_at?: string;
+          updated_at?: string;
+        };
+      };
       products: {
         Row: {
           id: string;

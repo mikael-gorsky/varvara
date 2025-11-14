@@ -26,7 +26,7 @@ const level2Items: Record<Level1MenuItem, string[] | null> = {
   PRODUCTS: ['CATALOG', 'PERFORMANCE', 'INVENTORY', 'CATEGORIES'],
   PLAN: ['SALES PLANS', 'BUDGET', 'TARGETS', 'TIMELINE'],
   IMPORT: ['MARKETPLACES', 'PRICE LISTS', 'ACCOUNTING'],
-  SETTINGS: ['THEME', 'LANGUAGE', 'USERS'],
+  SETTINGS: ['INTERFACE DESIGN', 'THEME', 'LANGUAGE', 'USERS'],
 };
 
 const Navigation: React.FC<NavigationProps> = ({
@@ -139,26 +139,34 @@ const Navigation: React.FC<NavigationProps> = ({
         <div>
           <button
             onClick={onBack}
-            className="text-menu-l1 uppercase whitespace-nowrap"
             style={{
-              color: 'rgba(255, 255, 255, 1)',
-              paddingTop: '16px',
-              paddingBottom: '16px',
+              color: 'var(--text-tertiary)',
+              fontSize: 'calc(14px * var(--font-size-scale))',
+              paddingTop: '12px',
+              paddingBottom: '12px',
               paddingLeft: '0',
               paddingRight: '0',
               fontWeight: 400,
               letterSpacing: '0.02em',
               lineHeight: 1.2,
+              transition: 'color 300ms ease',
               border: 'none',
               background: 'transparent',
               cursor: 'pointer',
               display: 'block',
               width: '100%',
               textAlign: 'left',
-              marginBottom: '8px',
+              marginBottom: 'calc(8px * var(--density-multiplier))',
+              textTransform: 'uppercase',
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.color = 'var(--accent)';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.color = 'var(--text-tertiary)';
             }}
           >
-            {activeL1}
+            MAIN → {activeL1}
           </button>
           {currentL2Items!.map((item) => {
             const isActive = activeL2 === item;

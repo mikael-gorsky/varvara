@@ -19,6 +19,27 @@
   --accent: #90CAF9;
   --accent-hover: #BBDEFB;
   --accent-pressed: #64B5F6;
+
+  --font-family-primary: 'Segoe UI', -apple-system, BlinkMacSystemFont, 'Helvetica Neue', Arial, sans-serif;
+  --font-size-scale: 1.0;
+  --density-multiplier: 1.0;
+
+  --spacing-base: 8px;
+  --spacing-0-5: calc(4px * var(--density-multiplier));
+  --spacing-1: calc(8px * var(--density-multiplier));
+  --spacing-2: calc(16px * var(--density-multiplier));
+  --spacing-3: calc(24px * var(--density-multiplier));
+  --spacing-4: calc(32px * var(--density-multiplier));
+  --spacing-6: calc(48px * var(--density-multiplier));
+  --spacing-8: calc(64px * var(--density-multiplier));
+
+  --font-size-micro: calc(10px * var(--font-size-scale));
+  --font-size-label: calc(11px * var(--font-size-scale));
+  --font-size-label-lg: calc(12px * var(--font-size-scale));
+  --font-size-body: calc(16px * var(--font-size-scale));
+  --font-size-menu-l2: calc(18px * var(--font-size-scale));
+  --font-size-menu-l1: calc(20px * var(--font-size-scale));
+  --font-size-subsection: calc(20px * var(--font-size-scale));
 }
 
 .light-theme {
@@ -45,7 +66,7 @@ body {
   padding: 0;
   background-color: var(--bg-primary);
   color: var(--text-primary);
-  font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, 'Helvetica Neue', Arial, sans-serif;
+  font-family: var(--font-family-primary);
   transition: background-color 300ms ease, color 300ms ease;
 }
 

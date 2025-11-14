@@ -20,7 +20,7 @@ const ImportModule: React.FC<ImportModuleProps> = ({ activeL2 }) => {
 
   const renderContent = () => {
     switch (activeL2) {
-      case 'MARKETPLACES':
+      case 'MARKETPLACE REPORTS':
         return (
           <div>
             <h2 className="text-page-title-mobile md:text-page-title-desktop uppercase mb-8" style={{ color: 'var(--accent)' }}>

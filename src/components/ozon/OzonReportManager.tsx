@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Trash2, Calendar, Clock, Package, DollarSign } from 'lucide-react';
-import { reportManagementService, ReportWithStats } from '../../modules/imports/ozon';
+import { reportManagementService, ReportWithStats } from '../../modules/imports/ozon/reportManagementService';
 
 export function OzonReportManager() {
   const [reports, setReports] = useState<ReportWithStats[]>([]);

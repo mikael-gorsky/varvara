@@ -128,7 +128,12 @@ export class BatchImportService {
         let importResult: ImportResult;
         if (parsedData.rows.length > 0) {
           console.log(`[BatchImport] Importing ${parsedData.rows.length} rows to database...`);
-          importResult = await ozonImportService.importData(parsedData.rows);
+
+          importResult = await ozonImportService.importDataWithReport(
+            parsedData.rows,
+            parsedData.metadata.dateOfReport,
+            parsedData.metadata.reportedDays
+          );
           console.log(`[BatchImport] Import result:`, importResult);
         } else {
           console.warn(`[BatchImport] No rows to import from ${file.name}`);

@@ -52,9 +52,99 @@ export interface ImportResult {
   successCount: number;
   failureCount: number;
   duplicateCount: number;
+  reportId?: string;
 }
 
 export class OzonImportService {
+  async importDataWithReport(
+    data: OzonRecord[],
+    dateOfReport: string | null,
+    reportedDays: number | null
+  ): Promise<ImportResult> {
+    if (!data || data.length === 0) {
+      throw new Error('No data provided for import');
+    }
+
+    if (!dateOfReport || !reportedDays) {
+      throw new Error('Report metadata (date and period) is required');
+    }
+
+    console.log(`[OzonImportService] Creating report: ${dateOfReport}, ${reportedDays} days`);
+
+    const { data: existingReport, error: checkError } = await supabaseAdmin
+      .from('ozon_reports')
+      .select('report_id')
+      .eq('date_of_report', dateOfReport)
+      .eq('reported_days', reportedDays)
+      .maybeSingle();
+
+    if (checkError) {
+      console.error(`[OzonImportService] Error checking for existing report:`, checkError);
+      throw new Error(`Failed to check for existing report: ${checkError.message}`);
+    }
+
+    if (existingReport) {
+      throw new Error(
+        `Report for ${dateOfReport} (${reportedDays} days) already exists. Delete the existing report first.`
+      );
+    }
+
+    const { data: reportData, error: reportError } = await supabaseAdmin
+      .from('ozon_reports')
+      .insert({
+        date_of_report: dateOfReport,
+        reported_days: reportedDays
+      })
+      .select('report_id')
+      .single();
+
+    if (reportError || !reportData) {
+      console.error(`[OzonImportService] Failed to create report:`, reportError);
+      throw new Error(`Failed to create report: ${reportError?.message}`);
+    }
+
+    const reportId = reportData.report_id;
+    console.log(`[OzonImportService] Created report: ${reportId}`);
+
+    const dataWithReportId = data.map(record => ({
+      ...record,
+      report_id: reportId
+    }));
+
+    console.log(`[OzonImportService] Attempting to insert ${dataWithReportId.length} records`);
+    console.log(`[OzonImportService] Sample record:`, JSON.stringify(dataWithReportId[0], null, 2));
+
+    try {
+      const { error } = await supabaseAdmin
+        .from('ozon_data')
+        .insert(dataWithReportId);
+
+      if (error) {
+        console.error(`[OzonImportService] ❌ Import error:`, error);
+        console.error(`[OzonImportService] Error details:`, {
+          message: error.message,
+          details: error.details,
+          hint: error.hint,
+          code: error.code
+        });
+
+        console.log(`[OzonImportService] Attempting row-by-row import to identify problematic record...`);
+        return await this.importDataRowByRow(dataWithReportId, reportId);
+      }
+
+      console.log(`[OzonImportService] ✅ Successfully inserted ${dataWithReportId.length} records`);
+      return {
+        successCount: dataWithReportId.length,
+        failureCount: 0,
+        duplicateCount: 0,
+        reportId
+      };
+    } catch (error) {
+      console.error(`[OzonImportService] ❌ Unexpected error during import:`, error);
+      throw error;
+    }
+  }
+
   async importData(data: OzonRecord[]): Promise<ImportResult> {
     if (!data || data.length === 0) {
       throw new Error('No data provided for import');
@@ -98,7 +188,7 @@ export class OzonImportService {
     }
   }
 
-  private async importDataRowByRow(data: OzonRecord[]): Promise<ImportResult> {
+  private async importDataRowByRow(data: OzonRecord[], reportId?: string): Promise<ImportResult> {
     console.log(`[OzonImportService] Starting row-by-row import for ${data.length} records...`);
     let successCount = 0;
     let errorCount = 0;
@@ -158,7 +248,8 @@ export class OzonImportService {
     return {
       successCount,
       failureCount: errorCount,
-      duplicateCount
+      duplicateCount,
+      reportId
     };
   }
 

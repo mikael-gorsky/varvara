@@ -4,3 +4,4 @@ export { importHistoryService, ImportHistoryService, ImportHistoryRecord, Import
 export { fileHashService, FileHashService, FileHashInfo } from './fileHashService';
 export { parseOzonFile, OzonParsedData, OzonDataRow, OzonFileMetadata, ValidationResult } from './ozonParser';
 export { reconciliationService, ReconciliationService, ReconciliationReport } from './reconciliationService';
+export { reportManagementService, ReportManagementService, OzonReport, ReportWithStats } from './reportManagementService';

@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import VarvaraHeader from './components/VarvaraHeader';
-import Navigation, { Level1MenuItem } from './components/Navigation';
+import Navigation from './components/Navigation';
+import { Level1MenuItem } from './config/menuStructure';
 import DashboardModule from './modules/DashboardModule';
 import ChannelsModule from './modules/ChannelsModule';
 import MotivationModule from './modules/MotivationModule';

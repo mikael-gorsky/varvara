@@ -1,4 +1,6 @@
 import React from 'react';
+import Breadcrumb from './Breadcrumb';
+import { menuStructure, buildBreadcrumbs } from '../config/menuStructure';
 
 export type Level1MenuItem =
   | 'DASHBOARD'
@@ -18,17 +20,6 @@ interface NavigationProps {
   onBack: () => void;
 }
 
-const level2Items: Record<Level1MenuItem, string[] | null> = {
-  DASHBOARD: null,
-  CHANNELS: ['CUMULATIVE', 'OZON', 'WILDBERRIES', 'YANDEX', 'RESELLERS', 'TENDERS'],
-  MOTIVATION: null,
-  FINANCE: null,
-  PRODUCTS: ['CATALOG', 'PERFORMANCE', 'INVENTORY', 'CATEGORIES'],
-  PLAN: ['SALES PLANS', 'BUDGET', 'TARGETS', 'TIMELINE'],
-  IMPORT: ['MARKETPLACE REPORTS', 'PRICE LISTS', 'ACCOUNTING'],
-  SETTINGS: ['INTERFACE DESIGN', 'THEME', 'LANGUAGE', 'USERS'],
-};
-
 const Navigation: React.FC<NavigationProps> = ({
   activeL1,
   activeL2,
@@ -36,29 +27,39 @@ const Navigation: React.FC<NavigationProps> = ({
   onL2Change,
   onBack,
 }) => {
-  const l1Items: Level1MenuItem[] = [
-    'DASHBOARD',
-    'CHANNELS',
-    'MOTIVATION',
-    'FINANCE',
-    'PRODUCTS',
-    'PLAN',
-    'IMPORT',
-    'SETTINGS',
-  ];
-
-  const currentL2Items = activeL1 ? level2Items[activeL1] : null;
+  const { l1Items, l2Items } = menuStructure;
+  const currentL2Items = activeL1 ? l2Items[activeL1] : null;
   const showL2Menu = activeL1 && currentL2Items;
   const showL1Menu = !activeL1;
   const showActionableL1 = activeL1 && !currentL2Items;
 
   const handleL1Click = (item: Level1MenuItem) => {
-    const hasL2 = level2Items[item] !== null;
+    const hasL2 = l2Items[item] !== null;
     onL1Change(item);
     if (hasL2) {
-      onL2Change(level2Items[item]![0]);
+      onL2Change(l2Items[item]![0]);
     }
   };
+
+  const handleNavigateToMain = () => {
+    onBack();
+  };
+
+  const handleNavigateToL1 = () => {
+    if (activeL2 && activeL1) {
+      const firstL2 = l2Items[activeL1]?.[0];
+      if (firstL2) {
+        onL2Change(firstL2);
+      }
+    }
+  };
+
+  const breadcrumbs = buildBreadcrumbs(
+    activeL1,
+    activeL2,
+    handleNavigateToMain,
+    handleNavigateToL1
+  );
 
   return (
     <div
@@ -109,65 +110,14 @@ const Navigation: React.FC<NavigationProps> = ({
       {/* Actionable L1 Item (no L2 submenu) */}
       {showActionableL1 && (
         <div>
-          <button
-            onClick={onBack}
-            className="text-menu-l1 uppercase whitespace-nowrap"
-            style={{
-              color: 'rgba(255, 255, 255, 1)',
-              paddingTop: '16px',
-              paddingBottom: '16px',
-              paddingLeft: '0',
-              paddingRight: '0',
-              fontWeight: 400,
-              letterSpacing: '0.02em',
-              lineHeight: 1.2,
-              border: 'none',
-              background: 'transparent',
-              cursor: 'pointer',
-              display: 'block',
-              width: '100%',
-              textAlign: 'left',
-            }}
-          >
-            {activeL1}
-          </button>
+          <Breadcrumb items={breadcrumbs} />
         </div>
       )}
 
       {/* Level 2 Menu */}
       {showL2Menu && (
         <div>
-          <button
-            onClick={onBack}
-            style={{
-              color: 'var(--text-tertiary)',
-              fontSize: 'calc(14px * var(--font-size-scale))',
-              paddingTop: '12px',
-              paddingBottom: '12px',
-              paddingLeft: '0',
-              paddingRight: '0',
-              fontWeight: 400,
-              letterSpacing: '0.02em',
-              lineHeight: 1.2,
-              transition: 'color 300ms ease',
-              border: 'none',
-              background: 'transparent',
-              cursor: 'pointer',
-              display: 'block',
-              width: '100%',
-              textAlign: 'left',
-              marginBottom: 'calc(8px * var(--density-multiplier))',
-              textTransform: 'uppercase',
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.color = 'var(--accent)';
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.color = 'var(--text-tertiary)';
-            }}
-          >
-            MAIN → {activeL1}
-          </button>
+          <Breadcrumb items={breadcrumbs} />
           {currentL2Items!.map((item) => {
             const isActive = activeL2 === item;
             return (

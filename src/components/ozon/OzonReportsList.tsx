@@ -6,7 +6,7 @@ interface OzonReport {
   report_id: string;
   date_of_report: string;
   reported_days: number;
-  imported_at: string;
+  imported_at?: string;
   product_count?: number;
 }
 
@@ -31,7 +31,7 @@ const OzonReportsList: React.FC<OzonReportsListProps> = ({ onNewImport }) => {
       const { data: reportsData, error: reportsError } = await supabase
         .from('ozon_reports')
         .select('*')
-        .order('imported_at', { ascending: false });
+        .order('date_of_report', { ascending: false });
 
       if (reportsError) throw reportsError;
 
@@ -236,21 +236,23 @@ const OzonReportsList: React.FC<OzonReportsListProps> = ({ onNewImport }) => {
                             {report.product_count}
                           </span>
                         </div>
-                        <div className="flex items-center gap-2">
-                          <Clock
-                            className="w-4 h-4"
-                            style={{ color: 'var(--text-tertiary)' }}
-                          />
-                          <span style={{ color: 'var(--text-tertiary)' }}>
-                            Imported:
-                          </span>
-                          <span
-                            className="ml-1 font-medium"
-                            style={{ color: 'var(--text-secondary)' }}
-                          >
-                            {formatDateTime(report.imported_at)}
-                          </span>
-                        </div>
+                        {report.imported_at && (
+                          <div className="flex items-center gap-2">
+                            <Clock
+                              className="w-4 h-4"
+                              style={{ color: 'var(--text-tertiary)' }}
+                            />
+                            <span style={{ color: 'var(--text-tertiary)' }}>
+                              Imported:
+                            </span>
+                            <span
+                              className="ml-1 font-medium"
+                              style={{ color: 'var(--text-secondary)' }}
+                            >
+                              {formatDateTime(report.imported_at)}
+                            </span>
+                          </div>
+                        )}
                       </div>
                     </div>
                   </div>

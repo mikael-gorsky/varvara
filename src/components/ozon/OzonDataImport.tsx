@@ -1,12 +1,18 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { ArrowLeft, Upload, Activity, CheckCircle, XCircle, FileUp } from 'lucide-react';
+import { ArrowLeft, Upload, Activity, CheckCircle, XCircle, FileUp, Database } from 'lucide-react';
 import { ozonImportService } from '../../modules/imports/ozon/ozonImportService';
 import { batchImportService, BatchImportProgress, BatchImportResult } from '../../modules/imports/ozon/batchImportService';
 import MultiFileUploadQueue, { QueuedFile, MultiFileUploadQueueRef } from './MultiFileUploadQueue';
 import ImportHistoryViewer from './ImportHistoryViewer';
+import { supabase } from '../../lib/supabase';
 
 interface OzonDataImportProps {
   onBack: () => void;
+}
+
+interface DataSummary {
+  totalReports: number;
+  totalRecords: number;
 }
 
 const OzonDataImport: React.FC<OzonDataImportProps> = ({ onBack }) => {
@@ -17,6 +23,34 @@ const OzonDataImport: React.FC<OzonDataImportProps> = ({ onBack }) => {
   const skipDuplicates = true;
   const [showHistory, setShowHistory] = useState(false);
   const uploadQueueRef = useRef<MultiFileUploadQueueRef>(null);
+  const [dataSummary, setDataSummary] = useState<DataSummary | null>(null);
+
+  useEffect(() => {
+    loadDataSummary();
+  }, [importResult]);
+
+  const loadDataSummary = async () => {
+    try {
+      const { data: reports, error: reportsError } = await supabase
+        .from('ozon_reports')
+        .select('report_id');
+
+      if (reportsError) throw reportsError;
+
+      const { count, error: countError } = await supabase
+        .from('ozon_data')
+        .select('*', { count: 'exact', head: true });
+
+      if (countError) throw countError;
+
+      setDataSummary({
+        totalReports: reports?.length || 0,
+        totalRecords: count || 0
+      });
+    } catch (error) {
+      console.error('Failed to load data summary:', error);
+    }
+  };
 
   const handleFilesValidated = (files: QueuedFile[]) => {
     setValidatedFiles(files);
@@ -57,7 +91,42 @@ const OzonDataImport: React.FC<OzonDataImportProps> = ({ onBack }) => {
       backgroundColor: 'var(--bg-primary)'
     }}>
       <div className="max-w-6xl mx-auto space-y-6">
-        {validatedFiles.length === 0 && (
+        {dataSummary && dataSummary.totalRecords > 0 && (
+          <div className="rounded-xl border p-6 relative overflow-hidden" style={{
+            backgroundColor: 'var(--bg-secondary)',
+            borderColor: 'var(--divider-standard)'
+          }}>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center space-x-4">
+                <Database className="w-8 h-8" style={{ color: 'var(--accent)' }} />
+                <div>
+                  <h3 className="text-xl font-bold" style={{
+                    color: 'var(--text-primary)',
+                    fontFamily: "'Montserrat', sans-serif"
+                  }}>
+                    Imported Data
+                  </h3>
+                  <p className="text-sm mt-1" style={{ color: 'var(--text-secondary)' }}>
+                    {dataSummary.totalReports} {dataSummary.totalReports === 1 ? 'report' : 'reports'} with {dataSummary.totalRecords.toLocaleString()} records
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={() => uploadQueueRef.current?.openFileDialog()}
+                className="flex items-center space-x-2 px-6 py-3 rounded transition-all duration-200 font-semibold"
+                style={{
+                  backgroundColor: 'var(--accent)',
+                  color: 'var(--bg-primary)'
+                }}
+              >
+                <FileUp className="w-5 h-5" />
+                <span>Import More Files</span>
+              </button>
+            </div>
+          </div>
+        )}
+
+        {validatedFiles.length === 0 && (!dataSummary || dataSummary.totalRecords === 0) && (
           <div className="text-center py-12">
             <button
               onClick={() => uploadQueueRef.current?.openFileDialog()}

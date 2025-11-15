@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useImperativeHandle, forwardRef } from 'react';
 import { Upload, X, AlertTriangle, CheckCircle, Clock, FileSpreadsheet, Database } from 'lucide-react';
 import { fileHashService, FileHashInfo } from '../../modules/imports/ozon/fileHashService';
 import { importHistoryService } from '../../modules/imports/ozon/importHistoryService';
@@ -22,9 +22,20 @@ interface MultiFileUploadQueueProps {
   onImportComplete?: (summary: any) => void;
 }
 
-const MultiFileUploadQueue: React.FC<MultiFileUploadQueueProps> = ({ onFilesValidated }) => {
+export interface MultiFileUploadQueueRef {
+  openFileDialog: () => void;
+}
+
+const MultiFileUploadQueue = forwardRef<MultiFileUploadQueueRef, MultiFileUploadQueueProps>(({ onFilesValidated }, ref) => {
   const [queuedFiles, setQueuedFiles] = useState<QueuedFile[]>([]);
   const [isDragging, setIsDragging] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  useImperativeHandle(ref, () => ({
+    openFileDialog: () => {
+      fileInputRef.current?.click();
+    }
+  }));
 
   const handleFileSelect = async (files: FileList | null) => {
     if (!files) return;
@@ -261,6 +272,7 @@ const MultiFileUploadQueue: React.FC<MultiFileUploadQueueProps> = ({ onFilesVali
 
         <label className="inline-block">
           <input
+            ref={fileInputRef}
             type="file"
             accept=".xlsx,.xls,.csv"
             multiple
@@ -392,6 +404,8 @@ const MultiFileUploadQueue: React.FC<MultiFileUploadQueueProps> = ({ onFilesVali
       )}
     </div>
   );
-};
+});
+
+MultiFileUploadQueue.displayName = 'MultiFileUploadQueue';
 
 export default MultiFileUploadQueue;

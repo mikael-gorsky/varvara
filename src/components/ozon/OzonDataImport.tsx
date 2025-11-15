@@ -1,8 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { ArrowLeft, Upload, Activity, CheckCircle, XCircle, FileUp } from 'lucide-react';
 import { ozonImportService } from '../../modules/imports/ozon/ozonImportService';
 import { batchImportService, BatchImportProgress, BatchImportResult } from '../../modules/imports/ozon/batchImportService';
-import MultiFileUploadQueue, { QueuedFile } from './MultiFileUploadQueue';
+import MultiFileUploadQueue, { QueuedFile, MultiFileUploadQueueRef } from './MultiFileUploadQueue';
 import ImportHistoryViewer from './ImportHistoryViewer';
 
 interface OzonDataImportProps {
@@ -16,6 +16,11 @@ const OzonDataImport: React.FC<OzonDataImportProps> = ({ onBack }) => {
   const [importResult, setImportResult] = useState<BatchImportResult | null>(null);
   const skipDuplicates = true;
   const [showHistory, setShowHistory] = useState(false);
+  const uploadQueueRef = useRef<MultiFileUploadQueueRef>(null);
+
+  useEffect(() => {
+    uploadQueueRef.current?.openFileDialog();
+  }, []);
 
   const handleFilesValidated = (files: QueuedFile[]) => {
     setValidatedFiles(files);
@@ -57,50 +62,7 @@ const OzonDataImport: React.FC<OzonDataImportProps> = ({ onBack }) => {
     }}>
       <div className="max-w-6xl mx-auto space-y-6">
 
-        <div className="rounded-lg border p-4 relative overflow-hidden" style={{
-          backgroundColor: 'var(--bg-secondary)',
-          borderColor: 'var(--divider-standard)'
-        }}>
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-4">
-              <button
-                onClick={onBack}
-                className="flex items-center space-x-2 px-4 py-2 rounded transition-all duration-200"
-                style={{
-                  backgroundColor: 'var(--surface-1)',
-                  color: 'var(--text-primary)',
-                  borderWidth: '1px',
-                  borderColor: 'var(--divider-standard)'
-                }}
-              >
-                <ArrowLeft className="w-4 h-4" />
-                <span className="font-semibold text-sm">Back to Reports</span>
-              </button>
-              <div className="h-6 border-l" style={{ borderColor: 'var(--divider-standard)' }}></div>
-              <div className="flex items-center space-x-3">
-                <div className="w-10 h-10 rounded-lg flex items-center justify-center" style={{
-                  backgroundColor: 'var(--accent)',
-                  color: 'var(--bg-primary)'
-                }}>
-                  <FileUp className="w-5 h-5" />
-                </div>
-                <div>
-                  <h1 className="text-xl font-bold" style={{
-                    color: 'var(--text-primary)',
-                    fontFamily: "'Montserrat', sans-serif"
-                  }}>
-                    Import Ozon Reports
-                  </h1>
-                  <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>
-                    Upload one or multiple Excel files
-                  </p>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <MultiFileUploadQueue onFilesValidated={handleFilesValidated} />
+        <MultiFileUploadQueue ref={uploadQueueRef} onFilesValidated={handleFilesValidated} />
 
         {validatedFiles.length > 0 && (
           <div className="rounded-xl border p-6 relative overflow-hidden" style={{

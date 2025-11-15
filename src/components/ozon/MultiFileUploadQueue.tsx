@@ -28,7 +28,6 @@ export interface MultiFileUploadQueueRef {
 
 const MultiFileUploadQueue = forwardRef<MultiFileUploadQueueRef, MultiFileUploadQueueProps>(({ onFilesValidated }, ref) => {
   const [queuedFiles, setQueuedFiles] = useState<QueuedFile[]>([]);
-  const [isDragging, setIsDragging] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useImperativeHandle(ref, () => ({
@@ -188,21 +187,6 @@ const MultiFileUploadQueue = forwardRef<MultiFileUploadQueueRef, MultiFileUpload
     setQueuedFiles(prev => prev.filter(f => f.id !== id));
   };
 
-  const handleDragOver = (e: React.DragEvent) => {
-    e.preventDefault();
-    setIsDragging(true);
-  };
-
-  const handleDragLeave = () => {
-    setIsDragging(false);
-  };
-
-  const handleDrop = (e: React.DragEvent) => {
-    e.preventDefault();
-    setIsDragging(false);
-    handleFileSelect(e.dataTransfer.files);
-  };
-
   const formatFileSize = (bytes: number) => {
     if (bytes < 1024) return `${bytes} B`;
     if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
@@ -252,38 +236,14 @@ const MultiFileUploadQueue = forwardRef<MultiFileUploadQueueRef, MultiFileUpload
 
   return (
     <div className="space-y-6">
-      <div
-        onDragOver={handleDragOver}
-        onDragLeave={handleDragLeave}
-        onDrop={handleDrop}
-        className={`border-2 border-dashed rounded-lg p-8 text-center transition-all duration-200 ${
-          isDragging
-            ? 'border-cyan-400 bg-cyan-900/20'
-            : 'border-cyan-400/30 hover:border-cyan-400/50'
-        }`}
-      >
-        <Upload className="w-12 h-12 text-cyan-400 mx-auto mb-4" />
-        <h3 className="text-lg font-mono text-cyan-300 mb-2">
-          DRAG & DROP MULTIPLE FILES
-        </h3>
-        <p className="text-cyan-400/80 text-sm mb-4 font-mono">
-          or click to select Excel files (.xlsx, .xls, .csv)
-        </p>
-
-        <label className="inline-block">
-          <input
-            ref={fileInputRef}
-            type="file"
-            accept=".xlsx,.xls,.csv"
-            multiple
-            onChange={(e) => handleFileSelect(e.target.files)}
-            className="hidden"
-          />
-          <div className="bg-gradient-to-r from-emerald-600 to-teal-600 border border-emerald-400 text-black px-6 py-3 rounded cursor-pointer hover:from-emerald-500 hover:to-teal-500 transition-all duration-200 font-mono font-bold">
-            SELECT FILES
-          </div>
-        </label>
-      </div>
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept=".xlsx,.xls,.csv"
+        multiple
+        onChange={(e) => handleFileSelect(e.target.files)}
+        className="hidden"
+      />
 
       {queuedFiles.length > 0 && (
         <div className="bg-gradient-to-br from-gray-900 to-gray-800 rounded-xl border border-cyan-400/30 shadow-xl p-6 relative overflow-hidden">

@@ -18,10 +18,6 @@ const OzonDataImport: React.FC<OzonDataImportProps> = ({ onBack }) => {
   const [showHistory, setShowHistory] = useState(false);
   const uploadQueueRef = useRef<MultiFileUploadQueueRef>(null);
 
-  useEffect(() => {
-    uploadQueueRef.current?.openFileDialog();
-  }, []);
-
   const handleFilesValidated = (files: QueuedFile[]) => {
     setValidatedFiles(files);
   };
@@ -61,6 +57,24 @@ const OzonDataImport: React.FC<OzonDataImportProps> = ({ onBack }) => {
       backgroundColor: 'var(--bg-primary)'
     }}>
       <div className="max-w-6xl mx-auto space-y-6">
+        {validatedFiles.length === 0 && (
+          <div className="text-center py-12">
+            <button
+              onClick={() => uploadQueueRef.current?.openFileDialog()}
+              className="inline-flex items-center space-x-3 px-8 py-4 rounded-lg transition-all duration-200 font-semibold text-lg"
+              style={{
+                backgroundColor: 'var(--accent)',
+                color: 'var(--bg-primary)'
+              }}
+            >
+              <FileUp className="w-6 h-6" />
+              <span>Select Files to Import</span>
+            </button>
+            <p className="mt-4 text-sm" style={{ color: 'var(--text-secondary)' }}>
+              Choose Excel files (.xlsx, .xls, .csv) with Ozon marketplace data
+            </p>
+          </div>
+        )}
 
         <MultiFileUploadQueue ref={uploadQueueRef} onFilesValidated={handleFilesValidated} />
 

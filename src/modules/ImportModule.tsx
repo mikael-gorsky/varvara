@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
 import OzonDashboard from '../components/OzonDashboard';
 import PricelistDashboard from '../components/PricelistDashboard';
-import ImportStatusDisplay from '../components/ImportStatusDisplay';
 import OzonDataImport from '../components/ozon/OzonDataImport';
+import OzonReportsList from '../components/ozon/OzonReportsList';
 
 interface ImportModuleProps {
   activeL2: string | null;
@@ -39,81 +39,25 @@ const ImportModule: React.FC<ImportModuleProps> = ({ activeL2 }) => {
     }
 
     switch (activeL2) {
-      case 'MARKETPLACE REPORTS':
+      case 'IMPORT OZON REPORTS':
         return (
           <div className="space-y-6">
             <h2 className="text-page-title-mobile md:text-page-title-desktop uppercase mb-8" style={{ color: 'var(--accent)' }}>
-              MARKETPLACE IMPORT
+              OZON REPORTS
             </h2>
-
-            <div className="grid gap-6 md:grid-cols-2">
-              <div
-                onClick={() => setShowOzonImport(true)}
-                className="p-6 border cursor-pointer transition-all duration-fast hover:bg-[var(--surface-1)] hover:shadow-lg"
-                style={{
-                  backgroundColor: 'var(--bg-secondary)',
-                  borderColor: 'var(--divider-standard)'
-                }}
-              >
-                <h3 className="text-xl font-semibold mb-2" style={{ color: 'var(--text-primary)' }}>
-                  Import OZON Data
-                </h3>
-                <p className="text-body text-sm" style={{ color: 'var(--text-secondary)' }}>
-                  Upload and process OZON marketplace reports with multi-file batch import
-                </p>
-              </div>
-
-              <div
-                onClick={() => setSelectedImportSource('ozon')}
-                className="p-6 border cursor-pointer transition-all duration-fast hover:bg-[var(--surface-1)] hover:shadow-lg"
-                style={{
-                  backgroundColor: 'var(--bg-secondary)',
-                  borderColor: 'var(--divider-standard)'
-                }}
-              >
-                <h3 className="text-xl font-semibold mb-2" style={{ color: 'var(--text-primary)' }}>
-                  View Analytics
-                </h3>
-                <p className="text-body text-sm" style={{ color: 'var(--text-secondary)' }}>
-                  Access analytics dashboard, reports, and price comparisons
-                </p>
-              </div>
-            </div>
-
-            <ImportStatusDisplay
-              onNavigateToOzon={() => setSelectedImportSource('ozon')}
-              onNavigateToPricelist={() => setSelectedImportSource('pricelist')}
-            />
+            <OzonReportsList onNewImport={() => setShowOzonImport(true)} />
           </div>
         );
-      case 'PRICE LISTS':
+      case 'IMPORT WB REPORTS':
+      case 'IMPORT YANDEX.MARKET REPORTS':
+      case 'IMPORT OUR PRICE-LIST':
         return (
           <div>
             <h2 className="text-page-title-mobile md:text-page-title-desktop uppercase mb-8" style={{ color: 'var(--accent)' }}>
-              PRICE LIST IMPORT
-            </h2>
-            <div
-              className="p-6 border cursor-pointer transition-colors duration-fast hover:bg-[var(--surface-1)]"
-              style={{
-                backgroundColor: 'var(--bg-secondary)',
-                borderColor: 'var(--divider-standard)'
-              }}
-              onClick={() => setSelectedImportSource('pricelist')}
-            >
-              <p className="text-body" style={{ color: 'var(--text-primary)' }}>
-                Launch Price List Import Tool
-              </p>
-            </div>
-          </div>
-        );
-      case 'ACCOUNTING':
-        return (
-          <div>
-            <h2 className="text-page-title-mobile md:text-page-title-desktop uppercase mb-8" style={{ color: 'var(--accent)' }}>
-              ACCOUNTING IMPORT
+              {activeL2}
             </h2>
             <p className="text-body" style={{ color: 'var(--text-secondary)' }}>
-              Accounting import coming soon...
+              This import type is coming soon...
             </p>
           </div>
         );

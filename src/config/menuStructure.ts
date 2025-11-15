@@ -11,6 +11,7 @@ export type Level1MenuItem =
 export interface MenuStructure {
   l1Items: Level1MenuItem[];
   l2Items: Record<Level1MenuItem, string[] | null>;
+  disabledL2Items?: Record<Level1MenuItem, string[]>;
 }
 
 export const menuStructure: MenuStructure = {
@@ -31,8 +32,18 @@ export const menuStructure: MenuStructure = {
     FINANCE: null,
     PRODUCTS: ['CATALOG', 'PERFORMANCE', 'INVENTORY', 'CATEGORIES'],
     PLAN: ['SALES PLANS', 'BUDGET', 'TARGETS', 'TIMELINE'],
-    IMPORT: ['MARKETPLACE REPORTS', 'PRICE LISTS', 'ACCOUNTING'],
+    IMPORT: ['IMPORT OZON REPORTS', 'IMPORT WB REPORTS', 'IMPORT YANDEX.MARKET REPORTS', 'IMPORT OUR PRICE-LIST'],
     SETTINGS: ['INTERFACE DESIGN', 'THEME', 'LANGUAGE', 'USERS'],
+  },
+  disabledL2Items: {
+    DASHBOARD: [],
+    CHANNELS: [],
+    MOTIVATION: [],
+    FINANCE: [],
+    PRODUCTS: [],
+    PLAN: [],
+    IMPORT: ['IMPORT WB REPORTS', 'IMPORT YANDEX.MARKET REPORTS', 'IMPORT OUR PRICE-LIST'],
+    SETTINGS: [],
   },
 };
 

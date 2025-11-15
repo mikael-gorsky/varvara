@@ -27,8 +27,9 @@ const Navigation: React.FC<NavigationProps> = ({
   onL2Change,
   onBack,
 }) => {
-  const { l1Items, l2Items } = menuStructure;
+  const { l1Items, l2Items, disabledL2Items } = menuStructure;
   const currentL2Items = activeL1 ? l2Items[activeL1] : null;
+  const currentDisabledL2Items = activeL1 ? disabledL2Items?.[activeL1] || [] : [];
   const showL2Menu = activeL1 && currentL2Items;
   const showL1Menu = !activeL1;
   const showActionableL1 = activeL1 && !currentL2Items;
@@ -116,13 +117,19 @@ const Navigation: React.FC<NavigationProps> = ({
           <Breadcrumb items={breadcrumbs} />
           {currentL2Items!.map((item) => {
             const isActive = activeL2 === item;
+            const isDisabled = currentDisabledL2Items.includes(item);
             return (
               <button
                 key={item}
-                onClick={() => onL2Change(item)}
+                onClick={() => !isDisabled && onL2Change(item)}
                 className="text-menu-l1 uppercase whitespace-nowrap"
+                disabled={isDisabled}
                 style={{
-                  color: isActive ? 'rgba(255, 255, 255, 1)' : 'rgba(255, 255, 255, 0.6)',
+                  color: isDisabled
+                    ? 'rgba(255, 255, 255, 0.3)'
+                    : isActive
+                      ? 'rgba(255, 255, 255, 1)'
+                      : 'rgba(255, 255, 255, 0.6)',
                   paddingTop: '16px',
                   paddingBottom: '16px',
                   paddingLeft: '0',
@@ -133,18 +140,18 @@ const Navigation: React.FC<NavigationProps> = ({
                   transition: 'color 300ms ease',
                   border: 'none',
                   background: 'transparent',
-                  cursor: 'pointer',
+                  cursor: isDisabled ? 'not-allowed' : 'pointer',
                   display: 'block',
                   width: '100%',
                   textAlign: 'left',
                 }}
                 onMouseEnter={(e) => {
-                  if (!isActive) {
+                  if (!isActive && !isDisabled) {
                     e.currentTarget.style.color = 'rgba(255, 255, 255, 0.85)';
                   }
                 }}
                 onMouseLeave={(e) => {
-                  if (!isActive) {
+                  if (!isActive && !isDisabled) {
                     e.currentTarget.style.color = 'rgba(255, 255, 255, 0.6)';
                   }
                 }}

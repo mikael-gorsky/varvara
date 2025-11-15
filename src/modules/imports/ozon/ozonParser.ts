@@ -34,8 +34,6 @@ export interface OzonDataRow {
   days_boost?: number;
   ads_share_percentage?: number;
   card_date?: string;
-  date_of_report?: string;
-  reported_days?: number;
 }
 
 export interface OzonFileMetadata {
@@ -411,10 +409,7 @@ function validateFieldValue(fieldName: string, value: any): { valid: boolean; er
 }
 
 function mapOzonRowToData(headers: any[], values: any[], metadata: OzonFileMetadata): OzonDataRow | null {
-  const row: any = {
-    date_of_report: metadata.dateOfReport,
-    reported_days: metadata.reportedDays
-  };
+  const row: any = {};
   let hasRequiredData = false;
   const validationErrors: string[] = [];
   const validationWarnings: string[] = [];

@@ -11,7 +11,7 @@ export interface DuplicateCheckResult {
 
 export class DuplicateDetectionService {
   async checkDatabaseDuplicate(metadata: OzonFileMetadata): Promise<DuplicateCheckResult> {
-    if (!metadata.dateOfReport || !metadata.reportedDays || !metadata.categoryLevel3) {
+    if (!metadata.dateOfReport || !metadata.reportedDays) {
       return {
         isDuplicate: false,
         matchType: 'none',
@@ -21,11 +21,10 @@ export class DuplicateDetectionService {
 
     try {
       const { data, error } = await supabase
-        .from('ozon_data')
-        .select('id, created_at')
+        .from('ozon_reports')
+        .select('report_id, when_imported')
         .eq('date_of_report', metadata.dateOfReport)
         .eq('reported_days', metadata.reportedDays)
-        .eq('category_level3', metadata.categoryLevel3)
         .limit(1)
         .maybeSingle();
 
@@ -42,16 +41,14 @@ export class DuplicateDetectionService {
         const { count } = await supabase
           .from('ozon_data')
           .select('*', { count: 'exact', head: true })
-          .eq('date_of_report', metadata.dateOfReport)
-          .eq('reported_days', metadata.reportedDays)
-          .eq('category_level3', metadata.categoryLevel3);
+          .eq('report_id', data.report_id);
 
         return {
           isDuplicate: true,
           matchType: 'database',
-          message: 'This data is already imported',
+          message: 'This report is already imported',
           existingRecordCount: count || 0,
-          existingImportDate: data.created_at
+          existingImportDate: data.when_imported
         };
       }
 
@@ -74,11 +71,11 @@ export class DuplicateDetectionService {
     const duplicateGroups = new Map<string, number[]>();
 
     metadataList.forEach((metadata, index) => {
-      if (!metadata.dateOfReport || !metadata.reportedDays || !metadata.categoryLevel3) {
+      if (!metadata.dateOfReport || !metadata.reportedDays) {
         return;
       }
 
-      const key = `${metadata.dateOfReport}|${metadata.reportedDays}|${metadata.categoryLevel3}`;
+      const key = `${metadata.dateOfReport}|${metadata.reportedDays}`;
 
       if (!duplicateGroups.has(key)) {
         duplicateGroups.set(key, []);
@@ -98,10 +95,10 @@ export class DuplicateDetectionService {
   }
 
   getMetadataKey(metadata: OzonFileMetadata): string | null {
-    if (!metadata.dateOfReport || !metadata.reportedDays || !metadata.categoryLevel3) {
+    if (!metadata.dateOfReport || !metadata.reportedDays) {
       return null;
     }
-    return `${metadata.dateOfReport}|${metadata.reportedDays}|${metadata.categoryLevel3}`;
+    return `${metadata.dateOfReport}|${metadata.reportedDays}`;
   }
 }
 

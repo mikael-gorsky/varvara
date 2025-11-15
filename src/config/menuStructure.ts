@@ -55,10 +55,19 @@ export function buildBreadcrumbs(
   });
 
   if (activeL1) {
-    breadcrumbs.push({
-      label: activeL1,
-      onClick: onNavigateToL1,
-    });
+    const hasL2Submenu = menuStructure.l2Items[activeL1] !== null;
+
+    if (hasL2Submenu && !activeL2) {
+      breadcrumbs.push({
+        label: activeL1,
+        onClick: () => {},
+      });
+    } else {
+      breadcrumbs.push({
+        label: activeL1,
+        onClick: onNavigateToL1,
+      });
+    }
   }
 
   if (activeL2) {

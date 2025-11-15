@@ -34,11 +34,7 @@ const Navigation: React.FC<NavigationProps> = ({
   const showActionableL1 = activeL1 && !currentL2Items;
 
   const handleL1Click = (item: Level1MenuItem) => {
-    const hasL2 = l2Items[item] !== null;
     onL1Change(item);
-    if (hasL2) {
-      onL2Change(l2Items[item]![0]);
-    }
   };
 
   const handleNavigateToMain = () => {

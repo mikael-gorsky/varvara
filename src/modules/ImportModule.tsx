@@ -25,6 +25,19 @@ const ImportModule: React.FC<ImportModuleProps> = ({ activeL2 }) => {
   }
 
   const renderContent = () => {
+    if (!activeL2) {
+      return (
+        <div>
+          <h2 className="text-page-title-mobile md:text-page-title-desktop uppercase mb-8" style={{ color: 'var(--accent)' }}>
+            IMPORT
+          </h2>
+          <p className="text-body" style={{ color: 'var(--text-secondary)' }}>
+            Select an import type from the menu
+          </p>
+        </div>
+      );
+    }
+
     switch (activeL2) {
       case 'MARKETPLACE REPORTS':
         return (

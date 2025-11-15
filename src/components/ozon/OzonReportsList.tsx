@@ -86,18 +86,30 @@ const OzonReportsList: React.FC<OzonReportsListProps> = ({ onNewImport }) => {
 
   if (loading) {
     return (
-      <div className="space-y-6">
-        <div className="flex justify-end">
+      <div className="space-y-8">
+        <div className="flex justify-between items-center">
+          <h3
+            className="text-2xl font-semibold uppercase tracking-wide"
+            style={{
+              color: 'var(--text-primary)',
+              fontFamily: "'Montserrat', sans-serif",
+              fontWeight: 700,
+            }}
+          >
+            IMPORT NEW FILES
+          </h3>
           <button
             onClick={onNewImport}
-            className="px-6 py-3 rounded-lg font-semibold transition-all duration-fast flex items-center gap-2"
+            className="px-6 py-3 rounded-lg font-semibold transition-all flex items-center gap-2 hover:opacity-90"
             style={{
               backgroundColor: 'var(--accent)',
               color: 'var(--bg-primary)',
+              fontFamily: "'Montserrat', sans-serif",
+              fontWeight: 700,
             }}
           >
             <Plus className="w-5 h-5" />
-            New Import
+            Import Files
           </button>
         </div>
         <div className="text-center py-12" style={{ color: 'var(--text-secondary)' }}>
@@ -109,18 +121,30 @@ const OzonReportsList: React.FC<OzonReportsListProps> = ({ onNewImport }) => {
 
   if (error) {
     return (
-      <div className="space-y-6">
-        <div className="flex justify-end">
+      <div className="space-y-8">
+        <div className="flex justify-between items-center">
+          <h3
+            className="text-2xl font-semibold uppercase tracking-wide"
+            style={{
+              color: 'var(--text-primary)',
+              fontFamily: "'Montserrat', sans-serif",
+              fontWeight: 700,
+            }}
+          >
+            IMPORT NEW FILES
+          </h3>
           <button
             onClick={onNewImport}
-            className="px-6 py-3 rounded-lg font-semibold transition-all duration-fast flex items-center gap-2"
+            className="px-6 py-3 rounded-lg font-semibold transition-all flex items-center gap-2 hover:opacity-90"
             style={{
               backgroundColor: 'var(--accent)',
               color: 'var(--bg-primary)',
+              fontFamily: "'Montserrat', sans-serif",
+              fontWeight: 700,
             }}
           >
             <Plus className="w-5 h-5" />
-            New Import
+            Import Files
           </button>
         </div>
         <div
@@ -139,18 +163,30 @@ const OzonReportsList: React.FC<OzonReportsListProps> = ({ onNewImport }) => {
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex justify-end">
+    <div className="space-y-8">
+      <div className="flex justify-between items-center">
+        <h3
+          className="text-2xl font-semibold uppercase tracking-wide"
+          style={{
+            color: 'var(--text-primary)',
+            fontFamily: "'Montserrat', sans-serif",
+            fontWeight: 700,
+          }}
+        >
+          IMPORT NEW FILES
+        </h3>
         <button
           onClick={onNewImport}
-          className="px-6 py-3 rounded-lg font-semibold transition-all duration-fast flex items-center gap-2 hover:opacity-90"
+          className="px-6 py-3 rounded-lg font-semibold transition-all flex items-center gap-2 hover:opacity-90"
           style={{
             backgroundColor: 'var(--accent)',
             color: 'var(--bg-primary)',
+            fontFamily: "'Montserrat', sans-serif",
+            fontWeight: 700,
           }}
         >
           <Plus className="w-5 h-5" />
-          New Import
+          Import Files
         </button>
       </div>
 
@@ -171,12 +207,16 @@ const OzonReportsList: React.FC<OzonReportsListProps> = ({ onNewImport }) => {
           <p className="text-sm">Click "New Import" to upload your first OZON report</p>
         </div>
       ) : (
-        <div className="space-y-4">
+        <div className="space-y-6">
           <h3
-            className="text-lg font-semibold uppercase"
-            style={{ color: 'var(--text-primary)' }}
+            className="text-xl font-semibold uppercase tracking-wide"
+            style={{
+              color: 'var(--text-primary)',
+              fontFamily: "'Montserrat', sans-serif",
+              fontWeight: 700,
+            }}
           >
-            Imported Reports ({reports.length})
+            Previously Imported Reports ({reports.length})
           </h3>
           <div className="grid gap-4">
             {reports.map((report) => (

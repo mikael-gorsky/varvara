@@ -40,14 +40,7 @@ const ImportModule: React.FC<ImportModuleProps> = ({ activeL2 }) => {
 
     switch (activeL2) {
       case 'IMPORT OZON REPORTS':
-        return (
-          <div className="space-y-6">
-            <h2 className="text-page-title-mobile md:text-page-title-desktop uppercase mb-8" style={{ color: 'var(--accent)' }}>
-              OZON REPORTS
-            </h2>
-            <OzonReportsList onNewImport={() => setShowOzonImport(true)} />
-          </div>
-        );
+        return <OzonReportsList onNewImport={() => setShowOzonImport(true)} />;
       case 'IMPORT WB REPORTS':
       case 'IMPORT YANDEX.MARKET REPORTS':
       case 'IMPORT OUR PRICE-LIST':

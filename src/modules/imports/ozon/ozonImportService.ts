@@ -59,23 +59,25 @@ export class OzonImportService {
   async importDataWithReport(
     data: OzonRecord[],
     dateOfReport: string | null,
-    reportedDays: number | null
+    reportedDays: number | null,
+    categoryLevel3: string | null
   ): Promise<ImportResult> {
     if (!data || data.length === 0) {
       throw new Error('No data provided for import');
     }
 
-    if (!dateOfReport || !reportedDays) {
-      throw new Error('Report metadata (date and period) is required');
+    if (!dateOfReport || !reportedDays || !categoryLevel3) {
+      throw new Error('Report metadata (date, period, and category) is required');
     }
 
-    console.log(`[OzonImportService] Creating report: ${dateOfReport}, ${reportedDays} days`);
+    console.log(`[OzonImportService] Creating report: ${dateOfReport}, ${reportedDays} days, category: ${categoryLevel3}`);
 
     const { data: existingReport, error: checkError } = await supabaseAdmin
       .from('ozon_reports')
       .select('report_id')
       .eq('date_of_report', dateOfReport)
       .eq('reported_days', reportedDays)
+      .eq('category_level3', categoryLevel3)
       .maybeSingle();
 
     if (checkError) {
@@ -85,7 +87,7 @@ export class OzonImportService {
 
     if (existingReport) {
       throw new Error(
-        `Report for ${dateOfReport} (${reportedDays} days) already exists. Delete the existing report first.`
+        `Report for ${dateOfReport} (${reportedDays} days, ${categoryLevel3}) already exists. Delete the existing report first.`
       );
     }
 
@@ -93,7 +95,8 @@ export class OzonImportService {
       .from('ozon_reports')
       .insert({
         date_of_report: dateOfReport,
-        reported_days: reportedDays
+        reported_days: reportedDays,
+        category_level3: categoryLevel3
       })
       .select('report_id')
       .single();

@@ -132,7 +132,8 @@ export class BatchImportService {
           importResult = await ozonImportService.importDataWithReport(
             parsedData.rows,
             parsedData.metadata.dateOfReport,
-            parsedData.metadata.reportedDays
+            parsedData.metadata.reportedDays,
+            parsedData.metadata.categoryLevel3
           );
           console.log(`[BatchImport] Import result:`, importResult);
         } else {

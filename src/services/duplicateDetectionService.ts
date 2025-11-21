@@ -11,7 +11,7 @@ export interface DuplicateCheckResult {
 
 export class DuplicateDetectionService {
   async checkDatabaseDuplicate(metadata: OzonFileMetadata): Promise<DuplicateCheckResult> {
-    if (!metadata.dateOfReport || !metadata.reportedDays) {
+    if (!metadata.dateOfReport || !metadata.reportedDays || !metadata.categoryLevel3) {
       return {
         isDuplicate: false,
         matchType: 'none',
@@ -25,6 +25,7 @@ export class DuplicateDetectionService {
         .select('report_id, when_imported')
         .eq('date_of_report', metadata.dateOfReport)
         .eq('reported_days', metadata.reportedDays)
+        .eq('category_level3', metadata.categoryLevel3)
         .limit(1)
         .maybeSingle();
 
@@ -71,11 +72,11 @@ export class DuplicateDetectionService {
     const duplicateGroups = new Map<string, number[]>();
 
     metadataList.forEach((metadata, index) => {
-      if (!metadata.dateOfReport || !metadata.reportedDays) {
+      if (!metadata.dateOfReport || !metadata.reportedDays || !metadata.categoryLevel3) {
         return;
       }
 
-      const key = `${metadata.dateOfReport}|${metadata.reportedDays}`;
+      const key = `${metadata.dateOfReport}|${metadata.reportedDays}|${metadata.categoryLevel3}`;
 
       if (!duplicateGroups.has(key)) {
         duplicateGroups.set(key, []);
@@ -95,10 +96,10 @@ export class DuplicateDetectionService {
   }
 
   getMetadataKey(metadata: OzonFileMetadata): string | null {
-    if (!metadata.dateOfReport || !metadata.reportedDays) {
+    if (!metadata.dateOfReport || !metadata.reportedDays || !metadata.categoryLevel3) {
       return null;
     }
-    return `${metadata.dateOfReport}|${metadata.reportedDays}`;
+    return `${metadata.dateOfReport}|${metadata.reportedDays}|${metadata.categoryLevel3}`;
   }
 }
 

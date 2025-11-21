@@ -64,8 +64,8 @@ function App() {
       <div
         style={{
           minHeight: '40px',
-          paddingLeft: '20px',
-          paddingRight: '20px',
+          paddingLeft: '16px',
+          paddingRight: '16px',
           paddingBottom: '24px',
         }}
       >
@@ -91,8 +91,8 @@ function App() {
         />
         {showContent && (
           <div style={{
-            paddingLeft: '20px',
-            paddingRight: '20px',
+            paddingLeft: '16px',
+            paddingRight: '16px',
             marginTop: '24px',
           }}>
             {renderContent()}

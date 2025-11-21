@@ -26,7 +26,7 @@ const DEFAULT_PREFERENCES: Omit<StylePreferences, 'userId'> = {
     accentPressed: '#64B5F6',
   },
   density: 'normal',
-  fontFamily: 'Segoe UI',
+  fontFamily: 'Montserrat',
   fontSizeScale: 1.0,
 };
 

@@ -111,110 +111,93 @@ const OzonDataImport: React.FC<OzonDataImportProps> = ({ onBack }) => {
   const duplicateFilesCount = validatedFiles.filter(f => f.isDuplicate).length;
 
   return (
-    <div className="min-h-screen p-6" style={{
+    <div className="min-h-screen p-4 md:p-6" style={{
       backgroundColor: 'var(--bg-primary)'
     }}>
       <div className="max-w-6xl mx-auto space-y-6">
-        {dataSummary && dataSummary.totalRecords > 0 && (
-          <div className="rounded-xl border p-6 relative overflow-hidden" style={{
-            backgroundColor: 'var(--bg-secondary)',
-            borderColor: 'var(--divider-standard)'
-          }}>
-            <div className="flex items-center justify-between mb-6">
-              <div className="flex items-center space-x-4">
-                <Database className="w-8 h-8" style={{ color: 'var(--accent)' }} />
-                <div>
-                  <h3 className="text-xl font-bold" style={{
-                    color: 'var(--text-primary)',
-                    fontFamily: "'Montserrat', sans-serif"
-                  }}>
-                    Imported Reports
-                  </h3>
-                  <p className="text-sm mt-1" style={{ color: 'var(--text-secondary)' }}>
-                    {dataSummary.totalReports} {dataSummary.totalReports === 1 ? 'report' : 'reports'} with {dataSummary.totalRecords.toLocaleString()} records total
-                  </p>
-                </div>
+        <div className="rounded-xl border p-4 md:p-6 relative overflow-hidden" style={{
+          backgroundColor: 'var(--bg-secondary)',
+          borderColor: 'var(--divider-standard)'
+        }}>
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
+            <div className="flex items-center space-x-3 md:space-x-4">
+              <Database className="w-7 h-7 md:w-8 md:h-8" style={{ color: 'var(--accent)' }} />
+              <div>
+                <h3 className="text-lg md:text-xl font-bold" style={{
+                  color: 'var(--text-primary)',
+                }}>
+                  Imported Reports
+                </h3>
+                <p className="text-xs md:text-sm mt-1" style={{ color: 'var(--text-secondary)' }}>
+                  {dataSummary ? `${dataSummary.totalReports} ${dataSummary.totalReports === 1 ? 'report' : 'reports'} with ${dataSummary.totalRecords.toLocaleString()} records` : 'No reports imported yet'}
+                </p>
               </div>
-              <button
-                onClick={() => uploadQueueRef.current?.openFileDialog()}
-                className="flex items-center space-x-2 px-6 py-3 rounded transition-all duration-200 font-semibold"
-                style={{
-                  backgroundColor: 'var(--accent)',
-                  color: 'var(--bg-primary)'
-                }}
-              >
-                <FileUp className="w-5 h-5" />
-                <span>Import More Files</span>
-              </button>
             </div>
+          </div>
 
-            {importedReports.length > 0 && (
-              <div className="space-y-3">
-                {importedReports.map((report) => (
-                  <div
-                    key={report.report_id}
-                    className="rounded-lg border p-4"
-                    style={{
-                      backgroundColor: 'var(--surface-1)',
-                      borderColor: 'var(--divider-standard)'
-                    }}
-                  >
-                    <div className="flex items-start justify-between">
-                      <div className="flex-1">
-                        <h4 className="font-semibold" style={{ color: 'var(--text-primary)' }}>
-                          {report.category}
-                        </h4>
-                        <div className="flex items-center space-x-4 mt-2 text-sm">
-                          <span style={{ color: 'var(--text-secondary)' }}>
-                            Report Date: <span style={{ color: 'var(--text-primary)' }}>
-                              {new Date(report.date_of_report).toLocaleDateString()}
-                            </span>
-                          </span>
-                          <span style={{ color: 'var(--text-secondary)' }}>•</span>
-                          <span style={{ color: 'var(--text-secondary)' }}>
-                            Duration: <span style={{ color: 'var(--text-primary)' }}>
-                              {report.reported_days} days
-                            </span>
-                          </span>
-                          <span style={{ color: 'var(--text-secondary)' }}>•</span>
-                          <span style={{ color: 'var(--text-secondary)' }}>
-                            Records: <span style={{ color: 'var(--accent)' }}>
-                              {report.record_count.toLocaleString()}
-                            </span>
-                          </span>
-                        </div>
-                        {report.filename && (
-                          <p className="text-xs mt-1" style={{ color: 'var(--text-secondary)' }}>
-                            File: {report.filename}
-                          </p>
-                        )}
-                      </div>
-                    </div>
+          {importedReports.length > 0 ? (
+            <div className="space-y-3 mb-6">
+              {importedReports.map((report) => (
+                <div
+                  key={report.report_id}
+                  className="rounded-lg border p-3 md:p-4"
+                  style={{
+                    backgroundColor: 'var(--surface-1)',
+                    borderColor: 'var(--divider-standard)'
+                  }}
+                >
+                  <h4 className="font-semibold text-sm md:text-base mb-2" style={{ color: 'var(--text-primary)' }}>
+                    {report.category}
+                  </h4>
+                  <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 text-xs md:text-sm">
+                    <span style={{ color: 'var(--text-secondary)' }}>
+                      <span className="opacity-70">Date:</span>{' '}
+                      <span style={{ color: 'var(--text-primary)' }}>
+                        {new Date(report.date_of_report).toLocaleDateString()}
+                      </span>
+                    </span>
+                    <span className="hidden sm:inline" style={{ color: 'var(--text-secondary)' }}>•</span>
+                    <span style={{ color: 'var(--text-secondary)' }}>
+                      <span className="opacity-70">Duration:</span>{' '}
+                      <span style={{ color: 'var(--text-primary)' }}>
+                        {report.reported_days} days
+                      </span>
+                    </span>
+                    <span className="hidden sm:inline" style={{ color: 'var(--text-secondary)' }}>•</span>
+                    <span style={{ color: 'var(--text-secondary)' }}>
+                      <span className="opacity-70">Records:</span>{' '}
+                      <span style={{ color: 'var(--accent)' }} className="font-semibold">
+                        {report.record_count.toLocaleString()}
+                      </span>
+                    </span>
                   </div>
-                ))}
-              </div>
-            )}
-          </div>
-        )}
+                  {report.filename && (
+                    <p className="text-xs mt-2" style={{ color: 'var(--text-secondary)', opacity: 0.7 }}>
+                      {report.filename}
+                    </p>
+                  )}
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="text-center py-8 mb-6" style={{ color: 'var(--text-secondary)' }}>
+              <FileUp className="w-12 h-12 mx-auto mb-3 opacity-30" />
+              <p className="text-sm">No reports imported yet</p>
+            </div>
+          )}
 
-        {validatedFiles.length === 0 && (!dataSummary || dataSummary.totalRecords === 0) && (
-          <div className="text-center py-12">
-            <button
-              onClick={() => uploadQueueRef.current?.openFileDialog()}
-              className="inline-flex items-center space-x-3 px-8 py-4 rounded-lg transition-all duration-200 font-semibold text-lg"
-              style={{
-                backgroundColor: 'var(--accent)',
-                color: 'var(--bg-primary)'
-              }}
-            >
-              <FileUp className="w-6 h-6" />
-              <span>Select Files to Import</span>
-            </button>
-            <p className="mt-4 text-sm" style={{ color: 'var(--text-secondary)' }}>
-              Choose Excel files (.xlsx, .xls, .csv) with Ozon marketplace data
-            </p>
-          </div>
-        )}
+          <button
+            onClick={() => uploadQueueRef.current?.openFileDialog()}
+            className="w-full flex items-center justify-center space-x-3 px-6 py-4 rounded-lg transition-all duration-200 font-bold text-base md:text-lg"
+            style={{
+              backgroundColor: 'var(--accent)',
+              color: 'var(--bg-primary)'
+            }}
+          >
+            <FileUp className="w-5 h-5 md:w-6 md:h-6" />
+            <span>Import New Files</span>
+          </button>
+        </div>
 
         <MultiFileUploadQueue ref={uploadQueueRef} onFilesValidated={handleFilesValidated} />
 
@@ -291,8 +274,7 @@ const OzonDataImport: React.FC<OzonDataImportProps> = ({ onBack }) => {
                     )}
                     <h3 className="font-bold" style={{
                       color: 'var(--text-primary)',
-                      fontFamily: "'Montserrat', sans-serif"
-                    }}>
+                      }}>
                       Import {importResult.success ? 'Completed' : 'Completed with Errors'}
                     </h3>
                   </div>

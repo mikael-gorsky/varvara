@@ -5,8 +5,8 @@ const VarvaraHeader: React.FC = () => {
     <div
       style={{
         backgroundColor: 'var(--bg-primary)',
-        paddingLeft: '20px',
-        paddingRight: '20px',
+        paddingLeft: '16px',
+        paddingRight: '16px',
         paddingTop: '16px',
         paddingBottom: '16px'
       }}

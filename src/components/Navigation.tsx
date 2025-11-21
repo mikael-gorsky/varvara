@@ -62,8 +62,8 @@ const Navigation: React.FC<NavigationProps> = ({
     <div
       style={{
         backgroundColor: 'var(--bg-primary)',
-        paddingLeft: '20px',
-        paddingRight: '20px',
+        paddingLeft: '16px',
+        paddingRight: '16px',
       }}
     >
       {/* Level 1 Menu */}
@@ -76,11 +76,10 @@ const Navigation: React.FC<NavigationProps> = ({
               className="text-menu-l1 uppercase whitespace-nowrap"
               style={{
                 color: 'rgba(255, 255, 255, 0.6)',
-                paddingTop: '16px',
-                paddingBottom: '16px',
+                paddingTop: '18px',
+                paddingBottom: '18px',
                 paddingLeft: '0',
                 paddingRight: '0',
-                fontFamily: "'Montserrat', sans-serif",
                 fontWeight: 700,
                 letterSpacing: '0.02em',
                 lineHeight: 1.2,
@@ -91,6 +90,7 @@ const Navigation: React.FC<NavigationProps> = ({
                 display: 'block',
                 width: '100%',
                 textAlign: 'left',
+                minHeight: '44px',
               }}
               onMouseEnter={(e) => {
                 e.currentTarget.style.color = 'rgba(255, 255, 255, 0.85)';
@@ -131,11 +131,10 @@ const Navigation: React.FC<NavigationProps> = ({
                     : isActive
                       ? 'rgba(255, 255, 255, 1)'
                       : 'rgba(255, 255, 255, 0.6)',
-                  paddingTop: '16px',
-                  paddingBottom: '16px',
+                  paddingTop: '18px',
+                  paddingBottom: '18px',
                   paddingLeft: '0',
                   paddingRight: '0',
-                  fontFamily: "'Montserrat', sans-serif",
                   fontWeight: 700,
                   letterSpacing: '0.02em',
                   lineHeight: 1.2,
@@ -146,6 +145,7 @@ const Navigation: React.FC<NavigationProps> = ({
                   display: 'block',
                   width: '100%',
                   textAlign: 'left',
+                  minHeight: '44px',
                 }}
                 onMouseEnter={(e) => {
                   if (!isActive && !isDisabled) {

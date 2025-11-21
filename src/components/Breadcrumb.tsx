@@ -26,6 +26,8 @@ const Breadcrumb: React.FC<BreadcrumbProps> = ({ items }) => {
         paddingLeft: '0',
         paddingRight: '0',
         marginBottom: 'calc(8px * var(--density-multiplier))',
+        flexWrap: 'wrap',
+        overflowX: 'auto',
       }}
     >
       {items.map((item, index) => {
@@ -36,7 +38,7 @@ const Breadcrumb: React.FC<BreadcrumbProps> = ({ items }) => {
           <React.Fragment key={index}>
             {index > 0 && (
               <ChevronRight
-                className="w-4 h-4"
+                className="w-4 h-4 flex-shrink-0"
                 style={{
                   color: 'var(--text-tertiary)',
                   opacity: 0.5,
@@ -58,6 +60,7 @@ const Breadcrumb: React.FC<BreadcrumbProps> = ({ items }) => {
                 cursor: isClickable ? 'pointer' : 'default',
                 padding: '4px 0',
                 textTransform: 'uppercase',
+                whiteSpace: 'nowrap',
               }}
               onMouseEnter={(e) => {
                 if (isClickable) {

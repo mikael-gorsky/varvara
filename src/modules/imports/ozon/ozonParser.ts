@@ -303,8 +303,8 @@ function parseDateFromRussianFormat(dateStr: string): string | null {
   const match = dateStr.match(/(\d{1,2})\.(\d{1,2})\.(\d{2,4})/);
   if (!match) return null;
 
-  const day = match[1].padStart(2, '0');
-  const month = match[2].padStart(2, '0');
+  const month = match[1].padStart(2, '0');
+  const day = match[2].padStart(2, '0');
   let year = match[3];
 
   if (year.length === 2) {

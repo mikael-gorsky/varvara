@@ -117,7 +117,7 @@ export async function parseOzonFile(file: File): Promise<OzonParsedData> {
           return;
         }
 
-        const workbook = XLSX.read(data, { type: 'binary', cellDates: true });
+        const workbook = XLSX.read(data, { type: 'binary', cellDates: false });
         const firstSheetName = workbook.SheetNames[0];
         const worksheet = workbook.Sheets[firstSheetName];
         const rawData = XLSX.utils.sheet_to_json(worksheet, { header: 1, raw: true, defval: '' });

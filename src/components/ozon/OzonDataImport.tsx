@@ -15,6 +15,16 @@ interface DataSummary {
   totalRecords: number;
 }
 
+interface ImportedReport {
+  report_id: string;
+  date_of_report: string;
+  reported_days: number;
+  when_imported: string | null;
+  filename: string | null;
+  record_count: number;
+  category: string;
+}
+
 const OzonDataImport: React.FC<OzonDataImportProps> = ({ onBack }) => {
   const [validatedFiles, setValidatedFiles] = useState<QueuedFile[]>([]);
   const [importing, setImporting] = useState(false);
@@ -24,9 +34,11 @@ const OzonDataImport: React.FC<OzonDataImportProps> = ({ onBack }) => {
   const [showHistory, setShowHistory] = useState(false);
   const uploadQueueRef = useRef<MultiFileUploadQueueRef>(null);
   const [dataSummary, setDataSummary] = useState<DataSummary | null>(null);
+  const [importedReports, setImportedReports] = useState<ImportedReport[]>([]);
 
   useEffect(() => {
     loadDataSummary();
+    loadImportedReports();
   }, [importResult]);
 
   const loadDataSummary = async () => {
@@ -49,6 +61,21 @@ const OzonDataImport: React.FC<OzonDataImportProps> = ({ onBack }) => {
       });
     } catch (error) {
       console.error('Failed to load data summary:', error);
+    }
+  };
+
+  const loadImportedReports = async () => {
+    try {
+      const { data, error } = await supabase.rpc('get_imported_reports');
+
+      if (error) {
+        console.error('RPC error:', error);
+        return;
+      }
+
+      setImportedReports(data || []);
+    } catch (error) {
+      console.error('Failed to load imported reports:', error);
     }
   };
 
@@ -96,7 +123,7 @@ const OzonDataImport: React.FC<OzonDataImportProps> = ({ onBack }) => {
             backgroundColor: 'var(--bg-secondary)',
             borderColor: 'var(--divider-standard)'
           }}>
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between mb-6">
               <div className="flex items-center space-x-4">
                 <Database className="w-8 h-8" style={{ color: 'var(--accent)' }} />
                 <div>
@@ -104,10 +131,10 @@ const OzonDataImport: React.FC<OzonDataImportProps> = ({ onBack }) => {
                     color: 'var(--text-primary)',
                     fontFamily: "'Montserrat', sans-serif"
                   }}>
-                    Imported Data
+                    Imported Reports
                   </h3>
                   <p className="text-sm mt-1" style={{ color: 'var(--text-secondary)' }}>
-                    {dataSummary.totalReports} {dataSummary.totalReports === 1 ? 'report' : 'reports'} with {dataSummary.totalRecords.toLocaleString()} records
+                    {dataSummary.totalReports} {dataSummary.totalReports === 1 ? 'report' : 'reports'} with {dataSummary.totalRecords.toLocaleString()} records total
                   </p>
                 </div>
               </div>
@@ -123,6 +150,53 @@ const OzonDataImport: React.FC<OzonDataImportProps> = ({ onBack }) => {
                 <span>Import More Files</span>
               </button>
             </div>
+
+            {importedReports.length > 0 && (
+              <div className="space-y-3">
+                {importedReports.map((report) => (
+                  <div
+                    key={report.report_id}
+                    className="rounded-lg border p-4"
+                    style={{
+                      backgroundColor: 'var(--surface-1)',
+                      borderColor: 'var(--divider-standard)'
+                    }}
+                  >
+                    <div className="flex items-start justify-between">
+                      <div className="flex-1">
+                        <h4 className="font-semibold" style={{ color: 'var(--text-primary)' }}>
+                          {report.category}
+                        </h4>
+                        <div className="flex items-center space-x-4 mt-2 text-sm">
+                          <span style={{ color: 'var(--text-secondary)' }}>
+                            Report Date: <span style={{ color: 'var(--text-primary)' }}>
+                              {new Date(report.date_of_report).toLocaleDateString()}
+                            </span>
+                          </span>
+                          <span style={{ color: 'var(--text-secondary)' }}>•</span>
+                          <span style={{ color: 'var(--text-secondary)' }}>
+                            Duration: <span style={{ color: 'var(--text-primary)' }}>
+                              {report.reported_days} days
+                            </span>
+                          </span>
+                          <span style={{ color: 'var(--text-secondary)' }}>•</span>
+                          <span style={{ color: 'var(--text-secondary)' }}>
+                            Records: <span style={{ color: 'var(--accent)' }}>
+                              {report.record_count.toLocaleString()}
+                            </span>
+                          </span>
+                        </div>
+                        {report.filename && (
+                          <p className="text-xs mt-1" style={{ color: 'var(--text-secondary)' }}>
+                            File: {report.filename}
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         )}
 

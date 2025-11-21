@@ -37,18 +37,15 @@ const OzonDataImport: React.FC<OzonDataImportProps> = ({ onBack }) => {
   const [importedReports, setImportedReports] = useState<ImportedReport[]>([]);
 
   useEffect(() => {
-    loadDataSummary();
     loadImportedReports();
   }, [importResult]);
 
+  useEffect(() => {
+    loadDataSummary();
+  }, [importedReports]);
+
   const loadDataSummary = async () => {
     try {
-      const { data: reports, error: reportsError } = await supabase
-        .from('ozon_reports')
-        .select('report_id');
-
-      if (reportsError) throw reportsError;
-
       const { count, error: countError } = await supabase
         .from('ozon_data')
         .select('*', { count: 'exact', head: true });
@@ -56,7 +53,7 @@ const OzonDataImport: React.FC<OzonDataImportProps> = ({ onBack }) => {
       if (countError) throw countError;
 
       setDataSummary({
-        totalReports: reports?.length || 0,
+        totalReports: importedReports.length,
         totalRecords: count || 0
       });
     } catch (error) {

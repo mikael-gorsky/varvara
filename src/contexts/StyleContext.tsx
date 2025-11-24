@@ -99,7 +99,7 @@ export const StyleProvider: React.FC<StyleProviderProps> = ({ children }) => {
         accentPressed: '#64B5F6',
       },
       density: 'normal',
-      fontFamily: 'Montserrat',
+      fontFamily: 'Segoe UI',
       fontSizeScale: 1.0,
     };
     await updateAndSave(defaults);

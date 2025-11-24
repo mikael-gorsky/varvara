@@ -165,7 +165,6 @@ const OzonReportsList: React.FC<OzonReportsListProps> = ({ onNewImport }) => {
           className="text-2xl font-semibold uppercase tracking-wide"
           style={{
             color: 'var(--text-primary)',
-            fontFamily: "'Montserrat', sans-serif",
             fontWeight: 700,
           }}
         >
@@ -177,7 +176,6 @@ const OzonReportsList: React.FC<OzonReportsListProps> = ({ onNewImport }) => {
           style={{
             backgroundColor: 'var(--accent)',
             color: 'var(--bg-primary)',
-            fontFamily: "'Montserrat', sans-serif",
             fontWeight: 700,
           }}
         >

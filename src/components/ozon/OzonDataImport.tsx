@@ -207,8 +207,7 @@ const OzonDataImport: React.FC<OzonDataImportProps> = ({ onBack }) => {
             borderColor: 'var(--divider-standard)'
           }}>
             <h2 className="text-lg font-bold mb-6 flex items-center space-x-3" style={{
-              color: 'var(--text-primary)',
-              fontFamily: "'Montserrat', sans-serif"
+              color: 'var(--text-primary)'
             }}>
               <Upload className="w-5 h-5" style={{ color: 'var(--accent)' }} />
               <span>Ready to Import</span>
@@ -345,8 +344,7 @@ const OzonDataImport: React.FC<OzonDataImportProps> = ({ onBack }) => {
           }}>
             <div className="flex items-center justify-between mb-6">
               <h2 className="text-lg font-bold" style={{
-                color: 'var(--text-primary)',
-                fontFamily: "'Montserrat', sans-serif"
+                color: 'var(--text-primary)'
               }}>
                 Import History
               </h2>

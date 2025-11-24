@@ -11,6 +11,7 @@ export type Level1MenuItem =
 export interface MenuStructure {
   l1Items: Level1MenuItem[];
   l2Items: Record<Level1MenuItem, string[] | null>;
+  l3Items?: Record<string, string[]>;
   disabledL2Items?: Record<Level1MenuItem, string[]>;
 }
 
@@ -34,6 +35,9 @@ export const menuStructure: MenuStructure = {
     PLAN: ['SALES PLANS', 'BUDGET', 'TARGETS', 'TIMELINE'],
     IMPORT: ['IMPORT OZON REPORTS', 'IMPORT WB REPORTS', 'IMPORT YANDEX.MARKET REPORTS', 'IMPORT OUR PRICE-LIST'],
     SETTINGS: ['INTERFACE DESIGN', 'THEME', 'LANGUAGE', 'USERS'],
+  },
+  l3Items: {
+    OZON: ['COMPANIES', 'PRODUCTS', 'MARKETING'],
   },
   disabledL2Items: {
     DASHBOARD: [],

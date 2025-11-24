@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { ArrowLeft, TrendingUp, Package, BarChart3, Activity, Brain, Zap, AlertCircle, CheckCircle } from 'lucide-react';
+import { ArrowLeft, TrendingUp, Package, BarChart3, Activity } from 'lucide-react';
 import { productAnalysisService, AnalysisResult, AnalysisStats } from '../../services/productAnalysisService';
 
 interface OzonProductAnalysisProps {
@@ -18,11 +18,11 @@ const OzonProductAnalysis: React.FC<OzonProductAnalysisProps> = ({ onBack }) => 
   const loadCategories = async () => {
     try {
       const result = await productAnalysisService.getCategories();
-      setCategories(result || []); // Defensive programming - ensure it's always an array
+      setCategories(result || []);
     } catch (error) {
       console.error('Failed to load categories:', error);
       setError('Failed to load categories');
-      setCategories([]); // Set to empty array on error
+      setCategories([]);
     }
   };
 
@@ -39,18 +39,18 @@ const OzonProductAnalysis: React.FC<OzonProductAnalysisProps> = ({ onBack }) => 
   const loadResults = async () => {
     try {
       const results = await productAnalysisService.getAnalysisResults();
-      setAnalysisResults(results || []); // Defensive programming - ensure it's always an array
+      setAnalysisResults(results || []);
     } catch (error) {
       console.error('Failed to load results:', error);
       setError('Failed to load analysis results');
-      setAnalysisResults([]); // Set to empty array on error
+      setAnalysisResults([]);
     }
   };
 
   const loadData = async () => {
     setIsLoading(true);
     setError('');
-    
+
     try {
       await Promise.all([
         loadCategories(),
@@ -74,8 +74,8 @@ const OzonProductAnalysis: React.FC<OzonProductAnalysisProps> = ({ onBack }) => 
 
     try {
       await productAnalysisService.analyzeCategory(selectedCategory);
-      await loadResults(); // Reload to show new results
-      await loadStats(); // Update stats
+      await loadResults();
+      await loadStats();
     } catch (error) {
       console.error('Analysis failed:', error);
       setError('Analysis failed. Please try again.');
@@ -84,245 +84,229 @@ const OzonProductAnalysis: React.FC<OzonProductAnalysisProps> = ({ onBack }) => 
     }
   };
 
-  const handleClearCategory = async (category: string) => {
-    try {
-      await productAnalysisService.clearCategoryAnalysis(category);
-      await loadResults(); // Reload to show updated results
-      await loadStats(); // Update stats
-    } catch (error) {
-      console.error('Failed to clear analysis:', error);
-      setError('Failed to clear analysis');
-    }
-  };
-
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-black flex items-center justify-center">
-        <div className="text-center">
-          <div className="w-12 h-12 border-4 border-cyan-400 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-          <p className="text-cyan-300 font-mono">Loading analysis data...</p>
-        </div>
+      <div style={{
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        minHeight: '50vh',
+        padding: 'var(--spacing-3)'
+      }}>
+        <p className="text-body" style={{ color: 'var(--text-secondary)' }}>Loading...</p>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-black p-6" style={{
-      backgroundImage: `radial-gradient(circle at 20% 50%, rgba(0, 255, 255, 0.03) 0%, transparent 50%), 
-                       radial-gradient(circle at 80% 20%, rgba(0, 255, 255, 0.02) 0%, transparent 50%), 
-                       radial-gradient(circle at 40% 80%, rgba(0, 255, 255, 0.01) 0%, transparent 50%)`
-    }}>
-      <div className="max-w-7xl mx-auto space-y-6">
-        
-        {/* Header */}
-        <div className="bg-gradient-to-r from-gray-900 to-gray-800 rounded-lg border border-cyan-400/30 shadow-lg shadow-cyan-400/10 p-6 relative overflow-hidden">
-          <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-blue-400 to-indigo-400"></div>
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-4">
-              <button
-                onClick={onBack}
-                className="flex items-center space-x-2 px-4 py-2 bg-gray-800 border border-cyan-400/50 rounded text-cyan-300 hover:bg-gray-700 hover:border-cyan-400 transition-all duration-200 font-mono text-sm"
+    <div style={{ padding: 'var(--spacing-3)' }}>
+      <div style={{ marginBottom: 'var(--spacing-3)', display: 'flex', alignItems: 'center', gap: 'var(--spacing-2)' }}>
+        <button
+          onClick={onBack}
+          style={{
+            padding: 'var(--spacing-1)',
+            backgroundColor: 'transparent',
+            border: '1px solid var(--divider-standard)',
+            color: 'var(--text-secondary)',
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            gap: 'var(--spacing-0-5)',
+          }}
+        >
+          <ArrowLeft size={16} />
+          <span className="text-body">BACK</span>
+        </button>
+        <h2 className="text-page-title-mobile md:text-page-title-desktop uppercase" style={{ color: 'var(--accent)' }}>
+          PRODUCTS
+        </h2>
+      </div>
+
+      {analysisStats && (
+        <div style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+          gap: 'var(--spacing-2)',
+          marginBottom: 'var(--spacing-3)'
+        }}>
+          <div style={{
+            padding: 'var(--spacing-2)',
+            backgroundColor: 'var(--bg-elevated)',
+            border: '1px solid var(--divider-standard)'
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--spacing-1)', marginBottom: 'var(--spacing-1)' }}>
+              <Package size={16} style={{ color: 'var(--accent)' }} />
+              <span className="text-label uppercase" style={{ color: 'var(--text-tertiary)' }}>Total Groups</span>
+            </div>
+            <p className="text-kpi-value-mobile md:text-kpi-value-desktop" style={{ color: 'var(--text-primary)' }}>
+              {analysisStats.totalGroups}
+            </p>
+          </div>
+
+          <div style={{
+            padding: 'var(--spacing-2)',
+            backgroundColor: 'var(--bg-elevated)',
+            border: '1px solid var(--divider-standard)'
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--spacing-1)', marginBottom: 'var(--spacing-1)' }}>
+              <BarChart3 size={16} style={{ color: 'var(--accent)' }} />
+              <span className="text-label uppercase" style={{ color: 'var(--text-tertiary)' }}>Total Products</span>
+            </div>
+            <p className="text-kpi-value-mobile md:text-kpi-value-desktop" style={{ color: 'var(--text-primary)' }}>
+              {analysisStats.totalProducts}
+            </p>
+          </div>
+
+          <div style={{
+            padding: 'var(--spacing-2)',
+            backgroundColor: 'var(--bg-elevated)',
+            border: '1px solid var(--divider-standard)'
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--spacing-1)', marginBottom: 'var(--spacing-1)' }}>
+              <Activity size={16} style={{ color: 'var(--accent)' }} />
+              <span className="text-label uppercase" style={{ color: 'var(--text-tertiary)' }}>Categories</span>
+            </div>
+            <p className="text-kpi-value-mobile md:text-kpi-value-desktop" style={{ color: 'var(--text-primary)' }}>
+              {analysisStats.categoriesAnalyzed}
+            </p>
+          </div>
+        </div>
+      )}
+
+      <div style={{
+        padding: 'var(--spacing-2)',
+        backgroundColor: 'var(--bg-elevated)',
+        border: '1px solid var(--divider-standard)',
+        marginBottom: 'var(--spacing-3)'
+      }}>
+        <h3 className="text-subsection uppercase" style={{ color: 'var(--text-primary)', marginBottom: 'var(--spacing-2)' }}>
+          Analyze Category
+        </h3>
+
+        <div style={{ display: 'flex', gap: 'var(--spacing-1)', marginBottom: 'var(--spacing-1)' }}>
+          <select
+            value={selectedCategory}
+            onChange={(e) => setSelectedCategory(e.target.value)}
+            disabled={isAnalyzing}
+            style={{
+              flex: 1,
+              padding: 'var(--spacing-1)',
+              backgroundColor: 'var(--bg-secondary)',
+              border: '1px solid var(--divider-standard)',
+              color: 'var(--text-primary)',
+            }}
+            className="text-body"
+          >
+            <option value="">Select a category...</option>
+            {categories.map((category) => (
+              <option key={category} value={category}>
+                {category}
+              </option>
+            ))}
+          </select>
+
+          <button
+            onClick={handleAnalyzeCategory}
+            disabled={!selectedCategory || isAnalyzing}
+            style={{
+              padding: 'var(--spacing-1) var(--spacing-2)',
+              backgroundColor: selectedCategory && !isAnalyzing ? 'var(--accent)' : 'var(--bg-secondary)',
+              border: '1px solid var(--divider-standard)',
+              color: selectedCategory && !isAnalyzing ? 'var(--text-primary)' : 'var(--text-disabled)',
+              cursor: selectedCategory && !isAnalyzing ? 'pointer' : 'not-allowed',
+            }}
+            className="text-body"
+          >
+            {isAnalyzing ? 'ANALYZING...' : 'ANALYZE'}
+          </button>
+        </div>
+
+        {error && (
+          <p className="text-body" style={{ color: '#D32F2F', marginTop: 'var(--spacing-1)' }}>
+            {error}
+          </p>
+        )}
+      </div>
+
+      {analysisResults.length > 0 && (
+        <div>
+          <h3 className="text-subsection uppercase" style={{ color: 'var(--text-primary)', marginBottom: 'var(--spacing-2)' }}>
+            Analysis Results
+          </h3>
+
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--spacing-2)' }}>
+            {analysisResults.map((result) => (
+              <div
+                key={result.id}
+                style={{
+                  padding: 'var(--spacing-2)',
+                  backgroundColor: 'var(--bg-elevated)',
+                  border: '1px solid var(--divider-standard)'
+                }}
               >
-                <ArrowLeft className="w-4 h-4" />
-                <span>RETURN TO COMMAND</span>
-              </button>
-              <div className="h-6 border-l border-cyan-400/30"></div>
-              <div className="flex items-center space-x-3">
-                <div className="w-12 h-12 bg-gradient-to-br from-purple-400 to-indigo-500 rounded-lg flex items-center justify-center shadow-lg border border-purple-300">
-                  <Brain className="w-6 h-6 text-black" />
-                </div>
-                <div>
-                  <h1 className="text-2xl font-bold text-cyan-300 font-mono tracking-wider">
-                    AI PRODUCT ANALYSIS
-                  </h1>
-                  <p className="text-cyan-400/80 text-sm font-mono">
-                    Intelligent Market Intelligence
+                <div style={{ marginBottom: 'var(--spacing-1)' }}>
+                  <h4 className="text-menu-l2 uppercase" style={{ color: 'var(--accent)' }}>
+                    {result.groupName}
+                  </h4>
+                  <p className="text-body" style={{ color: 'var(--text-secondary)' }}>
+                    {result.groupDescription}
                   </p>
                 </div>
-              </div>
-            </div>
-          </div>
-        </div>
 
-        {/* Error Display */}
-        {error && (
-          <div className="bg-red-900/20 border border-red-400/30 rounded-lg p-4 flex items-center space-x-3">
-            <AlertCircle className="w-5 h-5 text-red-400" />
-            <span className="text-red-300 font-mono">{error}</span>
-          </div>
-        )}
-
-        {/* Stats Overview */}
-        {analysisStats && (
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-            <div className="bg-gradient-to-br from-gray-900 to-gray-800 rounded-xl border border-cyan-400/30 shadow-xl p-4 hover:border-cyan-400/50 transition-all duration-300 relative overflow-hidden">
-              <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-emerald-400 to-teal-400"></div>
-              <div className="flex items-center justify-between mb-3">
-                <div className="w-8 h-8 bg-gradient-to-br from-emerald-400 to-teal-500 rounded-lg flex items-center justify-center shadow-lg border border-emerald-300">
-                  <BarChart3 className="w-4 h-4 text-black" />
-                </div>
-                <TrendingUp className="w-4 h-4 text-emerald-400" />
-              </div>
-              <h3 className="text-xs font-mono text-cyan-400 mb-1 uppercase tracking-wider">Categories</h3>
-              <p className="text-lg font-bold text-emerald-300 font-mono">{analysisStats.totalCategories}</p>
-            </div>
-
-            <div className="bg-gradient-to-br from-gray-900 to-gray-800 rounded-xl border border-cyan-400/30 shadow-xl p-4 hover:border-cyan-400/50 transition-all duration-300 relative overflow-hidden">
-              <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-blue-400 to-indigo-400"></div>
-              <div className="flex items-center justify-between mb-3">
-                <div className="w-8 h-8 bg-gradient-to-br from-blue-400 to-indigo-500 rounded-lg flex items-center justify-center shadow-lg border border-blue-300">
-                  <Package className="w-4 h-4 text-black" />
-                </div>
-                <Activity className="w-4 h-4 text-blue-400" />
-              </div>
-              <h3 className="text-xs font-mono text-cyan-400 mb-1 uppercase tracking-wider">Groups</h3>
-              <p className="text-lg font-bold text-blue-300 font-mono">{analysisStats.totalGroups}</p>
-            </div>
-
-            <div className="bg-gradient-to-br from-gray-900 to-gray-800 rounded-xl border border-cyan-400/30 shadow-xl p-4 hover:border-cyan-400/50 transition-all duration-300 relative overflow-hidden">
-              <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-purple-400 to-pink-400"></div>
-              <div className="flex items-center justify-between mb-3">
-                <div className="w-8 h-8 bg-gradient-to-br from-purple-400 to-pink-500 rounded-lg flex items-center justify-center shadow-lg border border-purple-300">
-                  <Brain className="w-4 h-4 text-black" />
-                </div>
-                <TrendingUp className="w-4 h-4 text-purple-400" />
-              </div>
-              <h3 className="text-xs font-mono text-cyan-400 mb-1 uppercase tracking-wider">Products</h3>
-              <p className="text-lg font-bold text-purple-300 font-mono">{analysisStats.totalProducts}</p>
-            </div>
-
-            <div className="bg-gradient-to-br from-gray-900 to-gray-800 rounded-xl border border-cyan-400/30 shadow-xl p-4 hover:border-cyan-400/50 transition-all duration-300 relative overflow-hidden">
-              <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-orange-400 to-red-400"></div>
-              <div className="flex items-center justify-between mb-3">
-                <div className="w-8 h-8 bg-gradient-to-br from-orange-400 to-red-500 rounded-lg flex items-center justify-center shadow-lg border border-orange-300">
-                  <Zap className="w-4 h-4 text-black" />
-                </div>
-                <Activity className="w-4 h-4 text-orange-400" />
-              </div>
-              <h3 className="text-xs font-mono text-cyan-400 mb-1 uppercase tracking-wider">Last Analysis</h3>
-              <p className="text-lg font-bold text-orange-300 font-mono">
-                {analysisStats.lastAnalysisDate 
-                  ? new Date(analysisStats.lastAnalysisDate).toLocaleDateString()
-                  : 'None'
-                }
-              </p>
-            </div>
-          </div>
-        )}
-
-        {/* Analysis Controls */}
-        <div className="bg-gradient-to-br from-gray-900 to-gray-800 rounded-xl border border-cyan-400/30 shadow-xl p-6 relative overflow-hidden">
-          <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-purple-400 to-indigo-400"></div>
-          <h2 className="text-xl font-bold text-cyan-300 font-mono mb-4">Category Analysis</h2>
-          
-          <div className="flex items-center space-x-4">
-            <select
-              value={selectedCategory}
-              onChange={(e) => setSelectedCategory(e.target.value)}
-              className="bg-gray-800 border border-cyan-400/50 text-cyan-300 rounded-lg px-4 py-2 font-mono focus:outline-none focus:border-cyan-400"
-            >
-              <option value="">Select Category</option>
-              {categories.map((category) => (
-                <option key={category} value={category}>
-                  {category}
-                </option>
-              ))}
-            </select>
-            
-            <button
-              onClick={handleAnalyzeCategory}
-              disabled={!selectedCategory || isAnalyzing}
-              className="flex items-center space-x-2 px-6 py-2 bg-purple-600 hover:bg-purple-700 disabled:bg-gray-700 disabled:text-gray-400 text-white rounded-lg transition-all duration-200 font-mono"
-            >
-              <Brain className="w-4 h-4" />
-              <span>{isAnalyzing ? 'Analyzing...' : 'Analyze Category'}</span>
-            </button>
-          </div>
-        </div>
-
-        {/* Analysis Results */}
-        {analysisResults.length > 0 && (
-          <div className="space-y-6">
-            {analysisResults.map((result) => (
-              <div key={result.category} className="bg-gradient-to-br from-gray-900 to-gray-800 rounded-xl border border-cyan-400/30 shadow-xl p-6 relative overflow-hidden">
-                <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-emerald-400 to-teal-400"></div>
-                
-                <div className="flex items-center justify-between mb-6">
-                  <div className="flex items-center space-x-3">
-                    <div className="w-10 h-10 bg-gradient-to-br from-emerald-400 to-teal-500 rounded-lg flex items-center justify-center shadow-lg border border-emerald-300">
-                      <Package className="w-5 h-5 text-black" />
-                    </div>
-                    <div>
-                      <h3 className="text-xl font-bold text-cyan-300 font-mono">{result.category}</h3>
-                      <p className="text-cyan-400/80 text-sm font-mono">{result.groups.length} groups • {result.totalProducts} products</p>
-                    </div>
+                <div style={{ marginBottom: 'var(--spacing-1)' }}>
+                  <p className="text-label uppercase" style={{ color: 'var(--text-tertiary)', marginBottom: 'var(--spacing-0-5)' }}>
+                    Products ({result.productNames.length})
+                  </p>
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 'var(--spacing-0-5)' }}>
+                    {result.productNames.map((name, index) => (
+                      <span
+                        key={index}
+                        className="text-micro"
+                        style={{
+                          padding: '4px 8px',
+                          backgroundColor: 'var(--surface-1)',
+                          color: 'var(--text-secondary)',
+                          border: '1px solid var(--divider-standard)'
+                        }}
+                      >
+                        {name}
+                      </span>
+                    ))}
                   </div>
-                  
-                  <button
-                    onClick={() => handleClearCategory(result.category)}
-                    className="px-4 py-2 bg-red-600/20 border border-red-400/30 text-red-400 rounded-lg hover:bg-red-600/30 transition-all duration-200 font-mono text-sm"
-                  >
-                    Clear Analysis
-                  </button>
                 </div>
 
-                {/* Category Stats */}
-                <div className="grid grid-cols-3 gap-4 mb-6">
-                  <div className="bg-gray-800/40 border border-cyan-400/20 rounded-lg p-3">
-                    <h4 className="text-xs font-mono text-cyan-400 uppercase tracking-wider">Avg Price</h4>
-                    <p className="text-lg font-bold text-cyan-300 font-mono">
-                      ${result.averagePrice.toFixed(2)}
+                {result.priceAnalysis && (
+                  <div style={{ marginTop: 'var(--spacing-1)' }}>
+                    <p className="text-label uppercase" style={{ color: 'var(--text-tertiary)', marginBottom: 'var(--spacing-0-5)' }}>
+                      Price Analysis
                     </p>
-                  </div>
-                  <div className="bg-gray-800/40 border border-cyan-400/20 rounded-lg p-3">
-                    <h4 className="text-xs font-mono text-cyan-400 uppercase tracking-wider">Price Range</h4>
-                    <p className="text-lg font-bold text-cyan-300 font-mono">
-                      ${result.priceRange.min} - ${result.priceRange.max}
-                    </p>
-                  </div>
-                  <div className="bg-gray-800/40 border border-cyan-400/20 rounded-lg p-3">
-                    <h4 className="text-xs font-mono text-cyan-400 uppercase tracking-wider">Top Vendor</h4>
-                    <p className="text-lg font-bold text-cyan-300 font-mono">
-                      {result.topVendors[0]?.name || 'N/A'}
-                    </p>
-                  </div>
-                </div>
-
-                {/* Product Groups */}
-                <div className="space-y-3">
-                  {result.groups.map((group) => (
-                    <div key={group.id} className="bg-gray-800/40 border border-cyan-400/20 rounded-lg p-4">
-                      <div className="flex items-start justify-between mb-2">
-                        <h4 className="font-semibold text-cyan-300 font-mono">{group.group_name}</h4>
-                        {group.confidence_score && (
-                          <span className="bg-emerald-400/10 border border-emerald-400/30 text-emerald-400 text-xs px-2 py-1 rounded font-mono">
-                            {(group.confidence_score * 100).toFixed(0)}% confidence
-                          </span>
-                        )}
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(120px, 1fr))', gap: 'var(--spacing-1)' }}>
+                      <div>
+                        <p className="text-micro" style={{ color: 'var(--text-tertiary)' }}>Min Price</p>
+                        <p className="text-body" style={{ color: 'var(--text-primary)' }}>
+                          ₽{result.priceAnalysis.minPrice?.toFixed(0) || 'N/A'}
+                        </p>
                       </div>
-                      {group.group_description && (
-                        <p className="text-cyan-400/80 text-sm mb-3 font-mono">{group.group_description}</p>
-                      )}
-                      <div className="text-xs text-cyan-400/60 font-mono">
-                        {group.product_names.length} products in this group
+                      <div>
+                        <p className="text-micro" style={{ color: 'var(--text-tertiary)' }}>Max Price</p>
+                        <p className="text-body" style={{ color: 'var(--text-primary)' }}>
+                          ₽{result.priceAnalysis.maxPrice?.toFixed(0) || 'N/A'}
+                        </p>
+                      </div>
+                      <div>
+                        <p className="text-micro" style={{ color: 'var(--text-tertiary)' }}>Avg Price</p>
+                        <p className="text-body" style={{ color: 'var(--text-primary)' }}>
+                          ₽{result.priceAnalysis.avgPrice?.toFixed(0) || 'N/A'}
+                        </p>
                       </div>
                     </div>
-                  ))}
-                </div>
+                  </div>
+                )}
               </div>
             ))}
           </div>
-        )}
-
-        {/* Empty State */}
-        {analysisResults.length === 0 && !isLoading && (
-          <div className="bg-gradient-to-br from-gray-900 to-gray-800 rounded-xl border border-cyan-400/30 shadow-xl p-12 text-center">
-            <Brain className="w-16 h-16 text-cyan-400/50 mx-auto mb-4" />
-            <h3 className="text-xl font-bold text-cyan-300 font-mono mb-2">No Analysis Results</h3>
-            <p className="text-cyan-400/80 font-mono">Select a category and run analysis to see intelligent product groupings</p>
-          </div>
-        )}
-      </div>
+        </div>
+      )}
     </div>
   );
 };

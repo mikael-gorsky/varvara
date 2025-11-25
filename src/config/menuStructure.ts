@@ -12,7 +12,6 @@ export interface MenuStructure {
   l1Items: Level1MenuItem[];
   l2Items: Record<Level1MenuItem, string[] | null>;
   l3Items?: Record<string, string[]>;
-  l4Items?: Record<string, string[]>;
   disabledL2Items?: Record<Level1MenuItem, string[]>;
 }
 
@@ -38,12 +37,7 @@ export const menuStructure: MenuStructure = {
     SETTINGS: ['INTERFACE DESIGN', 'THEME', 'LANGUAGE', 'USERS'],
   },
   l3Items: {
-    OZON: ['COMPANIES', 'PRODUCTS', 'MARKETING'],
-  },
-  l4Items: {
-    COMPANIES: ['CATEGORIES', 'SUPPLIERS'],
-    PRODUCTS: ['ANALYSIS'],
-    MARKETING: [],
+    OZON: ['COMPANIES', 'CATEGORIES', 'MARKETING'],
   },
   disabledL2Items: {
     DASHBOARD: [],

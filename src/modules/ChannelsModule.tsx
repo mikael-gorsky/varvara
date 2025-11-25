@@ -5,18 +5,17 @@ import OzonProductAnalysis from '../components/ozon/OzonProductAnalysis';
 interface ChannelsModuleProps {
   activeL2: string | null;
   activeL3: string | null;
-  activeL4: string | null;
 }
 
-const ChannelsModule: React.FC<ChannelsModuleProps> = ({ activeL2, activeL3, activeL4 }) => {
+const ChannelsModule: React.FC<ChannelsModuleProps> = ({ activeL2, activeL3 }) => {
 
   const renderOzonContent = () => {
     if (activeL3 === 'COMPANIES') {
-      return <OzonMarketplaceAnalytics activeL4={activeL4} />;
+      return <OzonMarketplaceAnalytics />;
     }
 
-    if (activeL3 === 'PRODUCTS') {
-      return <OzonProductAnalysis activeL4={activeL4} />;
+    if (activeL3 === 'CATEGORIES') {
+      return <OzonProductAnalysis />;
     }
 
     if (activeL3 === 'MARKETING') {

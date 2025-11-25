@@ -4,10 +4,9 @@ import { productAnalysisService, AnalysisResult, AnalysisStats } from '../../ser
 
 interface OzonProductAnalysisProps {
   onBack?: () => void;
-  activeL4: string | null;
 }
 
-const OzonProductAnalysis: React.FC<OzonProductAnalysisProps> = ({ onBack, activeL4 }) => {
+const OzonProductAnalysis: React.FC<OzonProductAnalysisProps> = ({ onBack }) => {
   const [categories, setCategories] = useState<string[]>([]);
   const [selectedCategory, setSelectedCategory] = useState<string>('');
   const [analysisResults, setAnalysisResults] = useState<AnalysisResult[]>([]);
@@ -103,7 +102,7 @@ const OzonProductAnalysis: React.FC<OzonProductAnalysisProps> = ({ onBack, activ
     <div style={{ padding: 'var(--spacing-3)' }}>
       <div style={{ marginBottom: 'var(--spacing-3)' }}>
         <h2 className="text-page-title-mobile md:text-page-title-desktop uppercase" style={{ color: 'var(--accent)' }}>
-          PRODUCTS
+          CATEGORIES
         </h2>
       </div>
 

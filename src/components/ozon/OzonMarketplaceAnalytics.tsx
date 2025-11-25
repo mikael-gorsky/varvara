@@ -1,20 +1,15 @@
 import React, { useState, useEffect } from 'react';
-import { ArrowLeft, TrendingUp, Package, Users, BarChart3 } from 'lucide-react';
-import { marketplaceAnalyticsService, MarketplaceOverview, CategoryStats, SupplierStats } from '../../services/marketplaceAnalyticsService';
+import { TrendingUp, Package, Users, BarChart3 } from 'lucide-react';
+import { marketplaceAnalyticsService, MarketplaceOverview } from '../../services/marketplaceAnalyticsService';
 
 interface OzonMarketplaceAnalyticsProps {
   onBack?: () => void;
-  activeL4: string | null;
 }
 
-const OzonMarketplaceAnalytics: React.FC<OzonMarketplaceAnalyticsProps> = ({ onBack, activeL4 }) => {
+const OzonMarketplaceAnalytics: React.FC<OzonMarketplaceAnalyticsProps> = ({ onBack }) => {
   const [overview, setOverview] = useState<MarketplaceOverview | null>(null);
-  const [categories, setCategories] = useState<CategoryStats[]>([]);
-  const [suppliers, setSuppliers] = useState<SupplierStats[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string>('');
-  const [searchTerm, setSearchTerm] = useState('');
-  const [sortBy, setSortBy] = useState<'name' | 'count' | 'revenue'>('revenue');
 
   useEffect(() => {
     loadOverview();
@@ -34,78 +29,6 @@ const OzonMarketplaceAnalytics: React.FC<OzonMarketplaceAnalyticsProps> = ({ onB
     }
   };
 
-  const loadCategories = async () => {
-    if (categories.length > 0) return;
-    setIsLoading(true);
-    setError('');
-    try {
-      const data = await marketplaceAnalyticsService.getCategories();
-      setCategories(data);
-    } catch (err) {
-      console.error('Failed to load categories:', err);
-      setError('Failed to load categories');
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const loadSuppliers = async () => {
-    if (suppliers.length > 0) return;
-    setIsLoading(true);
-    setError('');
-    try {
-      const data = await marketplaceAnalyticsService.getSuppliersWithMinProducts(100);
-      setSuppliers(data);
-    } catch (err) {
-      console.error('Failed to load suppliers:', err);
-      setError('Failed to load suppliers');
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    if (activeL4 === 'CATEGORIES') {
-      loadCategories();
-    } else if (activeL4 === 'SUPPLIERS') {
-      loadSuppliers();
-    }
-  }, [activeL4]);
-
-  const getFilteredAndSortedCategories = () => {
-    let filtered = categories.filter(cat =>
-      cat.category.toLowerCase().includes(searchTerm.toLowerCase())
-    );
-
-    switch (sortBy) {
-      case 'name':
-        return filtered.sort((a, b) => a.category.localeCompare(b.category));
-      case 'count':
-        return filtered.sort((a, b) => b.productCount - a.productCount);
-      case 'revenue':
-        return filtered.sort((a, b) => b.totalRevenue - a.totalRevenue);
-      default:
-        return filtered;
-    }
-  };
-
-  const getFilteredAndSortedSuppliers = () => {
-    let filtered = suppliers.filter(sup =>
-      sup.supplier.toLowerCase().includes(searchTerm.toLowerCase())
-    );
-
-    switch (sortBy) {
-      case 'name':
-        return filtered.sort((a, b) => a.supplier.localeCompare(b.supplier));
-      case 'count':
-        return filtered.sort((a, b) => b.productCount - a.productCount);
-      case 'revenue':
-        return filtered.sort((a, b) => b.totalRevenue - a.totalRevenue);
-      default:
-        return filtered;
-    }
-  };
-
   if (isLoading && !overview) {
     return (
       <div style={{
@@ -120,7 +43,7 @@ const OzonMarketplaceAnalytics: React.FC<OzonMarketplaceAnalyticsProps> = ({ onB
     );
   }
 
-  const renderMenu = () => (
+  return (
     <div style={{ padding: 'var(--spacing-3)' }}>
       <div style={{ marginBottom: 'var(--spacing-3)' }}>
         <h2 className="text-page-title-mobile md:text-page-title-desktop uppercase" style={{ color: 'var(--accent)' }}>
@@ -187,187 +110,13 @@ const OzonMarketplaceAnalytics: React.FC<OzonMarketplaceAnalyticsProps> = ({ onB
               <span className="text-label uppercase" style={{ color: 'var(--text-tertiary)' }}>Total Revenue</span>
             </div>
             <p className="text-kpi-value-mobile md:text-kpi-value-desktop" style={{ color: 'var(--text-primary)' }}>
-              {(overview.totalRevenue / 1_000_000).toFixed(1)}M
+              ₽{(overview.totalRevenue / 1_000_000).toFixed(1)}M
             </p>
           </div>
         </div>
       )}
     </div>
   );
-
-  const renderCategoriesList = () => {
-    const filtered = getFilteredAndSortedCategories();
-
-    return (
-      <div style={{ padding: 'var(--spacing-3)' }}>
-        <div style={{ marginBottom: 'var(--spacing-3)' }}>
-          <h2 className="text-subsection uppercase" style={{ color: 'var(--accent)' }}>
-            CATEGORIES
-          </h2>
-        </div>
-
-        <div style={{ marginBottom: 'var(--spacing-2)', display: 'flex', gap: 'var(--spacing-1)' }}>
-          <input
-            type="text"
-            placeholder="Search categories..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            style={{
-              flex: 1,
-              padding: 'var(--spacing-1)',
-              backgroundColor: 'var(--bg-secondary)',
-              border: '1px solid var(--divider-standard)',
-              color: 'var(--text-primary)',
-            }}
-            className="text-body"
-          />
-          <select
-            value={sortBy}
-            onChange={(e) => setSortBy(e.target.value as any)}
-            style={{
-              padding: 'var(--spacing-1)',
-              backgroundColor: 'var(--bg-secondary)',
-              border: '1px solid var(--divider-standard)',
-              color: 'var(--text-primary)',
-            }}
-            className="text-body"
-          >
-            <option value="revenue">By Revenue</option>
-            <option value="count">By Count</option>
-            <option value="name">By Name</option>
-          </select>
-        </div>
-
-        <div style={{ overflowX: 'auto' }}>
-          <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-            <thead>
-              <tr style={{ borderBottom: '1px solid var(--divider-strong)' }}>
-                <th className="text-label uppercase" style={{ textAlign: 'left', padding: 'var(--spacing-1)', color: 'var(--text-tertiary)' }}>
-                  Category
-                </th>
-                <th className="text-label uppercase" style={{ textAlign: 'right', padding: 'var(--spacing-1)', color: 'var(--text-tertiary)' }}>
-                  Products
-                </th>
-                <th className="text-label uppercase" style={{ textAlign: 'right', padding: 'var(--spacing-1)', color: 'var(--text-tertiary)' }}>
-                  Revenue
-                </th>
-              </tr>
-            </thead>
-            <tbody>
-              {filtered.map((cat) => (
-                <tr
-                  key={cat.category}
-                  style={{ borderBottom: '1px solid var(--divider-standard)' }}
-                >
-                  <td className="text-body" style={{ padding: 'var(--spacing-1)', color: 'var(--text-primary)' }}>
-                    {cat.category}
-                  </td>
-                  <td className="text-body" style={{ padding: 'var(--spacing-1)', color: 'var(--text-secondary)', textAlign: 'right' }}>
-                    {cat.productCount}
-                  </td>
-                  <td className="text-body" style={{ padding: 'var(--spacing-1)', color: 'var(--text-secondary)', textAlign: 'right' }}>
-                    ₽{(cat.totalRevenue / 1000).toFixed(0)}K
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </div>
-    );
-  };
-
-  const renderSuppliersList = () => {
-    const filtered = getFilteredAndSortedSuppliers();
-
-    return (
-      <div style={{ padding: 'var(--spacing-3)' }}>
-        <div style={{ marginBottom: 'var(--spacing-3)' }}>
-          <h2 className="text-subsection uppercase" style={{ color: 'var(--accent)' }}>
-            SUPPLIERS
-          </h2>
-        </div>
-
-        <div style={{ marginBottom: 'var(--spacing-2)', display: 'flex', gap: 'var(--spacing-1)' }}>
-          <input
-            type="text"
-            placeholder="Search suppliers..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            style={{
-              flex: 1,
-              padding: 'var(--spacing-1)',
-              backgroundColor: 'var(--bg-secondary)',
-              border: '1px solid var(--divider-standard)',
-              color: 'var(--text-primary)',
-            }}
-            className="text-body"
-          />
-          <select
-            value={sortBy}
-            onChange={(e) => setSortBy(e.target.value as any)}
-            style={{
-              padding: 'var(--spacing-1)',
-              backgroundColor: 'var(--bg-secondary)',
-              border: '1px solid var(--divider-standard)',
-              color: 'var(--text-primary)',
-            }}
-            className="text-body"
-          >
-            <option value="revenue">By Revenue</option>
-            <option value="count">By Count</option>
-            <option value="name">By Name</option>
-          </select>
-        </div>
-
-        <div style={{ overflowX: 'auto' }}>
-          <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-            <thead>
-              <tr style={{ borderBottom: '1px solid var(--divider-strong)' }}>
-                <th className="text-label uppercase" style={{ textAlign: 'left', padding: 'var(--spacing-1)', color: 'var(--text-tertiary)' }}>
-                  Supplier
-                </th>
-                <th className="text-label uppercase" style={{ textAlign: 'right', padding: 'var(--spacing-1)', color: 'var(--text-tertiary)' }}>
-                  Products
-                </th>
-                <th className="text-label uppercase" style={{ textAlign: 'right', padding: 'var(--spacing-1)', color: 'var(--text-tertiary)' }}>
-                  Revenue
-                </th>
-              </tr>
-            </thead>
-            <tbody>
-              {filtered.map((sup) => (
-                <tr
-                  key={sup.supplier}
-                  style={{ borderBottom: '1px solid var(--divider-standard)' }}
-                >
-                  <td className="text-body" style={{ padding: 'var(--spacing-1)', color: 'var(--text-primary)' }}>
-                    {sup.supplier}
-                  </td>
-                  <td className="text-body" style={{ padding: 'var(--spacing-1)', color: 'var(--text-secondary)', textAlign: 'right' }}>
-                    {sup.productCount}
-                  </td>
-                  <td className="text-body" style={{ padding: 'var(--spacing-1)', color: 'var(--text-secondary)', textAlign: 'right' }}>
-                    ₽{(sup.totalRevenue / 1000).toFixed(0)}K
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </div>
-    );
-  };
-
-  if (activeL4 === 'CATEGORIES') {
-    return renderCategoriesList();
-  }
-
-  if (activeL4 === 'SUPPLIERS') {
-    return renderSuppliersList();
-  }
-
-  return renderMenu();
 };
 
 export default OzonMarketplaceAnalytics;

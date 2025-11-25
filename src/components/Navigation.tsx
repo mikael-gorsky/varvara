@@ -35,8 +35,8 @@ const Navigation: React.FC<NavigationProps> = ({
   const currentL2Items = activeL1 ? l2Items[activeL1] : null;
   const currentL3Items = activeL2 && l3Items ? l3Items[activeL2] : null;
   const currentDisabledL2Items = activeL1 ? disabledL2Items?.[activeL1] || [] : [];
-  const showL3Menu = activeL2 && currentL3Items;
-  const showL2Menu = activeL1 && currentL2Items && !showL3Menu;
+  const showL3Menu = activeL2 && currentL3Items && !activeL3;
+  const showL2Menu = activeL1 && currentL2Items && !showL3Menu && !activeL3;
   const showL1Menu = !activeL1;
   const showActionableL1 = activeL1 && !currentL2Items;
 
@@ -225,6 +225,13 @@ const Navigation: React.FC<NavigationProps> = ({
               </button>
             );
           })}
+        </div>
+      )}
+
+      {/* Breadcrumb for selected L3 item */}
+      {activeL3 && (
+        <div>
+          <Breadcrumb items={breadcrumbsL3} />
         </div>
       )}
 

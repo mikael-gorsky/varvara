@@ -15,8 +15,8 @@ class CategoriesAnalyticsService {
   async getTopCategories(limit: number = 10): Promise<CategoryStats[]> {
     const { data: ozonData, error: ozonError } = await supabase
       .from('ozon_data')
-      .select('category, ordered_sum, report_id')
-      .not('category', 'is', null);
+      .select('category_level3, ordered_sum, report_id')
+      .not('category_level3', 'is', null);
 
     if (ozonError) {
       console.error('Error fetching ozon data:', ozonError);
@@ -47,7 +47,7 @@ class CategoriesAnalyticsService {
     }>();
 
     ozonData.forEach((row: any) => {
-      const category = row.category;
+      const category = row.category_level3;
       const sales = row.ordered_sum || 0;
       const report = reportsMap.get(row.report_id);
 
@@ -95,8 +95,8 @@ class CategoriesAnalyticsService {
   async getCategoryDetails(categoryName: string): Promise<CategoryStats | null> {
     const { data: ozonData, error: ozonError } = await supabase
       .from('ozon_data')
-      .select('category, ordered_sum, report_id')
-      .eq('category', categoryName);
+      .select('category_level3, ordered_sum, report_id')
+      .eq('category_level3', categoryName);
 
     if (ozonError) {
       console.error('Error fetching category data:', ozonError);

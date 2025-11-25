@@ -1,6 +1,6 @@
 import React from 'react';
-import OzonMarketplaceAnalytics from '../components/ozon/OzonMarketplaceAnalytics';
-import OzonProductAnalysis from '../components/ozon/OzonProductAnalysis';
+import OzonCompaniesAnalytics from '../components/ozon/OzonCompaniesAnalytics';
+import OzonCategoriesAnalytics from '../components/ozon/OzonCategoriesAnalytics';
 
 interface ChannelsModuleProps {
   activeL2: string | null;
@@ -11,11 +11,11 @@ const ChannelsModule: React.FC<ChannelsModuleProps> = ({ activeL2, activeL3 }) =
 
   const renderOzonContent = () => {
     if (activeL3 === 'COMPANIES') {
-      return <OzonMarketplaceAnalytics />;
+      return <OzonCompaniesAnalytics />;
     }
 
     if (activeL3 === 'CATEGORIES') {
-      return <OzonProductAnalysis />;
+      return <OzonCategoriesAnalytics />;
     }
 
     if (activeL3 === 'MARKETING') {

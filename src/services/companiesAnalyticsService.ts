@@ -22,27 +22,32 @@ export interface CompanyStats {
 
 class CompaniesAnalyticsService {
   async getTopCompanies(limit: number = 10): Promise<CompanyStats[]> {
-    const { data: rawData, error } = await supabase
+    const { data: ozonData, error: ozonError } = await supabase
       .from('ozon_data')
-      .select(`
-        seller,
-        ordered_sum,
-        report_id,
-        ozon_reports!inner (
-          date_of_report,
-          reported_days
-        )
-      `)
+      .select('seller, ordered_sum, report_id')
       .not('seller', 'is', null);
 
-    if (error) {
-      console.error('Error fetching companies data:', error);
-      throw error;
+    if (ozonError) {
+      console.error('Error fetching ozon data:', ozonError);
+      throw ozonError;
     }
 
-    if (!rawData || rawData.length === 0) {
+    const { data: reportsData, error: reportsError } = await supabase
+      .from('ozon_reports')
+      .select('report_id, date_of_report, reported_days');
+
+    if (reportsError) {
+      console.error('Error fetching reports data:', reportsError);
+      throw reportsError;
+    }
+
+    if (!ozonData || ozonData.length === 0 || !reportsData || reportsData.length === 0) {
       return [];
     }
+
+    const reportsMap = new Map(
+      reportsData.map(report => [report.report_id, report])
+    );
 
     const companiesMap = new Map<string, {
       totalSales: number;
@@ -50,11 +55,15 @@ class CompaniesAnalyticsService {
       periodData: Map<string, { sales: number; days: number }>;
     }>();
 
-    rawData.forEach((row: any) => {
+    ozonData.forEach((row: any) => {
       const seller = row.seller;
       const sales = row.ordered_sum || 0;
-      const reportDate = row.ozon_reports.date_of_report;
-      const reportedDays = row.ozon_reports.reported_days;
+      const report = reportsMap.get(row.report_id);
+
+      if (!report) return;
+
+      const reportDate = report.date_of_report;
+      const reportedDays = report.reported_days;
 
       if (!companiesMap.has(seller)) {
         companiesMap.set(seller, {
@@ -93,34 +102,44 @@ class CompaniesAnalyticsService {
   }
 
   async getCompanyDetails(sellerName: string): Promise<CompanyStats | null> {
-    const { data: rawData, error } = await supabase
+    const { data: ozonData, error: ozonError } = await supabase
       .from('ozon_data')
-      .select(`
-        seller,
-        ordered_sum,
-        ozon_reports!inner (
-          date_of_report,
-          reported_days
-        )
-      `)
+      .select('seller, ordered_sum, report_id')
       .eq('seller', sellerName);
 
-    if (error) {
-      console.error('Error fetching company details:', error);
-      throw error;
+    if (ozonError) {
+      console.error('Error fetching company data:', ozonError);
+      throw ozonError;
     }
 
-    if (!rawData || rawData.length === 0) {
+    const { data: reportsData, error: reportsError } = await supabase
+      .from('ozon_reports')
+      .select('report_id, date_of_report, reported_days');
+
+    if (reportsError) {
+      console.error('Error fetching reports data:', reportsError);
+      throw reportsError;
+    }
+
+    if (!ozonData || ozonData.length === 0 || !reportsData || reportsData.length === 0) {
       return null;
     }
+
+    const reportsMap = new Map(
+      reportsData.map(report => [report.report_id, report])
+    );
 
     let totalSales = 0;
     const periodData = new Map<string, { sales: number; days: number }>();
 
-    rawData.forEach((row: any) => {
+    ozonData.forEach((row: any) => {
       const sales = row.ordered_sum || 0;
-      const reportDate = row.ozon_reports.date_of_report;
-      const reportedDays = row.ozon_reports.reported_days;
+      const report = reportsMap.get(row.report_id);
+
+      if (!report) return;
+
+      const reportDate = report.date_of_report;
+      const reportedDays = report.reported_days;
 
       totalSales += sales;
 
@@ -133,7 +152,7 @@ class CompaniesAnalyticsService {
     return {
       seller: sellerName,
       totalSales,
-      productCount: rawData.length,
+      productCount: ozonData.length,
       salesByPeriod: Array.from(periodData.entries())
         .map(([date, data]) => ({
           date,

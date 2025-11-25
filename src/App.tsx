@@ -15,12 +15,14 @@ function App() {
   const [activeL1, setActiveL1] = useState<Level1MenuItem | null>(null);
   const [activeL2, setActiveL2] = useState<string | null>(null);
   const [activeL3, setActiveL3] = useState<string | null>(null);
+  const [activeL4, setActiveL4] = useState<string | null>(null);
   const [serviceMessage] = useState<string>('');
 
   const handleBack = () => {
     setActiveL1(null);
     setActiveL2(null);
     setActiveL3(null);
+    setActiveL4(null);
   };
 
   const renderContent = () => {
@@ -32,7 +34,7 @@ function App() {
       case 'DASHBOARD':
         return <DashboardModule />;
       case 'CHANNELS':
-        return <ChannelsModule activeL2={activeL2} activeL3={activeL3} />;
+        return <ChannelsModule activeL2={activeL2} activeL3={activeL3} activeL4={activeL4} />;
       case 'MOTIVATION':
         return <MotivationModule />;
       case 'FINANCE':
@@ -88,9 +90,11 @@ function App() {
           activeL1={activeL1}
           activeL2={activeL2}
           activeL3={activeL3}
+          activeL4={activeL4}
           onL1Change={setActiveL1}
           onL2Change={setActiveL2}
           onL3Change={setActiveL3}
+          onL4Change={setActiveL4}
           onBack={handleBack}
         />
         {showContent && (

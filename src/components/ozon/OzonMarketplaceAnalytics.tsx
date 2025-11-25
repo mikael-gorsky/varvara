@@ -4,12 +4,10 @@ import { marketplaceAnalyticsService, MarketplaceOverview, CategoryStats, Suppli
 
 interface OzonMarketplaceAnalyticsProps {
   onBack?: () => void;
+  activeL4: string | null;
 }
 
-type ViewState = 'menu' | 'categories-list' | 'suppliers-list';
-
-const OzonMarketplaceAnalytics: React.FC<OzonMarketplaceAnalyticsProps> = ({ onBack }) => {
-  const [viewState, setViewState] = useState<ViewState>('menu');
+const OzonMarketplaceAnalytics: React.FC<OzonMarketplaceAnalyticsProps> = ({ onBack, activeL4 }) => {
   const [overview, setOverview] = useState<MarketplaceOverview | null>(null);
   const [categories, setCategories] = useState<CategoryStats[]>([]);
   const [suppliers, setSuppliers] = useState<SupplierStats[]>([]);
@@ -37,12 +35,12 @@ const OzonMarketplaceAnalytics: React.FC<OzonMarketplaceAnalyticsProps> = ({ onB
   };
 
   const loadCategories = async () => {
+    if (categories.length > 0) return;
     setIsLoading(true);
     setError('');
     try {
       const data = await marketplaceAnalyticsService.getCategories();
       setCategories(data);
-      setViewState('categories-list');
     } catch (err) {
       console.error('Failed to load categories:', err);
       setError('Failed to load categories');
@@ -52,12 +50,12 @@ const OzonMarketplaceAnalytics: React.FC<OzonMarketplaceAnalyticsProps> = ({ onB
   };
 
   const loadSuppliers = async () => {
+    if (suppliers.length > 0) return;
     setIsLoading(true);
     setError('');
     try {
       const data = await marketplaceAnalyticsService.getSuppliersWithMinProducts(100);
       setSuppliers(data);
-      setViewState('suppliers-list');
     } catch (err) {
       console.error('Failed to load suppliers:', err);
       setError('Failed to load suppliers');
@@ -66,10 +64,13 @@ const OzonMarketplaceAnalytics: React.FC<OzonMarketplaceAnalyticsProps> = ({ onB
     }
   };
 
-  const handleBackToMenu = () => {
-    setViewState('menu');
-    setSearchTerm('');
-  };
+  useEffect(() => {
+    if (activeL4 === 'CATEGORIES') {
+      loadCategories();
+    } else if (activeL4 === 'SUPPLIERS') {
+      loadSuppliers();
+    }
+  }, [activeL4]);
 
   const getFilteredAndSortedCategories = () => {
     let filtered = categories.filter(cat =>
@@ -191,54 +192,6 @@ const OzonMarketplaceAnalytics: React.FC<OzonMarketplaceAnalyticsProps> = ({ onB
           </div>
         </div>
       )}
-
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--spacing-2)' }}>
-        <button
-          onClick={loadCategories}
-          style={{
-            padding: 'var(--spacing-2)',
-            backgroundColor: 'var(--bg-elevated)',
-            border: '1px solid var(--divider-standard)',
-            color: 'var(--text-primary)',
-            textAlign: 'left',
-            cursor: 'pointer',
-            transition: 'all 200ms',
-          }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.backgroundColor = 'var(--surface-1)';
-            e.currentTarget.style.borderColor = 'var(--accent)';
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.backgroundColor = 'var(--bg-elevated)';
-            e.currentTarget.style.borderColor = 'var(--divider-standard)';
-          }}
-        >
-          <span className="text-menu-l2">VIEW CATEGORIES</span>
-        </button>
-
-        <button
-          onClick={loadSuppliers}
-          style={{
-            padding: 'var(--spacing-2)',
-            backgroundColor: 'var(--bg-elevated)',
-            border: '1px solid var(--divider-standard)',
-            color: 'var(--text-primary)',
-            textAlign: 'left',
-            cursor: 'pointer',
-            transition: 'all 200ms',
-          }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.backgroundColor = 'var(--surface-1)';
-            e.currentTarget.style.borderColor = 'var(--accent)';
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.backgroundColor = 'var(--bg-elevated)';
-            e.currentTarget.style.borderColor = 'var(--divider-standard)';
-          }}
-        >
-          <span className="text-menu-l2">VIEW SUPPLIERS</span>
-        </button>
-      </div>
     </div>
   );
 
@@ -247,23 +200,7 @@ const OzonMarketplaceAnalytics: React.FC<OzonMarketplaceAnalyticsProps> = ({ onB
 
     return (
       <div style={{ padding: 'var(--spacing-3)' }}>
-        <div style={{ marginBottom: 'var(--spacing-3)', display: 'flex', alignItems: 'center', gap: 'var(--spacing-2)' }}>
-          <button
-            onClick={handleBackToMenu}
-            style={{
-              padding: 'var(--spacing-1)',
-              backgroundColor: 'transparent',
-              border: '1px solid var(--divider-standard)',
-              color: 'var(--text-secondary)',
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              gap: 'var(--spacing-0-5)',
-            }}
-          >
-            <ArrowLeft size={16} />
-            <span className="text-body">BACK</span>
-          </button>
+        <div style={{ marginBottom: 'var(--spacing-3)' }}>
           <h2 className="text-subsection uppercase" style={{ color: 'var(--accent)' }}>
             CATEGORIES
           </h2>
@@ -345,23 +282,7 @@ const OzonMarketplaceAnalytics: React.FC<OzonMarketplaceAnalyticsProps> = ({ onB
 
     return (
       <div style={{ padding: 'var(--spacing-3)' }}>
-        <div style={{ marginBottom: 'var(--spacing-3)', display: 'flex', alignItems: 'center', gap: 'var(--spacing-2)' }}>
-          <button
-            onClick={handleBackToMenu}
-            style={{
-              padding: 'var(--spacing-1)',
-              backgroundColor: 'transparent',
-              border: '1px solid var(--divider-standard)',
-              color: 'var(--text-secondary)',
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              gap: 'var(--spacing-0-5)',
-            }}
-          >
-            <ArrowLeft size={16} />
-            <span className="text-body">BACK</span>
-          </button>
+        <div style={{ marginBottom: 'var(--spacing-3)' }}>
           <h2 className="text-subsection uppercase" style={{ color: 'var(--accent)' }}>
             SUPPLIERS
           </h2>
@@ -438,14 +359,15 @@ const OzonMarketplaceAnalytics: React.FC<OzonMarketplaceAnalyticsProps> = ({ onB
     );
   };
 
-  switch (viewState) {
-    case 'categories-list':
-      return renderCategoriesList();
-    case 'suppliers-list':
-      return renderSuppliersList();
-    default:
-      return renderMenu();
+  if (activeL4 === 'CATEGORIES') {
+    return renderCategoriesList();
   }
+
+  if (activeL4 === 'SUPPLIERS') {
+    return renderSuppliersList();
+  }
+
+  return renderMenu();
 };
 
 export default OzonMarketplaceAnalytics;

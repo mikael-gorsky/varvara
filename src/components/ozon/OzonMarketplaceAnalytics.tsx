@@ -3,7 +3,7 @@ import { ArrowLeft, TrendingUp, Package, Users, BarChart3 } from 'lucide-react';
 import { marketplaceAnalyticsService, MarketplaceOverview, CategoryStats, SupplierStats } from '../../services/marketplaceAnalyticsService';
 
 interface OzonMarketplaceAnalyticsProps {
-  onBack: () => void;
+  onBack?: () => void;
 }
 
 type ViewState = 'menu' | 'categories-list' | 'suppliers-list';
@@ -121,23 +121,7 @@ const OzonMarketplaceAnalytics: React.FC<OzonMarketplaceAnalyticsProps> = ({ onB
 
   const renderMenu = () => (
     <div style={{ padding: 'var(--spacing-3)' }}>
-      <div style={{ marginBottom: 'var(--spacing-3)', display: 'flex', alignItems: 'center', gap: 'var(--spacing-2)' }}>
-        <button
-          onClick={onBack}
-          style={{
-            padding: 'var(--spacing-1)',
-            backgroundColor: 'transparent',
-            border: '1px solid var(--divider-standard)',
-            color: 'var(--text-secondary)',
-            cursor: 'pointer',
-            display: 'flex',
-            alignItems: 'center',
-            gap: 'var(--spacing-0-5)',
-          }}
-        >
-          <ArrowLeft size={16} />
-          <span className="text-body">BACK</span>
-        </button>
+      <div style={{ marginBottom: 'var(--spacing-3)' }}>
         <h2 className="text-page-title-mobile md:text-page-title-desktop uppercase" style={{ color: 'var(--accent)' }}>
           COMPANIES
         </h2>

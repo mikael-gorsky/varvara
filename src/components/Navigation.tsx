@@ -15,22 +15,28 @@ export type Level1MenuItem =
 interface NavigationProps {
   activeL1: Level1MenuItem | null;
   activeL2: string | null;
+  activeL3: string | null;
   onL1Change: (item: Level1MenuItem) => void;
   onL2Change: (item: string) => void;
+  onL3Change: (item: string) => void;
   onBack: () => void;
 }
 
 const Navigation: React.FC<NavigationProps> = ({
   activeL1,
   activeL2,
+  activeL3,
   onL1Change,
   onL2Change,
+  onL3Change,
   onBack,
 }) => {
-  const { l1Items, l2Items, disabledL2Items } = menuStructure;
+  const { l1Items, l2Items, l3Items, disabledL2Items } = menuStructure;
   const currentL2Items = activeL1 ? l2Items[activeL1] : null;
+  const currentL3Items = activeL2 && l3Items ? l3Items[activeL2] : null;
   const currentDisabledL2Items = activeL1 ? disabledL2Items?.[activeL1] || [] : [];
-  const showL2Menu = activeL1 && currentL2Items;
+  const showL3Menu = activeL2 && currentL3Items;
+  const showL2Menu = activeL1 && currentL2Items && !showL3Menu;
   const showL1Menu = !activeL1;
   const showActionableL1 = activeL1 && !currentL2Items;
 
@@ -57,6 +63,14 @@ const Navigation: React.FC<NavigationProps> = ({
     handleNavigateToMain,
     handleNavigateToL1
   );
+
+  const breadcrumbsL3 = [...breadcrumbs];
+  if (activeL3) {
+    breadcrumbsL3.push({
+      label: activeL3,
+      onClick: () => {},
+    });
+  }
 
   return (
     <div
@@ -154,6 +168,55 @@ const Navigation: React.FC<NavigationProps> = ({
                 }}
                 onMouseLeave={(e) => {
                   if (!isActive && !isDisabled) {
+                    e.currentTarget.style.color = 'rgba(255, 255, 255, 0.6)';
+                  }
+                }}
+              >
+                {item}
+              </button>
+            );
+          })}
+        </div>
+      )}
+
+      {/* Level 3 Menu */}
+      {showL3Menu && (
+        <div>
+          <Breadcrumb items={breadcrumbs} />
+          {currentL3Items!.map((item) => {
+            const isActive = activeL3 === item;
+            return (
+              <button
+                key={item}
+                onClick={() => onL3Change(item)}
+                className="text-menu-l1 uppercase whitespace-nowrap"
+                style={{
+                  color: isActive
+                    ? 'rgba(255, 255, 255, 1)'
+                    : 'rgba(255, 255, 255, 0.6)',
+                  paddingTop: '18px',
+                  paddingBottom: '18px',
+                  paddingLeft: '0',
+                  paddingRight: '0',
+                  fontWeight: 700,
+                  letterSpacing: '0.02em',
+                  lineHeight: 1.2,
+                  transition: 'color 300ms ease',
+                  border: 'none',
+                  background: 'transparent',
+                  cursor: 'pointer',
+                  display: 'block',
+                  width: '100%',
+                  textAlign: 'left',
+                  minHeight: '44px',
+                }}
+                onMouseEnter={(e) => {
+                  if (!isActive) {
+                    e.currentTarget.style.color = 'rgba(255, 255, 255, 0.85)';
+                  }
+                }}
+                onMouseLeave={(e) => {
+                  if (!isActive) {
                     e.currentTarget.style.color = 'rgba(255, 255, 255, 0.6)';
                   }
                 }}

@@ -3,7 +3,7 @@ import { ArrowLeft, TrendingUp, Package, BarChart3, Activity } from 'lucide-reac
 import { productAnalysisService, AnalysisResult, AnalysisStats } from '../../services/productAnalysisService';
 
 interface OzonProductAnalysisProps {
-  onBack: () => void;
+  onBack?: () => void;
 }
 
 const OzonProductAnalysis: React.FC<OzonProductAnalysisProps> = ({ onBack }) => {
@@ -100,23 +100,7 @@ const OzonProductAnalysis: React.FC<OzonProductAnalysisProps> = ({ onBack }) => 
 
   return (
     <div style={{ padding: 'var(--spacing-3)' }}>
-      <div style={{ marginBottom: 'var(--spacing-3)', display: 'flex', alignItems: 'center', gap: 'var(--spacing-2)' }}>
-        <button
-          onClick={onBack}
-          style={{
-            padding: 'var(--spacing-1)',
-            backgroundColor: 'transparent',
-            border: '1px solid var(--divider-standard)',
-            color: 'var(--text-secondary)',
-            cursor: 'pointer',
-            display: 'flex',
-            alignItems: 'center',
-            gap: 'var(--spacing-0-5)',
-          }}
-        >
-          <ArrowLeft size={16} />
-          <span className="text-body">BACK</span>
-        </button>
+      <div style={{ marginBottom: 'var(--spacing-3)' }}>
         <h2 className="text-page-title-mobile md:text-page-title-desktop uppercase" style={{ color: 'var(--accent)' }}>
           PRODUCTS
         </h2>

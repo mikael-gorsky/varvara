@@ -14,11 +14,13 @@ import SettingsModule from './modules/SettingsModule';
 function App() {
   const [activeL1, setActiveL1] = useState<Level1MenuItem | null>(null);
   const [activeL2, setActiveL2] = useState<string | null>(null);
+  const [activeL3, setActiveL3] = useState<string | null>(null);
   const [serviceMessage] = useState<string>('');
 
   const handleBack = () => {
     setActiveL1(null);
     setActiveL2(null);
+    setActiveL3(null);
   };
 
   const renderContent = () => {
@@ -30,7 +32,7 @@ function App() {
       case 'DASHBOARD':
         return <DashboardModule />;
       case 'CHANNELS':
-        return <ChannelsModule activeL2={activeL2} />;
+        return <ChannelsModule activeL2={activeL2} activeL3={activeL3} />;
       case 'MOTIVATION':
         return <MotivationModule />;
       case 'FINANCE':
@@ -85,8 +87,10 @@ function App() {
         <Navigation
           activeL1={activeL1}
           activeL2={activeL2}
+          activeL3={activeL3}
           onL1Change={setActiveL1}
           onL2Change={setActiveL2}
+          onL3Change={setActiveL3}
           onBack={handleBack}
         />
         {showContent && (

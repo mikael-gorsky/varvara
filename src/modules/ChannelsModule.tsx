@@ -1,22 +1,21 @@
-import React, { useState } from 'react';
+import React from 'react';
 import OzonMarketplaceAnalytics from '../components/ozon/OzonMarketplaceAnalytics';
 import OzonProductAnalysis from '../components/ozon/OzonProductAnalysis';
-import { menuStructure } from '../config/menuStructure';
 
 interface ChannelsModuleProps {
   activeL2: string | null;
+  activeL3: string | null;
 }
 
-const ChannelsModule: React.FC<ChannelsModuleProps> = ({ activeL2 }) => {
-  const [activeL3, setActiveL3] = useState<string | null>(null);
+const ChannelsModule: React.FC<ChannelsModuleProps> = ({ activeL2, activeL3 }) => {
 
   const renderOzonContent = () => {
     if (activeL3 === 'COMPANIES') {
-      return <OzonMarketplaceAnalytics onBack={() => setActiveL3(null)} />;
+      return <OzonMarketplaceAnalytics onBack={() => {}} />;
     }
 
     if (activeL3 === 'PRODUCTS') {
-      return <OzonProductAnalysis onBack={() => setActiveL3(null)} />;
+      return <OzonProductAnalysis onBack={() => {}} />;
     }
 
     if (activeL3 === 'MARKETING') {
@@ -32,42 +31,7 @@ const ChannelsModule: React.FC<ChannelsModuleProps> = ({ activeL2 }) => {
       );
     }
 
-    const l3Items = menuStructure.l3Items?.['OZON'] || [];
-
-    return (
-      <div style={{ padding: 'var(--spacing-3)' }}>
-        <h2 className="text-page-title-mobile md:text-page-title-desktop uppercase mb-8" style={{ color: 'var(--accent)' }}>
-          OZON
-        </h2>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--spacing-2)' }}>
-          {l3Items.map((item) => (
-            <button
-              key={item}
-              onClick={() => setActiveL3(item)}
-              style={{
-                padding: 'var(--spacing-2)',
-                backgroundColor: 'var(--bg-elevated)',
-                border: '1px solid var(--divider-standard)',
-                color: 'var(--text-primary)',
-                textAlign: 'left',
-                cursor: 'pointer',
-                transition: 'all 200ms',
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.backgroundColor = 'var(--surface-1)';
-                e.currentTarget.style.borderColor = 'var(--accent)';
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.backgroundColor = 'var(--bg-elevated)';
-                e.currentTarget.style.borderColor = 'var(--divider-standard)';
-              }}
-            >
-              <span className="text-menu-l2">{item}</span>
-            </button>
-          ))}
-        </div>
-      </div>
-    );
+    return null;
   };
 
   const renderContent = () => {

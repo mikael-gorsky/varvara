@@ -1,6 +1,21 @@
 import React, { useState, useEffect } from 'react';
 import { categoriesAnalyticsService, CategoryStats } from '../../services/categoriesAnalyticsService';
 
+interface PeriodStats {
+  date: string;
+  days: number;
+  sales: number;
+  salesPerDay: number;
+  percentageVsFirst: number | null;
+}
+
+interface MarketTotals {
+  date: string;
+  days: number;
+  totalSalesPerDay: number;
+  percentageVsFirst: number | null;
+}
+
 interface OzonCategoriesAnalyticsProps {
   onBack?: () => void;
 }
@@ -9,6 +24,7 @@ const OzonCategoriesAnalytics: React.FC<OzonCategoriesAnalyticsProps> = ({ onBac
   const [categories, setCategories] = useState<CategoryStats[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string>('');
+  const [marketTotals, setMarketTotals] = useState<MarketTotals[]>([]);
 
   useEffect(() => {
     loadCategories();
@@ -20,12 +36,72 @@ const OzonCategoriesAnalytics: React.FC<OzonCategoriesAnalyticsProps> = ({ onBac
     try {
       const data = await categoriesAnalyticsService.getTopCategories(10);
       setCategories(data);
+      calculateMarketTotals(data);
     } catch (err) {
       console.error('Failed to load categories:', err);
       setError('Failed to load categories data');
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const calculateMarketTotals = (categoriesData: CategoryStats[]) => {
+    if (categoriesData.length === 0) return;
+
+    const periodsMap = new Map<string, { totalSales: number; days: number }>();
+
+    categoriesData.forEach(category => {
+      category.salesByPeriod.forEach(period => {
+        if (!periodsMap.has(period.date)) {
+          periodsMap.set(period.date, { totalSales: 0, days: period.days });
+        }
+        const periodData = periodsMap.get(period.date)!;
+        periodData.totalSales += period.sales;
+      });
+    });
+
+    const sortedPeriods = Array.from(periodsMap.entries())
+      .map(([date, data]) => ({
+        date,
+        days: data.days,
+        totalSales: data.totalSales,
+        totalSalesPerDay: data.totalSales / data.days
+      }))
+      .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+
+    const firstPeriodSalesPerDay = sortedPeriods[0]?.totalSalesPerDay || 0;
+
+    const totalsWithPercentages = sortedPeriods.map((period, index) => ({
+      date: period.date,
+      days: period.days,
+      totalSalesPerDay: period.totalSalesPerDay,
+      percentageVsFirst: index === 0
+        ? null
+        : ((period.totalSalesPerDay / firstPeriodSalesPerDay) * 100)
+    }));
+
+    setMarketTotals(totalsWithPercentages);
+  };
+
+  const calculatePeriodStats = (periods: { date: string; sales: number; days: number }[]): PeriodStats[] => {
+    const sortedPeriods = [...periods].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+
+    if (sortedPeriods.length === 0) return [];
+
+    const firstPeriodSalesPerDay = sortedPeriods[0].sales / sortedPeriods[0].days;
+
+    return sortedPeriods.map((period, index) => {
+      const salesPerDay = period.sales / period.days;
+      return {
+        date: period.date,
+        days: period.days,
+        sales: period.sales,
+        salesPerDay,
+        percentageVsFirst: index === 0
+          ? null
+          : ((salesPerDay / firstPeriodSalesPerDay) * 100)
+      };
+    });
   };
 
   const formatCurrency = (value: number): string => {
@@ -78,88 +154,160 @@ const OzonCategoriesAnalytics: React.FC<OzonCategoriesAnalyticsProps> = ({ onBac
         </p>
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--spacing-3)' }}>
-          {categories.map((category, index) => (
+
+          {marketTotals.length > 0 && (
             <div
-              key={category.category}
               style={{
-                backgroundColor: 'var(--bg-elevated)',
-                border: '1px solid var(--divider-standard)',
+                backgroundColor: 'var(--accent)',
+                border: '2px solid var(--accent)',
                 padding: 'var(--spacing-2)',
               }}
             >
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 'var(--spacing-2)' }}>
-                <div style={{ flex: 1 }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--spacing-1)', marginBottom: 'var(--spacing-1)' }}>
-                    <span className="text-label" style={{
-                      color: 'var(--text-tertiary)',
-                      minWidth: '30px'
+              <h3 className="text-subsection uppercase" style={{ color: 'var(--bg-primary)', marginBottom: 'var(--spacing-2)' }}>
+                MARKET TOTAL - SALES PER DAY DYNAMICS
+              </h3>
+              <div style={{
+                display: 'grid',
+                gridTemplateColumns: 'repeat(auto-fill, minmax(140px, 1fr))',
+                gap: 'var(--spacing-1)',
+              }}>
+                {marketTotals.map((period) => (
+                  <div
+                    key={period.date}
+                    style={{
+                      padding: 'var(--spacing-1)',
+                      backgroundColor: 'var(--bg-primary)',
+                      border: '1px solid var(--accent)',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      gap: 'var(--spacing-0-5)'
+                    }}
+                  >
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <span className="text-label" style={{ color: 'var(--text-tertiary)' }}>
+                        {formatDate(period.date)}
+                      </span>
+                      <span className="text-label" style={{ color: 'var(--text-tertiary)', fontSize: '10px' }}>
+                        {period.days}d
+                      </span>
+                    </div>
+                    <span className="text-body" style={{
+                      color: 'var(--accent)',
+                      fontWeight: 600,
+                      fontSize: '13px'
                     }}>
-                      #{index + 1}
+                      {formatCurrency(period.totalSalesPerDay)}/day
                     </span>
-                    <h3 className="text-subsection uppercase" style={{ color: 'var(--text-primary)' }}>
-                      {category.category}
-                    </h3>
-                  </div>
-                  <div style={{ display: 'flex', gap: 'var(--spacing-3)', marginTop: 'var(--spacing-1)' }}>
-                    <div>
-                      <span className="text-label uppercase" style={{ color: 'var(--text-tertiary)' }}>Total Sales:</span>
-                      <span className="text-body" style={{ color: 'var(--accent)', marginLeft: 'var(--spacing-1)', fontWeight: 600 }}>
-                        {formatCurrency(category.totalSales)}
-                      </span>
-                    </div>
-                    <div>
-                      <span className="text-label uppercase" style={{ color: 'var(--text-tertiary)' }}>Products:</span>
-                      <span className="text-body" style={{ color: 'var(--text-secondary)', marginLeft: 'var(--spacing-1)' }}>
-                        {category.productCount}
-                      </span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <div style={{ marginTop: 'var(--spacing-2)' }}>
-                <h4 className="text-label uppercase" style={{ color: 'var(--text-tertiary)', marginBottom: 'var(--spacing-1)' }}>
-                  Sales Dynamics by Reporting Period:
-                </h4>
-                <div style={{
-                  display: 'grid',
-                  gridTemplateColumns: 'repeat(auto-fill, minmax(140px, 1fr))',
-                  gap: 'var(--spacing-1)',
-                  marginTop: 'var(--spacing-1)'
-                }}>
-                  {category.salesByPeriod.map((period) => (
-                    <div
-                      key={period.date}
-                      style={{
-                        padding: 'var(--spacing-1)',
-                        backgroundColor: 'var(--surface-1)',
-                        border: '1px solid var(--divider-subtle)',
-                        display: 'flex',
-                        flexDirection: 'column',
-                        gap: 'var(--spacing-0-5)'
-                      }}
-                    >
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                        <span className="text-label" style={{ color: 'var(--text-tertiary)' }}>
-                          {formatDate(period.date)}
-                        </span>
-                        <span className="text-label" style={{ color: 'var(--text-tertiary)', fontSize: '10px' }}>
-                          {period.days}d
-                        </span>
-                      </div>
-                      <span className="text-body" style={{
-                        color: 'var(--text-primary)',
-                        fontWeight: 600,
-                        fontSize: '13px'
+                    {period.percentageVsFirst !== null && (
+                      <span className="text-label" style={{
+                        color: period.percentageVsFirst >= 100 ? 'var(--status-success)' : 'var(--status-error)',
+                        fontSize: '11px',
+                        fontWeight: 600
                       }}>
-                        {formatCurrency(period.sales)}
+                        {period.percentageVsFirst.toFixed(0)}%
                       </span>
-                    </div>
-                  ))}
-                </div>
+                    )}
+                  </div>
+                ))}
               </div>
             </div>
-          ))}
+          )}
+
+          {categories.map((category, index) => {
+            const periodStats = calculatePeriodStats(category.salesByPeriod);
+
+            return (
+              <div
+                key={category.category}
+                style={{
+                  backgroundColor: 'var(--bg-elevated)',
+                  border: '1px solid var(--divider-standard)',
+                  padding: 'var(--spacing-2)',
+                }}
+              >
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 'var(--spacing-2)' }}>
+                  <div style={{ flex: 1 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--spacing-1)', marginBottom: 'var(--spacing-1)' }}>
+                      <span className="text-label" style={{
+                        color: 'var(--text-tertiary)',
+                        minWidth: '30px'
+                      }}>
+                        #{index + 1}
+                      </span>
+                      <h3 className="text-subsection uppercase" style={{ color: 'var(--text-primary)' }}>
+                        {category.category}
+                      </h3>
+                    </div>
+                    <div style={{ display: 'flex', gap: 'var(--spacing-3)', marginTop: 'var(--spacing-1)' }}>
+                      <div>
+                        <span className="text-label uppercase" style={{ color: 'var(--text-tertiary)' }}>Total Sales:</span>
+                        <span className="text-body" style={{ color: 'var(--accent)', marginLeft: 'var(--spacing-1)', fontWeight: 600 }}>
+                          {formatCurrency(category.totalSales)}
+                        </span>
+                      </div>
+                      <div>
+                        <span className="text-label uppercase" style={{ color: 'var(--text-tertiary)' }}>Products:</span>
+                        <span className="text-body" style={{ color: 'var(--text-secondary)', marginLeft: 'var(--spacing-1)' }}>
+                          {category.productCount}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div style={{ marginTop: 'var(--spacing-2)' }}>
+                  <h4 className="text-label uppercase" style={{ color: 'var(--text-tertiary)', marginBottom: 'var(--spacing-1)' }}>
+                    Sales Per Day by Reporting Period:
+                  </h4>
+                  <div style={{
+                    display: 'grid',
+                    gridTemplateColumns: 'repeat(auto-fill, minmax(140px, 1fr))',
+                    gap: 'var(--spacing-1)',
+                    marginTop: 'var(--spacing-1)'
+                  }}>
+                    {periodStats.map((period) => (
+                      <div
+                        key={period.date}
+                        style={{
+                          padding: 'var(--spacing-1)',
+                          backgroundColor: 'var(--surface-1)',
+                          border: '1px solid var(--divider-subtle)',
+                          display: 'flex',
+                          flexDirection: 'column',
+                          gap: 'var(--spacing-0-5)'
+                        }}
+                      >
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                          <span className="text-label" style={{ color: 'var(--text-tertiary)' }}>
+                            {formatDate(period.date)}
+                          </span>
+                          <span className="text-label" style={{ color: 'var(--text-tertiary)', fontSize: '10px' }}>
+                            {period.days}d
+                          </span>
+                        </div>
+                        <span className="text-body" style={{
+                          color: 'var(--text-primary)',
+                          fontWeight: 600,
+                          fontSize: '13px'
+                        }}>
+                          {formatCurrency(period.salesPerDay)}/day
+                        </span>
+                        {period.percentageVsFirst !== null && (
+                          <span className="text-label" style={{
+                            color: period.percentageVsFirst >= 100 ? 'var(--status-success)' : 'var(--status-error)',
+                            fontSize: '11px',
+                            fontWeight: 600
+                          }}>
+                            {period.percentageVsFirst.toFixed(0)}%
+                          </span>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            );
+          })}
         </div>
       )}
     </div>

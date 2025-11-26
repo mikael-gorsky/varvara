@@ -1,12 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { categoriesAnalyticsService, CategoryStats } from '../../services/categoriesAnalyticsService';
 
-interface PeriodStats {
+interface CategoryPeriodStats {
   date: string;
   days: number;
-  sales: number;
   salesPerDay: number;
-  percentageVsFirst: number | null;
+  marketShare: number;
 }
 
 interface MarketTotals {
@@ -83,23 +82,19 @@ const OzonCategoriesAnalytics: React.FC<OzonCategoriesAnalyticsProps> = ({ onBac
     setMarketTotals(totalsWithPercentages);
   };
 
-  const calculatePeriodStats = (periods: { date: string; sales: number; days: number }[]): PeriodStats[] => {
-    const sortedPeriods = [...periods].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+  const calculateCategoryMarketShare = (categoryPeriods: { date: string; sales: number; days: number }[]): CategoryPeriodStats[] => {
+    const sortedPeriods = [...categoryPeriods].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
 
-    if (sortedPeriods.length === 0) return [];
+    return sortedPeriods.map(period => {
+      const marketTotal = marketTotals.find(mt => mt.date === period.date);
+      const categorySalesPerDay = period.sales / period.days;
+      const marketShare = marketTotal ? (categorySalesPerDay / marketTotal.totalSalesPerDay) * 100 : 0;
 
-    const firstPeriodSalesPerDay = sortedPeriods[0].sales / sortedPeriods[0].days;
-
-    return sortedPeriods.map((period, index) => {
-      const salesPerDay = period.sales / period.days;
       return {
         date: period.date,
         days: period.days,
-        sales: period.sales,
-        salesPerDay,
-        percentageVsFirst: index === 0
-          ? null
-          : ((salesPerDay / firstPeriodSalesPerDay) * 100)
+        salesPerDay: categorySalesPerDay,
+        marketShare
       };
     });
   };
@@ -214,7 +209,7 @@ const OzonCategoriesAnalytics: React.FC<OzonCategoriesAnalyticsProps> = ({ onBac
           )}
 
           {categories.map((category, index) => {
-            const periodStats = calculatePeriodStats(category.salesByPeriod);
+            const periodStats = calculateCategoryMarketShare(category.salesByPeriod);
 
             return (
               <div
@@ -257,7 +252,7 @@ const OzonCategoriesAnalytics: React.FC<OzonCategoriesAnalyticsProps> = ({ onBac
 
                 <div style={{ marginTop: 'var(--spacing-2)' }}>
                   <h4 className="text-label uppercase" style={{ color: 'var(--text-tertiary)', marginBottom: 'var(--spacing-1)' }}>
-                    Sales Per Day by Reporting Period:
+                    Market Share by Reporting Period:
                   </h4>
                   <div style={{
                     display: 'grid',
@@ -292,15 +287,13 @@ const OzonCategoriesAnalytics: React.FC<OzonCategoriesAnalyticsProps> = ({ onBac
                         }}>
                           {formatCurrency(period.salesPerDay)}/day
                         </span>
-                        {period.percentageVsFirst !== null && (
-                          <span className="text-label" style={{
-                            color: period.percentageVsFirst >= 100 ? 'var(--status-success)' : 'var(--status-error)',
-                            fontSize: '11px',
-                            fontWeight: 600
-                          }}>
-                            {period.percentageVsFirst.toFixed(0)}%
-                          </span>
-                        )}
+                        <span className="text-label" style={{
+                          color: 'var(--accent)',
+                          fontSize: '12px',
+                          fontWeight: 600
+                        }}>
+                          {period.marketShare.toFixed(1)}%
+                        </span>
                       </div>
                     ))}
                   </div>

@@ -1,12 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { companiesAnalyticsService, CompanyStats } from '../../services/companiesAnalyticsService';
 
-interface PeriodStats {
+interface CompanyPeriodStats {
   date: string;
   days: number;
-  sales: number;
   salesPerDay: number;
-  percentageVsFirst: number | null;
+  marketShare: number;
 }
 
 interface MarketTotals {
@@ -79,23 +78,19 @@ const OzonCompaniesAnalytics: React.FC = () => {
     setMarketTotals(totalsWithPercentages);
   };
 
-  const calculatePeriodStats = (periods: { date: string; sales: number; days: number }[]): PeriodStats[] => {
-    const sortedPeriods = [...periods].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+  const calculateCompanyMarketShare = (companyPeriods: { date: string; sales: number; days: number }[]): CompanyPeriodStats[] => {
+    const sortedPeriods = [...companyPeriods].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
 
-    if (sortedPeriods.length === 0) return [];
+    return sortedPeriods.map(period => {
+      const marketTotal = marketTotals.find(mt => mt.date === period.date);
+      const companySalesPerDay = period.sales / period.days;
+      const marketShare = marketTotal ? (companySalesPerDay / marketTotal.totalSalesPerDay) * 100 : 0;
 
-    const firstPeriodSalesPerDay = sortedPeriods[0].sales / sortedPeriods[0].days;
-
-    return sortedPeriods.map((period, index) => {
-      const salesPerDay = period.sales / period.days;
       return {
         date: period.date,
         days: period.days,
-        sales: period.sales,
-        salesPerDay,
-        percentageVsFirst: index === 0
-          ? null
-          : ((salesPerDay / firstPeriodSalesPerDay) * 100)
+        salesPerDay: companySalesPerDay,
+        marketShare
       };
     });
   };
@@ -210,7 +205,7 @@ const OzonCompaniesAnalytics: React.FC = () => {
           )}
 
           {companies.map((company, index) => {
-            const periodStats = calculatePeriodStats(company.salesByPeriod);
+            const periodStats = calculateCompanyMarketShare(company.salesByPeriod);
 
             return (
               <div
@@ -253,7 +248,7 @@ const OzonCompaniesAnalytics: React.FC = () => {
 
                 <div style={{ marginTop: 'var(--spacing-2)' }}>
                   <h4 className="text-label uppercase" style={{ color: 'var(--text-tertiary)', marginBottom: 'var(--spacing-1)' }}>
-                    Sales Per Day by Reporting Period:
+                    Market Share by Reporting Period:
                   </h4>
                   <div style={{
                     display: 'grid',
@@ -288,15 +283,13 @@ const OzonCompaniesAnalytics: React.FC = () => {
                         }}>
                           {formatCurrency(period.salesPerDay)}/day
                         </span>
-                        {period.percentageVsFirst !== null && (
-                          <span className="text-label" style={{
-                            color: period.percentageVsFirst >= 100 ? 'var(--status-success)' : 'var(--status-error)',
-                            fontSize: '11px',
-                            fontWeight: 600
-                          }}>
-                            {period.percentageVsFirst.toFixed(0)}%
-                          </span>
-                        )}
+                        <span className="text-label" style={{
+                          color: 'var(--accent)',
+                          fontSize: '12px',
+                          fontWeight: 600
+                        }}>
+                          {period.marketShare.toFixed(1)}%
+                        </span>
                       </div>
                     ))}
                   </div>

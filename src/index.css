@@ -48,7 +48,7 @@
   --spacing-8: calc(64px * var(--density-multiplier));
 
   /* Sidebar width */
-  --sidebar-width: 280px;
+  --sidebar-width: 400px;
 }
 
 .light-theme {

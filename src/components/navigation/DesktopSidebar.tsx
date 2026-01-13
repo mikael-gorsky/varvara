@@ -67,14 +67,14 @@ export const DesktopSidebar: React.FC<DesktopSidebarProps> = ({
                     key={item}
                     onClick={() => onSelectL3?.(item)}
                     className={`
-                      block w-full text-left py-1 transition-colors
+                      block w-full text-left py-2 transition-colors
                       ${isActive ? 'text-menu-desktop-active' : 'text-menu-desktop'}
                     `}
                     style={{
                       color: isActive ? '#E91E63' : 'var(--text-tertiary)',
                     }}
                   >
-                    {item}
+                    {item.toLowerCase()}
                   </button>
                 );
               })}
@@ -100,7 +100,7 @@ export const DesktopSidebar: React.FC<DesktopSidebarProps> = ({
                     onClick={() => !isDisabled && onSelectL2(item)}
                     disabled={isDisabled}
                     className={`
-                      block w-full text-left py-1 transition-colors
+                      block w-full text-left py-2 transition-colors
                       ${isActive ? 'text-menu-desktop-active' : 'text-menu-desktop'}
                     `}
                     style={{
@@ -111,7 +111,7 @@ export const DesktopSidebar: React.FC<DesktopSidebarProps> = ({
                           : 'var(--text-tertiary)',
                     }}
                   >
-                    {item}
+                    {item.toLowerCase()}
                   </button>
                 );
               })}
@@ -128,14 +128,14 @@ export const DesktopSidebar: React.FC<DesktopSidebarProps> = ({
                   key={item}
                   onClick={() => handleL1Click(item)}
                   className={`
-                    block w-full text-left py-1 transition-colors
+                    block w-full text-left py-2 transition-colors
                     ${isActive ? 'text-menu-desktop-active' : 'text-menu-desktop'}
                   `}
                   style={{
                     color: isActive ? '#E91E63' : 'var(--text-tertiary)',
                   }}
                 >
-                  {item}
+                  {item.toLowerCase()}
                 </button>
               );
             })}

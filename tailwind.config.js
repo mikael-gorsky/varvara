@@ -76,18 +76,18 @@ export default {
         '8': '64px',
         '10': '80px',
         '12': '96px',
-        'sidebar': '280px',
+        'sidebar': '400px',
       },
       fontSize: {
-        // Mobile menu - large typography (40-48px)
-        'menu-mobile': ['40px', { lineHeight: '1.15', fontWeight: '300' }],
-        'menu-mobile-lg': ['48px', { lineHeight: '1.15', fontWeight: '300' }],
-        // Desktop menu (30-36px)
-        'menu-desktop': ['30px', { lineHeight: '1.2', fontWeight: '300' }],
-        'menu-desktop-lg': ['36px', { lineHeight: '1.2', fontWeight: '300' }],
+        // Mobile menu - large typography (48-56px)
+        'menu-mobile': ['48px', { lineHeight: '1.3', fontWeight: '300' }],
+        'menu-mobile-lg': ['56px', { lineHeight: '1.3', fontWeight: '300' }],
+        // Desktop menu (36-42px)
+        'menu-desktop': ['36px', { lineHeight: '1.4', fontWeight: '300' }],
+        'menu-desktop-lg': ['42px', { lineHeight: '1.4', fontWeight: '300' }],
         // Active menu item (bold)
-        'menu-mobile-active': ['40px', { lineHeight: '1.15', fontWeight: '600' }],
-        'menu-desktop-active': ['30px', { lineHeight: '1.2', fontWeight: '600' }],
+        'menu-mobile-active': ['48px', { lineHeight: '1.3', fontWeight: '600' }],
+        'menu-desktop-active': ['36px', { lineHeight: '1.4', fontWeight: '600' }],
         // Page titles
         'page-title': ['48px', { lineHeight: '1.1', fontWeight: '300' }],
         'page-title-mobile': ['32px', { lineHeight: '1.15', fontWeight: '300' }],

@@ -117,14 +117,14 @@ export const MobileMenu: React.FC<MobileMenuProps> = ({
                     key={item}
                     onClick={() => handleL3Click(item)}
                     className={`
-                      block w-full text-left py-2 transition-colors
+                      block w-full text-left py-3 transition-colors
                       ${isActive ? 'text-menu-mobile-active' : 'text-menu-mobile'}
                     `}
                     style={{
                       color: isActive ? '#E91E63' : 'var(--text-tertiary)',
                     }}
                   >
-                    {item}
+                    {item.toLowerCase()}
                   </button>
                 );
               })}
@@ -161,7 +161,7 @@ export const MobileMenu: React.FC<MobileMenuProps> = ({
                     onClick={() => handleL2Click(item)}
                     disabled={isDisabled}
                     className={`
-                      block w-full text-left py-2 transition-colors
+                      block w-full text-left py-3 transition-colors
                       ${isActive ? 'text-menu-mobile-active' : 'text-menu-mobile'}
                     `}
                     style={{
@@ -172,7 +172,7 @@ export const MobileMenu: React.FC<MobileMenuProps> = ({
                           : 'var(--text-tertiary)',
                     }}
                   >
-                    {item}
+                    {item.toLowerCase()}
                   </button>
                 );
               })}
@@ -203,17 +203,17 @@ export const MobileMenu: React.FC<MobileMenuProps> = ({
                     key={item}
                     onClick={() => handleL1Click(item)}
                     className={`
-                      flex items-center gap-3 w-full text-left py-2 transition-colors
+                      flex items-center gap-3 w-full text-left py-3 transition-colors
                       ${isActive ? 'text-menu-mobile-active' : 'text-menu-mobile'}
                     `}
                     style={{
                       color: isActive ? '#E91E63' : 'var(--text-primary)',
                     }}
                   >
-                    {item}
+                    {item.toLowerCase()}
                     {hasAI && (
                       item === 'MOTIVATION' ? (
-                        <Sparkles size={20} style={{ color: '#E91E63' }} />
+                        <Sparkles size={24} style={{ color: '#E91E63' }} />
                       ) : (
                         <span
                           className="text-label-xs px-2 py-0.5 border rounded"

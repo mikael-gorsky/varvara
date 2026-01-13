@@ -7,8 +7,10 @@ interface MobileMenuProps {
   onClose: () => void;
   activeL1: Level1MenuItem | null;
   activeL2: string | null;
+  activeL3?: string | null;
   onSelectL1: (item: Level1MenuItem) => void;
   onSelectL2: (item: string) => void;
+  onSelectL3?: (item: string) => void;
   onBack: () => void;
 }
 
@@ -17,14 +19,20 @@ export const MobileMenu: React.FC<MobileMenuProps> = ({
   onClose,
   activeL1,
   activeL2,
+  activeL3,
   onSelectL1,
   onSelectL2,
+  onSelectL3,
   onBack,
 }) => {
   // Check if we're showing L2 menu
   const showL2Menu = activeL1 && menuStructure.l2Items[activeL1];
   const l2Items = activeL1 ? menuStructure.l2Items[activeL1] : null;
   const disabledL2 = activeL1 ? menuStructure.disabledL2Items?.[activeL1] || [] : [];
+
+  // Check if we're showing L3 menu
+  const l3Items = activeL2 && menuStructure.l3Items ? menuStructure.l3Items[activeL2] : null;
+  const showL3Menu = activeL2 && l3Items && l3Items.length > 0;
 
   if (!isOpen) return null;
 
@@ -39,8 +47,17 @@ export const MobileMenu: React.FC<MobileMenuProps> = ({
   const handleL2Click = (item: string) => {
     if (!disabledL2.includes(item)) {
       onSelectL2(item);
-      onClose();
+      // Check if this L2 item has L3 items - if so, don't close
+      const hasL3 = menuStructure.l3Items && menuStructure.l3Items[item];
+      if (!hasL3) {
+        onClose();
+      }
     }
+  };
+
+  const handleL3Click = (item: string) => {
+    onSelectL3?.(item);
+    onClose();
   };
 
   return (
@@ -51,12 +68,12 @@ export const MobileMenu: React.FC<MobileMenuProps> = ({
       {/* Header */}
       <div className="flex items-center justify-between px-4 py-4 safe-area-top">
         <button
-          onClick={showL2Menu ? onBack : onClose}
+          onClick={(showL2Menu || showL3Menu) ? onBack : onClose}
           className="p-2 -ml-2 transition-colors"
           style={{ color: 'var(--text-secondary)' }}
         >
-          {showL2Menu ? (
-            <span className="text-body">{'< back'}</span>
+          {(showL2Menu || showL3Menu) ? (
+            <span className="text-body">{'< BACK'}</span>
           ) : (
             <X size={24} />
           )}
@@ -71,14 +88,56 @@ export const MobileMenu: React.FC<MobileMenuProps> = ({
 
       {/* Menu Content */}
       <div className="flex-1 px-4 py-6 overflow-y-auto">
-        {showL2Menu && l2Items ? (
+        {showL3Menu && l3Items ? (
+          // L3 Menu
+          <>
+            {/* Breadcrumb */}
+            <div className="mb-2" style={{ color: 'var(--text-tertiary)' }}>
+              <span className="text-body-sm">HOME / {activeL1} / </span>
+              <span className="text-body-sm" style={{ color: 'var(--text-primary)' }}>
+                {activeL2}
+              </span>
+            </div>
+
+            {/* Section Label */}
+            <p
+              className="text-label-sm uppercase mb-4"
+              style={{ color: 'var(--text-tertiary)' }}
+            >
+              {activeL2} MENU
+            </p>
+
+            {/* L3 Items */}
+            <nav className="space-y-1">
+              {l3Items.map((item) => {
+                const isActive = activeL3 === item;
+
+                return (
+                  <button
+                    key={item}
+                    onClick={() => handleL3Click(item)}
+                    className={`
+                      block w-full text-left py-2 transition-colors
+                      ${isActive ? 'text-menu-mobile-active' : 'text-menu-mobile'}
+                    `}
+                    style={{
+                      color: isActive ? '#E91E63' : 'var(--text-tertiary)',
+                    }}
+                  >
+                    {item}
+                  </button>
+                );
+              })}
+            </nav>
+          </>
+        ) : showL2Menu && l2Items ? (
           // L2 Menu
           <>
             {/* Breadcrumb */}
             <div className="mb-2" style={{ color: 'var(--text-tertiary)' }}>
-              <span className="text-body-sm">home / </span>
+              <span className="text-body-sm">HOME / </span>
               <span className="text-body-sm" style={{ color: 'var(--text-primary)' }}>
-                {activeL1?.toLowerCase()}
+                {activeL1}
               </span>
             </div>
 
@@ -102,18 +161,18 @@ export const MobileMenu: React.FC<MobileMenuProps> = ({
                     onClick={() => handleL2Click(item)}
                     disabled={isDisabled}
                     className={`
-                      block w-full text-left py-2 transition-colors lowercase
+                      block w-full text-left py-2 transition-colors
                       ${isActive ? 'text-menu-mobile-active' : 'text-menu-mobile'}
                     `}
                     style={{
                       color: isDisabled
                         ? 'var(--text-disabled)'
                         : isActive
-                          ? 'var(--text-primary)'
+                          ? '#E91E63'
                           : 'var(--text-tertiary)',
                     }}
                   >
-                    {item.toLowerCase()}
+                    {item}
                   </button>
                 );
               })}
@@ -124,10 +183,10 @@ export const MobileMenu: React.FC<MobileMenuProps> = ({
           <>
             {/* Section Label */}
             <div className="flex items-center gap-2 mb-4">
-              <div className="w-4 h-0.5 bg-accent" />
+              <div className="w-4 h-0.5" style={{ backgroundColor: '#E91E63' }} />
               <span
                 className="text-label-sm uppercase"
-                style={{ color: 'var(--accent)' }}
+                style={{ color: '#E91E63' }}
               >
                 SYSTEM CORE
               </span>
@@ -144,23 +203,23 @@ export const MobileMenu: React.FC<MobileMenuProps> = ({
                     key={item}
                     onClick={() => handleL1Click(item)}
                     className={`
-                      flex items-center gap-3 w-full text-left py-2 transition-colors lowercase
+                      flex items-center gap-3 w-full text-left py-2 transition-colors
                       ${isActive ? 'text-menu-mobile-active' : 'text-menu-mobile'}
                     `}
                     style={{
-                      color: isActive ? 'var(--accent)' : 'var(--text-primary)',
+                      color: isActive ? '#E91E63' : 'var(--text-primary)',
                     }}
                   >
-                    {item.toLowerCase()}
+                    {item}
                     {hasAI && (
                       item === 'MOTIVATION' ? (
-                        <Sparkles size={20} style={{ color: 'var(--accent)' }} />
+                        <Sparkles size={20} style={{ color: '#E91E63' }} />
                       ) : (
                         <span
                           className="text-label-xs px-2 py-0.5 border rounded"
                           style={{
-                            borderColor: 'var(--accent)',
-                            color: 'var(--accent)',
+                            borderColor: '#E91E63',
+                            color: '#E91E63',
                           }}
                         >
                           AI

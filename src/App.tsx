@@ -38,11 +38,16 @@ function App() {
     setActiveL3(null);
   };
 
+  const handleSelectL3 = (item: string) => {
+    setActiveL3(item);
+  };
+
   const handleBack = () => {
-    if (activeL2) {
-      setActiveL2(null);
+    if (activeL3) {
       setActiveL3(null);
-    } else {
+    } else if (activeL2) {
+      setActiveL2(null);
+    } else if (activeL1) {
       setActiveL1(null);
     }
   };
@@ -83,18 +88,25 @@ function App() {
   // Determine if we should show bottom tabs (only on dashboard in mobile)
   const showBottomTabs = isMobile && activeL1 === 'DASHBOARD';
 
-  // Determine if we should show L2 sidebar (when we have L2 items and one is selected)
-  const showL2Sidebar = activeL1 && menuStructure.l2Items[activeL1] !== null && activeL2 !== null;
+  // Determine if we should show L2 sidebar (show when L1 has L2 items)
+  const hasL2Items = activeL1 && menuStructure.l2Items[activeL1] !== null;
+  const showL2Sidebar = !!hasL2Items;
+
+  // Check if current L2 has L3 items
+  const hasL3Items = activeL2 && menuStructure.l3Items && menuStructure.l3Items[activeL2];
 
   return (
     <AppLayout
       activeL1={activeL1}
       activeL2={activeL2}
+      activeL3={activeL3}
       onSelectL1={handleSelectL1}
       onSelectL2={handleSelectL2}
+      onSelectL3={handleSelectL3}
       onBack={handleBack}
       showBottomTabs={showBottomTabs}
       showL2Sidebar={showL2Sidebar}
+      hasL3Items={!!hasL3Items}
     >
       {renderContent()}
     </AppLayout>

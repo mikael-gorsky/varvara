@@ -1,36 +1,40 @@
 import React, { useState, useEffect } from 'react';
-import { Menu, Moon, Sun } from 'lucide-react';
+import { Menu } from 'lucide-react';
 import { Level1MenuItem } from '../../config/menuStructure';
 import { MobileMenu } from '../navigation/MobileMenu';
 import { DesktopSidebar } from '../navigation/DesktopSidebar';
 import { BottomTabBar, TabId } from '../navigation/BottomTabBar';
-import { useTheme } from '../../contexts/ThemeContext';
 
 interface AppLayoutProps {
   children: React.ReactNode;
   activeL1: Level1MenuItem | null;
   activeL2: string | null;
+  activeL3?: string | null;
   onSelectL1: (item: Level1MenuItem) => void;
   onSelectL2: (item: string) => void;
+  onSelectL3?: (item: string) => void;
   onBack: () => void;
   showBottomTabs?: boolean;
   showL2Sidebar?: boolean;
+  hasL3Items?: boolean;
 }
 
 export const AppLayout: React.FC<AppLayoutProps> = ({
   children,
   activeL1,
   activeL2,
+  activeL3,
   onSelectL1,
   onSelectL2,
+  onSelectL3,
   onBack,
   showBottomTabs = false,
   showL2Sidebar = false,
+  hasL3Items = false,
 }) => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
   const [activeTab, setActiveTab] = useState<TabId>('metrics');
-  const { theme, toggleTheme } = useTheme();
 
   // Detect mobile viewport
   useEffect(() => {
@@ -84,17 +88,15 @@ export const AppLayout: React.FC<AppLayoutProps> = ({
             <Menu size={24} />
           </button>
 
-          <div className="flex items-center gap-2">
-            {/* Theme Toggle */}
-            <button
-              onClick={toggleTheme}
-              className="p-2"
-              style={{ color: 'var(--text-secondary)' }}
-              aria-label="Toggle theme"
-            >
-              {theme === 'dark' ? <Sun size={20} /> : <Moon size={20} />}
-            </button>
-          </div>
+          <span
+            className="text-logo uppercase"
+            style={{ color: 'var(--text-primary)' }}
+          >
+            VARVARA
+          </span>
+
+          {/* Empty div for spacing */}
+          <div className="w-10" />
         </header>
       )}
 
@@ -103,9 +105,12 @@ export const AppLayout: React.FC<AppLayoutProps> = ({
         <DesktopSidebar
           activeL1={activeL1}
           activeL2={activeL2}
+          activeL3={activeL3}
           onSelectL1={onSelectL1}
           onSelectL2={onSelectL2}
+          onSelectL3={onSelectL3}
           showL2Sidebar={showL2Sidebar}
+          hasL3Items={hasL3Items}
         />
       )}
 
@@ -118,23 +123,6 @@ export const AppLayout: React.FC<AppLayoutProps> = ({
         `}
         style={{ backgroundColor: 'var(--bg-secondary)' }}
       >
-        {/* Desktop Theme Toggle */}
-        {!isMobile && (
-          <div className="absolute top-4 right-4 z-20">
-            <button
-              onClick={toggleTheme}
-              className="p-2 rounded-md transition-colors"
-              style={{
-                backgroundColor: 'var(--surface-2)',
-                color: 'var(--text-secondary)',
-              }}
-              aria-label="Toggle theme"
-            >
-              {theme === 'dark' ? <Sun size={20} /> : <Moon size={20} />}
-            </button>
-          </div>
-        )}
-
         {/* Page Content */}
         <div className="relative">
           {children}
@@ -147,11 +135,15 @@ export const AppLayout: React.FC<AppLayoutProps> = ({
         onClose={() => setIsMobileMenuOpen(false)}
         activeL1={activeL1}
         activeL2={activeL2}
+        activeL3={activeL3}
         onSelectL1={(item) => {
           onSelectL1(item);
         }}
         onSelectL2={(item) => {
           onSelectL2(item);
+        }}
+        onSelectL3={(item) => {
+          onSelectL3?.(item);
           setIsMobileMenuOpen(false);
         }}
         onBack={onBack}

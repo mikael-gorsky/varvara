@@ -3,27 +3,41 @@
 @tailwind utilities;
 
 :root {
+  /* Dark theme (default) */
   --bg-primary: #000000;
   --bg-secondary: #0A0A0A;
   --bg-tertiary: #141414;
   --bg-elevated: #1A1A1A;
+  --bg-card: #111111;
+
   --text-primary: #FFFFFF;
-  --text-secondary: rgba(255, 255, 255, 0.7);
-  --text-tertiary: rgba(255, 255, 255, 0.5);
-  --text-disabled: rgba(255, 255, 255, 0.3);
+  --text-secondary: #9CA3AF;
+  --text-tertiary: #6B7280;
+  --text-disabled: #4B5563;
+
   --divider-standard: rgba(255, 255, 255, 0.12);
   --divider-strong: rgba(255, 255, 255, 0.2);
+
   --surface-1: rgba(255, 255, 255, 0.05);
   --surface-2: rgba(255, 255, 255, 0.08);
   --surface-3: rgba(255, 255, 255, 0.11);
-  --accent: #90CAF9;
-  --accent-hover: #BBDEFB;
-  --accent-pressed: #64B5F6;
 
-  --font-family-primary: 'Segoe UI', -apple-system, BlinkMacSystemFont, system-ui, 'Helvetica Neue', Arial, sans-serif;
+  /* Accent - Pink */
+  --accent: #E91E63;
+  --accent-hover: #F06292;
+  --accent-pressed: #C2185B;
+
+  /* Status colors */
+  --status-connected: #10B981;
+  --status-warning: #F59E0B;
+  --status-error: #EF4444;
+
+  /* Typography */
+  --font-family-primary: 'Inter', -apple-system, BlinkMacSystemFont, system-ui, 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
   --font-size-scale: 1.0;
   --density-multiplier: 1.0;
 
+  /* Spacing */
   --spacing-base: 8px;
   --spacing-0-5: calc(4px * var(--density-multiplier));
   --spacing-1: calc(8px * var(--density-multiplier));
@@ -33,13 +47,8 @@
   --spacing-6: calc(48px * var(--density-multiplier));
   --spacing-8: calc(64px * var(--density-multiplier));
 
-  --font-size-micro: calc(10px * var(--font-size-scale));
-  --font-size-label: calc(11px * var(--font-size-scale));
-  --font-size-label-lg: calc(12px * var(--font-size-scale));
-  --font-size-body: calc(16px * var(--font-size-scale));
-  --font-size-menu-l2: calc(18px * var(--font-size-scale));
-  --font-size-menu-l1: calc(20px * var(--font-size-scale));
-  --font-size-subsection: calc(20px * var(--font-size-scale));
+  /* Sidebar width */
+  --sidebar-width: 280px;
 }
 
 .light-theme {
@@ -47,18 +56,24 @@
   --bg-secondary: #F5F5F5;
   --bg-tertiary: #EEEEEE;
   --bg-elevated: #FAFAFA;
+  --bg-card: #FFFFFF;
+
   --text-primary: #000000;
-  --text-secondary: rgba(0, 0, 0, 0.7);
-  --text-tertiary: rgba(0, 0, 0, 0.5);
-  --text-disabled: rgba(0, 0, 0, 0.3);
-  --divider-standard: rgba(0, 0, 0, 0.12);
-  --divider-strong: rgba(0, 0, 0, 0.2);
-  --surface-1: rgba(0, 0, 0, 0.03);
-  --surface-2: rgba(0, 0, 0, 0.05);
-  --surface-3: rgba(0, 0, 0, 0.08);
-  --accent: #42A5F5;
-  --accent-hover: #64B5F6;
-  --accent-pressed: #2196F3;
+  --text-secondary: #6B7280;
+  --text-tertiary: #9CA3AF;
+  --text-disabled: #D1D5DB;
+
+  --divider-standard: rgba(0, 0, 0, 0.08);
+  --divider-strong: rgba(0, 0, 0, 0.12);
+
+  --surface-1: rgba(0, 0, 0, 0.02);
+  --surface-2: rgba(0, 0, 0, 0.04);
+  --surface-3: rgba(0, 0, 0, 0.06);
+}
+
+/* Base styles */
+html {
+  font-size: 16px;
 }
 
 body {
@@ -67,7 +82,9 @@ body {
   background-color: var(--bg-primary);
   color: var(--text-primary);
   font-family: var(--font-family-primary);
-  transition: background-color 300ms ease, color 300ms ease;
+  transition: background-color 200ms ease, color 200ms ease;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 * {
@@ -81,6 +98,7 @@ body {
 
 button {
   font-family: inherit;
+  cursor: pointer;
 }
 
 input, select, textarea {
@@ -88,6 +106,7 @@ input, select, textarea {
   font-size: 16px;
 }
 
+/* Scrollbar utilities */
 .scrollbar-hide::-webkit-scrollbar {
   display: none;
 }
@@ -95,6 +114,38 @@ input, select, textarea {
 .scrollbar-hide {
   -ms-overflow-style: none;
   scrollbar-width: none;
+}
+
+/* Custom scrollbar for desktop */
+@media (min-width: 768px) {
+  ::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: var(--bg-secondary);
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background: var(--text-tertiary);
+    border-radius: 4px;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background: var(--text-secondary);
+  }
+}
+
+/* Safe area for mobile */
+@supports (padding: env(safe-area-inset-bottom)) {
+  .safe-area-bottom {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+
+  .safe-area-top {
+    padding-top: env(safe-area-inset-top);
+  }
 }
 
 @layer utilities {

@@ -1,8 +1,7 @@
-import React, { useState } from 'react';
-import VarvaraHeader from './components/VarvaraHeader';
-import Navigation from './components/Navigation';
-import { Level1MenuItem } from './config/menuStructure';
-import DashboardModule from './modules/DashboardModule';
+import React, { useState, useEffect } from 'react';
+import { Level1MenuItem, menuStructure } from './config/menuStructure';
+import { AppLayout } from './components/layout/AppLayout';
+import Dashboard from './pages/Dashboard';
 import ChannelsModule from './modules/ChannelsModule';
 import MotivationModule from './modules/MotivationModule';
 import FinanceModule from './modules/FinanceModule';
@@ -12,25 +11,56 @@ import ImportModule from './modules/ImportModule';
 import SettingsModule from './modules/SettingsModule';
 
 function App() {
-  const [activeL1, setActiveL1] = useState<Level1MenuItem | null>(null);
+  const [activeL1, setActiveL1] = useState<Level1MenuItem | null>('DASHBOARD');
   const [activeL2, setActiveL2] = useState<string | null>(null);
   const [activeL3, setActiveL3] = useState<string | null>(null);
-  const [serviceMessage] = useState<string>('');
+  const [isMobile, setIsMobile] = useState(false);
 
-  const handleBack = () => {
-    setActiveL1(null);
+  // Detect mobile viewport
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 1024);
+    };
+
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
+
+  const handleSelectL1 = (item: Level1MenuItem) => {
+    setActiveL1(item);
     setActiveL2(null);
     setActiveL3(null);
   };
 
+  const handleSelectL2 = (item: string) => {
+    setActiveL2(item);
+    setActiveL3(null);
+  };
+
+  const handleBack = () => {
+    if (activeL2) {
+      setActiveL2(null);
+      setActiveL3(null);
+    } else {
+      setActiveL1(null);
+    }
+  };
+
   const renderContent = () => {
     if (!activeL1) {
-      return null;
+      return (
+        <div className="flex items-center justify-center min-h-[50vh]">
+          <p className="text-body" style={{ color: 'var(--text-tertiary)' }}>
+            Select a menu item to get started
+          </p>
+        </div>
+      );
     }
 
     switch (activeL1) {
       case 'DASHBOARD':
-        return <DashboardModule />;
+        return <Dashboard isMobile={isMobile} />;
       case 'CHANNELS':
         return <ChannelsModule activeL2={activeL2} activeL3={activeL3} />;
       case 'MOTIVATION':
@@ -50,60 +80,24 @@ function App() {
     }
   };
 
-  const showContent = activeL1 !== null;
+  // Determine if we should show bottom tabs (only on dashboard in mobile)
+  const showBottomTabs = isMobile && activeL1 === 'DASHBOARD';
+
+  // Determine if we should show L2 sidebar (when we have L2 items and one is selected)
+  const showL2Sidebar = activeL1 && menuStructure.l2Items[activeL1] !== null && activeL2 !== null;
 
   return (
-    <div
-      className="min-h-screen flex flex-col"
-      style={{ backgroundColor: 'var(--bg-primary)' }}
+    <AppLayout
+      activeL1={activeL1}
+      activeL2={activeL2}
+      onSelectL1={handleSelectL1}
+      onSelectL2={handleSelectL2}
+      onBack={handleBack}
+      showBottomTabs={showBottomTabs}
+      showL2Sidebar={showL2Sidebar}
     >
-      {/* Zone 1: App Name + Version */}
-      <div style={{ paddingBottom: '24px' }}>
-        <VarvaraHeader />
-      </div>
-
-      {/* Zone 2: Service Messages */}
-      <div
-        style={{
-          minHeight: '40px',
-          paddingLeft: '16px',
-          paddingRight: '16px',
-          paddingBottom: '24px',
-        }}
-      >
-        {serviceMessage && (
-          <div style={{
-            color: 'var(--accent)',
-            fontSize: '14px',
-            fontStyle: 'italic',
-          }}>
-            {serviceMessage}
-          </div>
-        )}
-      </div>
-
-      {/* Zone 3: Menus or Action Content */}
-      <div style={{ flex: 1 }}>
-        <Navigation
-          activeL1={activeL1}
-          activeL2={activeL2}
-          activeL3={activeL3}
-          onL1Change={setActiveL1}
-          onL2Change={setActiveL2}
-          onL3Change={setActiveL3}
-          onBack={handleBack}
-        />
-        {showContent && (
-          <div style={{
-            paddingLeft: '16px',
-            paddingRight: '16px',
-            marginTop: '24px',
-          }}>
-            {renderContent()}
-          </div>
-        )}
-      </div>
-    </div>
+      {renderContent()}
+    </AppLayout>
   );
 }
 

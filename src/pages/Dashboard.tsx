@@ -223,102 +223,230 @@ const MobileDashboard: React.FC = () => {
   );
 };
 
+// Static data for dashboard
+const salesData = [
+  { year: '2023', sales: 6285447 },
+  { year: '2024', sales: 7008763 },
+  { year: '2025', sales: 7265397 },
+];
+
+const productMixData = [
+  { category: 'Office Kit equipment', y2023: 58.4, y2024: 65.9, y2025: 61.0 },
+  { category: 'Covers + films', y2023: 17.5, y2024: 16.2, y2025: 24.3 },
+  { category: 'RENZ', y2023: 8.1, y2024: 5.5, y2025: 6.1 },
+  { category: 'HSM', y2023: 7.9, y2024: 6.6, y2025: 4.5 },
+  { category: 'Other', y2023: 8.1, y2024: 5.8, y2025: 4.1 },
+];
+
+const channelData = [
+  { channel: 'Retail chains', salesShare: 63, profitShare: 78 },
+  { channel: 'Marketplaces', salesShare: 22, profitShare: 3.5 },
+  { channel: 'Regions', salesShare: 9, profitShare: 11 },
+  { channel: 'Direct customers', salesShare: 4, profitShare: 5.5 },
+  { channel: 'Tenders', salesShare: 1.2, profitShare: 1.7 },
+];
+
+const formatCurrency = (value: number) => {
+  return new Intl.NumberFormat('en-US', {
+    style: 'currency',
+    currency: 'USD',
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 0,
+  }).format(value);
+};
+
 const DesktopDashboard: React.FC = () => {
   return (
-    <div className="p-8">
-      <DashboardSection
-        title="performance overview"
-        subtitle="REAL-TIME TRADE ANALYTICS • Q4 2024"
-        actions={
-          <>
-            <button
-              className="px-4 py-2 text-label uppercase border transition-colors"
-              style={{
-                borderColor: 'var(--divider-strong)',
-                color: 'var(--text-primary)',
-              }}
-            >
-              EXPORT REPORT
-            </button>
-            <button
-              className="px-4 py-2 text-label uppercase transition-colors"
-              style={{
-                backgroundColor: 'var(--accent)',
-                color: '#FFFFFF',
-              }}
-            >
-              UPDATE DATA
-            </button>
-          </>
-        }
+    <div className="p-8 space-y-8">
+      {/* Sales Performance */}
+      <div
+        className="p-6 border"
+        style={{ backgroundColor: 'var(--bg-primary)', borderColor: 'var(--divider-standard)' }}
       >
-        <DashboardGrid columns={5} gap="md">
-          <MetricCard
-            label="TOTAL REVENUE"
-            value="$1.2M"
-            chartType="bar"
-            chartData={[2, 3, 4, 3, 5, 4]}
-          />
-          <MetricCard
-            label="CONVERSION RATE"
-            value="4.2%"
-            chartType="line"
-            chartData={[3.2, 3.5, 3.8, 4.0, 4.2]}
-          />
-          <MetricCard
-            label="ACTIVE USERS"
-            value="+842"
-            chartType="bar"
-            chartData={[4, 5, 3, 4, 6, 5, 4]}
-          />
-          <MetricCard
-            label="INVENTORY FLOW"
-            value="92%"
-            chartType="progress"
-            current={92}
-            goal={100}
-          />
-          <MetricCard
-            label="NET MARGIN"
-            value="18.5%"
-            chartType="line"
-            chartData={[16, 17, 17.5, 18, 18.5]}
-          />
-          <MetricCard
-            label="PENDING ORDERS"
-            value="241"
-            chartType="bar"
-            chartData={[3, 4, 5, 4, 3, 5]}
-          />
-          <MetricCard
-            label="SATISFACTION"
-            value="4.8"
-            chartType="stars"
-            filled={4.8}
-          />
-          <MetricCard
-            label="RETURN RATE"
-            value="1.2%"
-            valueColor="var(--accent)"
-            chartType="progress"
-            current={12}
-            goal={100}
-          />
-          <MetricCard
-            label="AVG TICKET"
-            value="$142"
-            chartType="bar"
-            chartData={[3, 4, 3, 5]}
-          />
-          <MetricCard
-            label="LOGISTICS"
-            value="99%"
-            chartType="circular"
-            current={99}
-            goal={100}
-          />
-        </DashboardGrid>
-      </DashboardSection>
+        <h2
+          className="text-section-title mb-6"
+          style={{ color: 'var(--text-primary)' }}
+        >
+          Sales Performance, USD
+        </h2>
+        <p className="text-label-xs uppercase mb-4" style={{ color: 'var(--text-tertiary)' }}>
+          AVERAGE ANNUAL RATE
+        </p>
+        <div className="grid grid-cols-3 gap-6">
+          {salesData.map((item) => (
+            <div
+              key={item.year}
+              className="p-4 border"
+              style={{ borderColor: 'var(--divider-standard)' }}
+            >
+              <p className="text-label uppercase mb-2" style={{ color: 'var(--text-tertiary)' }}>
+                {item.year}
+              </p>
+              <p className="text-kpi-value-lg" style={{ color: '#E91E63' }}>
+                {formatCurrency(item.sales)}
+              </p>
+            </div>
+          ))}
+        </div>
+        {/* Simple bar visualization */}
+        <div className="mt-6 flex items-end gap-4 h-32">
+          {salesData.map((item, index) => {
+            const maxSales = Math.max(...salesData.map(d => d.sales));
+            const height = (item.sales / maxSales) * 100;
+            return (
+              <div key={item.year} className="flex-1 flex flex-col items-center">
+                <div
+                  className="w-full transition-all"
+                  style={{
+                    height: `${height}%`,
+                    backgroundColor: index === salesData.length - 1 ? '#E91E63' : 'var(--surface-3)',
+                  }}
+                />
+                <p className="text-label-xs mt-2" style={{ color: 'var(--text-tertiary)' }}>
+                  {item.year}
+                </p>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* Product Mix */}
+      <div
+        className="p-6 border"
+        style={{ backgroundColor: 'var(--bg-primary)', borderColor: 'var(--divider-standard)' }}
+      >
+        <h2
+          className="text-section-title mb-6"
+          style={{ color: 'var(--text-primary)' }}
+        >
+          Product Mix by Year
+        </h2>
+        <table className="w-full">
+          <thead>
+            <tr style={{ borderBottom: '1px solid var(--divider-standard)' }}>
+              <th className="text-left py-3 text-label uppercase" style={{ color: 'var(--text-tertiary)' }}>
+                Category
+              </th>
+              <th className="text-right py-3 text-label uppercase" style={{ color: 'var(--text-tertiary)' }}>
+                2023
+              </th>
+              <th className="text-right py-3 text-label uppercase" style={{ color: 'var(--text-tertiary)' }}>
+                2024
+              </th>
+              <th className="text-right py-3 text-label uppercase" style={{ color: 'var(--text-tertiary)' }}>
+                2025
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            {productMixData.map((item, index) => (
+              <tr
+                key={item.category}
+                style={{ borderBottom: index < productMixData.length - 1 ? '1px solid var(--divider-standard)' : 'none' }}
+              >
+                <td className="py-3 text-body" style={{ color: 'var(--text-primary)' }}>
+                  {item.category}
+                </td>
+                <td className="py-3 text-body text-right" style={{ color: 'var(--text-secondary)' }}>
+                  {item.y2023}%
+                </td>
+                <td className="py-3 text-body text-right" style={{ color: 'var(--text-secondary)' }}>
+                  {item.y2024}%
+                </td>
+                <td className="py-3 text-body text-right font-medium" style={{ color: '#E91E63' }}>
+                  {item.y2025}%
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+
+      {/* Channel Performance */}
+      <div
+        className="p-6 border"
+        style={{ backgroundColor: 'var(--bg-primary)', borderColor: 'var(--divider-standard)' }}
+      >
+        <h2
+          className="text-section-title mb-2"
+          style={{ color: 'var(--text-primary)' }}
+        >
+          Channel Performance
+        </h2>
+        <p className="text-label-xs uppercase mb-6" style={{ color: 'var(--text-tertiary)' }}>
+          JANUARY - NOVEMBER 2025
+        </p>
+        <table className="w-full">
+          <thead>
+            <tr style={{ borderBottom: '1px solid var(--divider-standard)' }}>
+              <th className="text-left py-3 text-label uppercase" style={{ color: 'var(--text-tertiary)' }}>
+                Channel
+              </th>
+              <th className="text-right py-3 text-label uppercase" style={{ color: 'var(--text-tertiary)' }}>
+                Share of Sales
+              </th>
+              <th className="text-right py-3 text-label uppercase" style={{ color: 'var(--text-tertiary)' }}>
+                Share of Profit
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            {channelData.map((item, index) => (
+              <tr
+                key={item.channel}
+                style={{ borderBottom: index < channelData.length - 1 ? '1px solid var(--divider-standard)' : 'none' }}
+              >
+                <td className="py-3 text-body" style={{ color: 'var(--text-primary)' }}>
+                  {item.channel}
+                </td>
+                <td className="py-3 text-body text-right" style={{ color: 'var(--text-secondary)' }}>
+                  {item.salesShare}%
+                </td>
+                <td className="py-3 text-body text-right font-medium" style={{ color: '#E91E63' }}>
+                  {item.profitShare}%
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+        {/* Visual bars for channel comparison */}
+        <div className="mt-6 space-y-3">
+          {channelData.map((item) => (
+            <div key={item.channel} className="flex items-center gap-4">
+              <div className="w-32 text-body-sm truncate" style={{ color: 'var(--text-tertiary)' }}>
+                {item.channel}
+              </div>
+              <div className="flex-1 flex gap-2">
+                <div
+                  className="h-4"
+                  style={{
+                    width: `${item.salesShare}%`,
+                    backgroundColor: 'var(--surface-3)',
+                  }}
+                />
+                <div
+                  className="h-4"
+                  style={{
+                    width: `${item.profitShare}%`,
+                    backgroundColor: '#E91E63',
+                  }}
+                />
+              </div>
+            </div>
+          ))}
+          <div className="flex gap-4 mt-2">
+            <div className="flex items-center gap-2">
+              <div className="w-4 h-4" style={{ backgroundColor: 'var(--surface-3)' }} />
+              <span className="text-label-xs" style={{ color: 'var(--text-tertiary)' }}>Sales</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="w-4 h-4" style={{ backgroundColor: '#E91E63' }} />
+              <span className="text-label-xs" style={{ color: 'var(--text-tertiary)' }}>Profit</span>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   );
 };

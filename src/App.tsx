@@ -76,6 +76,62 @@ function App() {
       );
     }
 
+    // On desktop, show L3 tile navigation when L2 is selected but L3 is not
+    const l3Items = activeL2 && menuStructure.l3Items?.[activeL2];
+    if (!isMobile && l3Items && !activeL3) {
+      return (
+        <div className="p-8">
+          <h1
+            className="text-section-title mb-8"
+            style={{ color: 'var(--text-primary)' }}
+          >
+            {activeL2.toLowerCase()} sections
+          </h1>
+          <div className="flex gap-4 flex-wrap">
+            {/* Category Tile - Large Pink */}
+            <button
+              className="flex-shrink-0 flex items-end p-6 transition-all hover:opacity-90"
+              style={{
+                backgroundColor: '#E91E63',
+                width: '280px',
+                height: '180px',
+              }}
+            >
+              <span
+                className="text-2xl font-medium uppercase"
+                style={{ color: 'white' }}
+              >
+                {activeL2}
+              </span>
+            </button>
+
+            {/* L3 Item Tiles */}
+            {l3Items.map((item) => (
+              <button
+                key={item}
+                onClick={() => handleSelectL3(item)}
+                className="flex-shrink-0 flex flex-col justify-end p-4 transition-all border hover:opacity-80"
+                style={{
+                  backgroundColor: 'var(--bg-tertiary)',
+                  borderColor: 'var(--divider-standard)',
+                  width: '160px',
+                  height: '180px',
+                  cursor: 'pointer',
+                }}
+              >
+                <span
+                  className="text-body-lg font-medium uppercase"
+                  style={{ color: 'var(--text-primary)' }}
+                >
+                  {item}
+                </span>
+              </button>
+            ))}
+          </div>
+        </div>
+      );
+    }
+
     switch (activeL1) {
       case 'DASHBOARD':
         return <Dashboard isMobile={isMobile} />;

@@ -132,67 +132,78 @@ const OzonCompaniesAnalytics: React.FC = () => {
   }
 
   return (
-    <div>
-      <div style={{ marginBottom: 'var(--spacing-3)' }}>
-        <h2 className="text-page-title-mobile md:text-page-title-desktop uppercase" style={{ color: 'var(--accent)' }}>
+    <div className="p-8">
+      <div style={{ marginBottom: '32px' }}>
+        <h2 style={{
+          fontSize: '24px',
+          fontWeight: 500,
+          textTransform: 'uppercase',
+          color: '#E91E63'
+        }}>
           TOP 10 COMPANIES BY SALES VOLUME
         </h2>
       </div>
 
       {companies.length === 0 ? (
-        <p className="text-body" style={{ color: 'var(--text-secondary)' }}>
+        <p style={{ color: 'var(--text-secondary)', fontSize: '18px' }}>
           No data available
         </p>
       ) : (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--spacing-3)' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '32px' }}>
 
           {marketTotals.length > 0 && (
             <div
               style={{
-                backgroundColor: 'var(--accent)',
-                border: '2px solid var(--accent)',
-                padding: 'var(--spacing-2)',
+                backgroundColor: '#E91E63',
+                padding: '24px',
               }}
             >
-              <h3 className="text-subsection uppercase" style={{ color: 'var(--bg-primary)', marginBottom: 'var(--spacing-2)' }}>
+              <h3 style={{
+                color: 'white',
+                marginBottom: '16px',
+                fontSize: '18px',
+                fontWeight: 500,
+                textTransform: 'uppercase'
+              }}>
                 MARKET TOTAL - SALES PER DAY DYNAMICS
               </h3>
               <div style={{
-                display: 'grid',
-                gridTemplateColumns: 'repeat(auto-fill, minmax(140px, 1fr))',
-                gap: 'var(--spacing-1)',
+                display: 'flex',
+                flexWrap: 'wrap',
+                gap: '16px',
               }}>
                 {marketTotals.map((period) => (
                   <div
                     key={period.date}
                     style={{
-                      padding: 'var(--spacing-1)',
+                      padding: '16px',
                       backgroundColor: 'var(--bg-primary)',
-                      border: '1px solid var(--accent)',
+                      border: '1px solid #E91E63',
+                      minWidth: '180px',
                       display: 'flex',
                       flexDirection: 'column',
-                      gap: 'var(--spacing-0-5)'
+                      gap: '8px'
                     }}
                   >
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                      <span className="text-label" style={{ color: 'var(--text-tertiary)' }}>
+                      <span style={{ color: 'var(--text-tertiary)', fontSize: '14px' }}>
                         {formatDate(period.date)}
                       </span>
-                      <span className="text-label" style={{ color: 'var(--text-tertiary)', fontSize: '10px' }}>
+                      <span style={{ color: 'var(--text-tertiary)', fontSize: '12px' }}>
                         {period.days}d
                       </span>
                     </div>
-                    <span className="text-body" style={{
-                      color: 'var(--accent)',
+                    <span style={{
+                      color: '#E91E63',
                       fontWeight: 600,
-                      fontSize: '13px'
+                      fontSize: '24px'
                     }}>
                       {formatCurrency(period.totalSalesPerDay)}/day
                     </span>
                     {period.percentageVsFirst !== null && (
-                      <span className="text-label" style={{
+                      <span style={{
                         color: period.percentageVsFirst >= 100 ? 'var(--status-success)' : 'var(--status-error)',
-                        fontSize: '11px',
+                        fontSize: '18px',
                         fontWeight: 600
                       }}>
                         {period.percentageVsFirst.toFixed(0)}%
@@ -213,32 +224,39 @@ const OzonCompaniesAnalytics: React.FC = () => {
                 style={{
                   backgroundColor: 'var(--bg-elevated)',
                   border: '1px solid var(--divider-standard)',
-                  padding: 'var(--spacing-2)',
+                  padding: '24px',
                 }}
               >
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 'var(--spacing-2)' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '20px' }}>
                   <div style={{ flex: 1 }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--spacing-1)', marginBottom: 'var(--spacing-1)' }}>
-                      <span className="text-label" style={{
-                        color: 'var(--text-tertiary)',
-                        minWidth: '30px'
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '12px' }}>
+                      <span style={{
+                        color: '#E91E63',
+                        minWidth: '40px',
+                        fontSize: '20px',
+                        fontWeight: 600
                       }}>
                         #{index + 1}
                       </span>
-                      <h3 className="text-subsection uppercase" style={{ color: 'var(--text-primary)' }}>
+                      <h3 style={{
+                        color: 'var(--text-primary)',
+                        fontSize: '20px',
+                        fontWeight: 500,
+                        textTransform: 'uppercase'
+                      }}>
                         {company.seller}
                       </h3>
                     </div>
-                    <div style={{ display: 'flex', gap: 'var(--spacing-3)', marginTop: 'var(--spacing-1)' }}>
+                    <div style={{ display: 'flex', gap: '32px', marginTop: '12px' }}>
                       <div>
-                        <span className="text-label uppercase" style={{ color: 'var(--text-tertiary)' }}>Total Sales:</span>
-                        <span className="text-body" style={{ color: 'var(--accent)', marginLeft: 'var(--spacing-1)', fontWeight: 600 }}>
+                        <span style={{ color: 'var(--text-tertiary)', fontSize: '14px', textTransform: 'uppercase' }}>Total Sales:</span>
+                        <span style={{ color: '#E91E63', marginLeft: '8px', fontWeight: 600, fontSize: '20px' }}>
                           {formatCurrency(company.totalSales)}
                         </span>
                       </div>
                       <div>
-                        <span className="text-label uppercase" style={{ color: 'var(--text-tertiary)' }}>Products:</span>
-                        <span className="text-body" style={{ color: 'var(--text-secondary)', marginLeft: 'var(--spacing-1)' }}>
+                        <span style={{ color: 'var(--text-tertiary)', fontSize: '14px', textTransform: 'uppercase' }}>Products:</span>
+                        <span style={{ color: 'var(--text-secondary)', marginLeft: '8px', fontSize: '20px' }}>
                           {company.productCount}
                         </span>
                       </div>
@@ -246,46 +264,52 @@ const OzonCompaniesAnalytics: React.FC = () => {
                   </div>
                 </div>
 
-                <div style={{ marginTop: 'var(--spacing-2)' }}>
-                  <h4 className="text-label uppercase" style={{ color: 'var(--text-tertiary)', marginBottom: 'var(--spacing-1)' }}>
-                    Market Share by Reporting Period:
+                <div style={{ marginTop: '20px' }}>
+                  <h4 style={{
+                    marginBottom: '16px',
+                    fontSize: '16px',
+                    textTransform: 'uppercase'
+                  }}>
+                    <span style={{ color: 'var(--text-primary)' }}>daily sales volume</span>
+                    <span style={{ color: 'var(--text-tertiary)' }}> / </span>
+                    <span style={{ color: '#E91E63' }}>market share</span>
                   </h4>
                   <div style={{
-                    display: 'grid',
-                    gridTemplateColumns: 'repeat(auto-fill, minmax(140px, 1fr))',
-                    gap: 'var(--spacing-1)',
-                    marginTop: 'var(--spacing-1)'
+                    display: 'flex',
+                    flexWrap: 'wrap',
+                    gap: '16px',
                   }}>
                     {periodStats.map((period) => (
                       <div
                         key={period.date}
                         style={{
-                          padding: 'var(--spacing-1)',
-                          backgroundColor: 'var(--surface-1)',
-                          border: '1px solid var(--divider-subtle)',
+                          padding: '16px',
+                          backgroundColor: 'var(--bg-tertiary)',
+                          border: '1px solid var(--divider-standard)',
+                          minWidth: '180px',
                           display: 'flex',
                           flexDirection: 'column',
-                          gap: 'var(--spacing-0-5)'
+                          gap: '8px'
                         }}
                       >
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                          <span className="text-label" style={{ color: 'var(--text-tertiary)' }}>
+                          <span style={{ color: 'var(--text-tertiary)', fontSize: '14px' }}>
                             {formatDate(period.date)}
                           </span>
-                          <span className="text-label" style={{ color: 'var(--text-tertiary)', fontSize: '10px' }}>
+                          <span style={{ color: 'var(--text-tertiary)', fontSize: '12px' }}>
                             {period.days}d
                           </span>
                         </div>
-                        <span className="text-body" style={{
+                        <span style={{
                           color: 'var(--text-primary)',
                           fontWeight: 600,
-                          fontSize: '13px'
+                          fontSize: '24px'
                         }}>
                           {formatCurrency(period.salesPerDay)}/day
                         </span>
-                        <span className="text-label" style={{
-                          color: 'var(--accent)',
-                          fontSize: '12px',
+                        <span style={{
+                          color: '#E91E63',
+                          fontSize: '22px',
                           fontWeight: 600
                         }}>
                           {period.marketShare.toFixed(1)}%

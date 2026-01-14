@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Level1MenuItem, menuStructure } from './config/menuStructure';
 import { AppLayout } from './components/layout/AppLayout';
+import { TileNavigation } from './components/navigation/TileNavigation';
 import Dashboard from './pages/Dashboard';
 import ChannelsModule from './modules/ChannelsModule';
 import MotivationModule from './modules/MotivationModule';
@@ -60,6 +61,18 @@ function App() {
             Select a menu item to get started
           </p>
         </div>
+      );
+    }
+
+    // On desktop, show tile navigation for L1 items with L2 subitems (when no L2 selected)
+    const hasL2Items = menuStructure.l2Items[activeL1] !== null;
+    if (!isMobile && hasL2Items && !activeL2) {
+      return (
+        <TileNavigation
+          activeL1={activeL1}
+          onSelectL2={handleSelectL2}
+          disabledItems={menuStructure.disabledL2Items?.[activeL1] || []}
+        />
       );
     }
 

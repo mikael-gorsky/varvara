@@ -23,11 +23,6 @@ export const DesktopSidebar: React.FC<DesktopSidebarProps> = ({
   showL2Sidebar = false,
   hasL3Items = false,
 }) => {
-  const l2Items = activeL1 ? menuStructure.l2Items[activeL1] : null;
-  const disabledL2 = activeL1 ? menuStructure.disabledL2Items?.[activeL1] || [] : [];
-  const l3Items = activeL2 && menuStructure.l3Items ? menuStructure.l3Items[activeL2] : null;
-  const showL3Sidebar = hasL3Items && l3Items && l3Items.length > 0;
-
   const handleL1Click = (item: Level1MenuItem) => {
     onSelectL1(item);
   };
@@ -37,110 +32,52 @@ export const DesktopSidebar: React.FC<DesktopSidebarProps> = ({
       className="fixed left-0 top-0 bottom-0 w-sidebar flex flex-col z-40"
       style={{ backgroundColor: 'var(--bg-primary)' }}
     >
-      {/* Logo */}
-      <div className="px-6 py-8">
-        <h1
-          className="text-logo uppercase"
-          style={{ color: 'var(--text-primary)' }}
-        >
-          VARVARA<span style={{ color: '#E91E63' }}>.</span>
-        </h1>
+      {/* Header with breadcrumb */}
+      <div className="px-6 py-6">
+        <div className="flex items-center gap-2 text-label-xs uppercase tracking-wider">
+          <span style={{ color: 'var(--text-tertiary)' }}>VARVARA</span>
+          {activeL1 && (
+            <>
+              <span style={{ color: 'var(--text-tertiary)' }}>&gt;</span>
+              <span style={{ color: '#E91E63' }}>{activeL1}</span>
+            </>
+          )}
+        </div>
       </div>
 
-      {/* Navigation */}
-      <nav className="flex-1 px-6 py-4 overflow-y-auto">
-        {showL3Sidebar && l3Items ? (
-          // L3 Menu for third-level pages
-          <>
-            <p
-              className="text-label-xs uppercase mb-4"
-              style={{ color: 'var(--text-tertiary)' }}
-            >
-              {activeL2}
-            </p>
-            <div className="space-y-1">
-              {l3Items.map((item) => {
-                const isActive = activeL3 === item;
+      {/* Section Label */}
+      <div className="px-6 mb-4">
+        <p
+          className="text-label-xs uppercase tracking-wider"
+          style={{ color: 'var(--text-tertiary)' }}
+        >
+          SYSTEM ACCESS
+        </p>
+      </div>
 
-                return (
-                  <button
-                    key={item}
-                    onClick={() => onSelectL3?.(item)}
-                    className={`
-                      block w-full text-left py-2 transition-colors
-                      ${isActive ? 'text-menu-desktop-active' : 'text-menu-desktop'}
-                    `}
-                    style={{
-                      color: isActive ? '#E91E63' : 'var(--text-tertiary)',
-                    }}
-                  >
-                    {item.toLowerCase()}
-                  </button>
-                );
-              })}
-            </div>
-          </>
-        ) : showL2Sidebar && l2Items ? (
-          // L2 Menu for second-level pages
-          <>
-            <p
-              className="text-label-xs uppercase mb-4"
-              style={{ color: 'var(--text-tertiary)' }}
-            >
-              CATEGORY
-            </p>
-            <div className="space-y-1">
-              {l2Items.map((item) => {
-                const isActive = activeL2 === item;
-                const isDisabled = disabledL2.includes(item);
+      {/* Navigation - Always L1 Menu */}
+      <nav className="flex-1 px-6 overflow-y-auto">
+        <div className="space-y-1">
+          {menuStructure.l1Items.map((item) => {
+            const isActive = activeL1 === item;
 
-                return (
-                  <button
-                    key={item}
-                    onClick={() => !isDisabled && onSelectL2(item)}
-                    disabled={isDisabled}
-                    className={`
-                      block w-full text-left py-2 transition-colors
-                      ${isActive ? 'text-menu-desktop-active' : 'text-menu-desktop'}
-                    `}
-                    style={{
-                      color: isDisabled
-                        ? 'var(--text-disabled)'
-                        : isActive
-                          ? '#E91E63'
-                          : 'var(--text-tertiary)',
-                    }}
-                  >
-                    {item.toLowerCase()}
-                  </button>
-                );
-              })}
-            </div>
-          </>
-        ) : (
-          // L1 Menu (main navigation)
-          <div className="space-y-1">
-            {menuStructure.l1Items.map((item) => {
-              const isActive = activeL1 === item;
-
-              return (
-                <button
-                  key={item}
-                  onClick={() => handleL1Click(item)}
-                  className={`
-                    block w-full text-left py-2 transition-colors
-                    ${isActive ? 'text-menu-desktop-active' : 'text-menu-desktop'}
-                  `}
-                  style={{
-                    color: isActive ? '#E91E63' : 'var(--text-tertiary)',
-                  }}
-                >
-                  {item.toLowerCase()}
-                </button>
-              );
-            })}
-          </div>
-        )}
+            return (
+              <button
+                key={item}
+                onClick={() => handleL1Click(item)}
+                className={`
+                  block w-full text-left py-2 transition-colors
+                  ${isActive ? 'text-menu-desktop-active' : 'text-menu-desktop'}
+                `}
+                style={{
+                  color: isActive ? '#E91E63' : 'var(--text-tertiary)',
+                }}
+              >
+                {item.toLowerCase()}
+              </button>
+            );
+          })}
+        </div>
       </nav>
 
       {/* Footer - User Info */}

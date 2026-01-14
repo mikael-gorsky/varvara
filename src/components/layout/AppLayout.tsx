@@ -4,7 +4,6 @@ import { Level1MenuItem } from '../../config/menuStructure';
 import { MobileMenu } from '../navigation/MobileMenu';
 import { DesktopSidebar } from '../navigation/DesktopSidebar';
 import { BottomTabBar, TabId } from '../navigation/BottomTabBar';
-import { Breadcrumb } from '../navigation/Breadcrumb';
 
 interface AppLayoutProps {
   children: React.ReactNode;
@@ -124,36 +123,6 @@ export const AppLayout: React.FC<AppLayoutProps> = ({
         `}
         style={{ backgroundColor: 'var(--bg-secondary)' }}
       >
-        {/* Desktop Breadcrumb */}
-        {!isMobile && activeL1 && (
-          <div
-            className="px-8 py-4 border-b"
-            style={{
-              backgroundColor: 'var(--bg-secondary)',
-              borderColor: 'var(--divider-standard)'
-            }}
-          >
-            <Breadcrumb
-              activeL1={activeL1}
-              activeL2={activeL2}
-              activeL3={activeL3}
-              onNavigateHome={() => {
-                onSelectL1('DASHBOARD' as Level1MenuItem);
-              }}
-              onNavigateL1={() => {
-                if (activeL2) {
-                  onBack();
-                }
-              }}
-              onNavigateL2={() => {
-                if (activeL3) {
-                  onBack();
-                }
-              }}
-            />
-          </div>
-        )}
-
         {/* Page Content */}
         <div className="relative">
           {children}

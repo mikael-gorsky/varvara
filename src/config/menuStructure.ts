@@ -8,11 +8,17 @@ export type Level1MenuItem =
   | 'IMPORT'
   | 'SETTINGS';
 
+export interface TileGroup {
+  category: string;
+  items: string[];
+}
+
 export interface MenuStructure {
   l1Items: Level1MenuItem[];
   l2Items: Record<Level1MenuItem, string[] | null>;
   l3Items?: Record<string, string[]>;
   disabledL2Items?: Record<Level1MenuItem, string[]>;
+  tileGroups?: Record<Level1MenuItem, TileGroup[]>;
 }
 
 export const menuStructure: MenuStructure = {
@@ -48,6 +54,29 @@ export const menuStructure: MenuStructure = {
     PLAN: [],
     IMPORT: ['IMPORT WB REPORTS', 'IMPORT YANDEX.MARKET REPORTS', 'IMPORT OUR PRICE-LIST'],
     SETTINGS: [],
+  },
+  tileGroups: {
+    DASHBOARD: [],
+    CHANNELS: [
+      { category: 'MARKETPLACES', items: ['OZON', 'WILDBERRIES', 'YANDEX'] },
+      { category: 'RETAIL', items: ['RESELLERS', 'TENDERS'] },
+      { category: 'ANALYTICS', items: ['CUMULATIVE'] },
+    ],
+    MOTIVATION: [],
+    FINANCE: [],
+    PRODUCTS: [
+      { category: 'INVENTORY', items: ['CATALOG', 'INVENTORY'] },
+      { category: 'ANALYTICS', items: ['PERFORMANCE', 'CATEGORIES'] },
+    ],
+    PLAN: [
+      { category: 'PLANNING', items: ['SALES PLANS', 'BUDGET', 'TARGETS', 'TIMELINE'] },
+    ],
+    IMPORT: [
+      { category: 'DATA IMPORT', items: ['IMPORT OZON REPORTS', 'IMPORT WB REPORTS', 'IMPORT YANDEX.MARKET REPORTS', 'IMPORT OUR PRICE-LIST'] },
+    ],
+    SETTINGS: [
+      { category: 'PREFERENCES', items: ['INTERFACE DESIGN', 'THEME', 'LANGUAGE', 'USERS'] },
+    ],
   },
 };
 

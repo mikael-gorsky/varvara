@@ -232,7 +232,7 @@ const salesData = [
 
 const productMixData = [
   { category: 'Office Kit equipment', y2023: 58.4, y2024: 65.9, y2025: 61.0 },
-  { category: 'Covers + films', y2023: 17.5, y2024: 16.2, y2025: 24.3 },
+  { category: 'Accessories', y2023: 17.5, y2024: 16.2, y2025: 24.3 },
   { category: 'RENZ', y2023: 8.1, y2024: 5.5, y2025: 6.1 },
   { category: 'HSM', y2023: 7.9, y2024: 6.6, y2025: 4.5 },
   { category: 'Other', y2023: 8.1, y2024: 5.8, y2025: 4.1 },
@@ -257,23 +257,20 @@ const formatCurrency = (value: number) => {
 
 const DesktopDashboard: React.FC = () => {
   return (
-    <div className="p-8 space-y-8">
-      {/* Sales Performance */}
+    <div className="p-4 md:p-8 space-y-6 md:space-y-8">
+      {/* Sales Volume by Year */}
       <div
-        className="p-6 border"
+        className="p-4 md:p-6 border"
         style={{ backgroundColor: 'var(--bg-primary)', borderColor: 'var(--divider-standard)' }}
       >
         <h2
-          className="text-section-title mb-6"
+          className="text-body-lg md:text-section-title mb-4 md:mb-6"
           style={{ color: 'var(--text-primary)' }}
         >
-          Sales Performance, USD
+          Sales Volume, by Year
         </h2>
-        <p className="text-label-xs uppercase mb-4" style={{ color: 'var(--text-tertiary)' }}>
-          AVERAGE ANNUAL RATE
-        </p>
-        <div className="grid grid-cols-3 gap-6">
-          {salesData.map((item) => (
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          {salesData.map((item, index) => (
             <div
               key={item.year}
               className="p-4 border"
@@ -282,169 +279,192 @@ const DesktopDashboard: React.FC = () => {
               <p className="text-label uppercase mb-2" style={{ color: 'var(--text-tertiary)' }}>
                 {item.year}
               </p>
-              <p className="text-kpi-value-lg" style={{ color: '#E91E63' }}>
+              <p
+                className="text-kpi-value md:text-kpi-value-lg"
+                style={{ color: index === salesData.length - 1 ? '#E91E63' : 'var(--text-primary)' }}
+              >
                 {formatCurrency(item.sales)}
               </p>
+              {/* Mini bar */}
+              <div className="mt-3 h-2 bg-surface-2" style={{ backgroundColor: 'var(--surface-2)' }}>
+                <div
+                  className="h-full"
+                  style={{
+                    width: `${(item.sales / Math.max(...salesData.map(d => d.sales))) * 100}%`,
+                    backgroundColor: index === salesData.length - 1 ? '#E91E63' : 'var(--text-tertiary)',
+                  }}
+                />
+              </div>
             </div>
           ))}
         </div>
-        {/* Simple bar visualization */}
-        <div className="mt-6 flex items-end gap-4 h-32">
-          {salesData.map((item, index) => {
-            const maxSales = Math.max(...salesData.map(d => d.sales));
-            const height = (item.sales / maxSales) * 100;
-            return (
-              <div key={item.year} className="flex-1 flex flex-col items-center">
-                <div
-                  className="w-full transition-all"
-                  style={{
-                    height: `${height}%`,
-                    backgroundColor: index === salesData.length - 1 ? '#E91E63' : 'var(--surface-3)',
-                  }}
-                />
-                <p className="text-label-xs mt-2" style={{ color: 'var(--text-tertiary)' }}>
-                  {item.year}
-                </p>
-              </div>
-            );
-          })}
-        </div>
       </div>
 
-      {/* Product Mix */}
+      {/* Product Mix by Year */}
       <div
-        className="p-6 border"
+        className="p-4 md:p-6 border"
         style={{ backgroundColor: 'var(--bg-primary)', borderColor: 'var(--divider-standard)' }}
       >
         <h2
-          className="text-section-title mb-6"
+          className="text-body-lg md:text-section-title mb-4 md:mb-6"
           style={{ color: 'var(--text-primary)' }}
         >
           Product Mix by Year
         </h2>
-        <table className="w-full">
-          <thead>
-            <tr style={{ borderBottom: '1px solid var(--divider-standard)' }}>
-              <th className="text-left py-3 text-label uppercase" style={{ color: 'var(--text-tertiary)' }}>
-                Category
-              </th>
-              <th className="text-right py-3 text-label uppercase" style={{ color: 'var(--text-tertiary)' }}>
-                2023
-              </th>
-              <th className="text-right py-3 text-label uppercase" style={{ color: 'var(--text-tertiary)' }}>
-                2024
-              </th>
-              <th className="text-right py-3 text-label uppercase" style={{ color: 'var(--text-tertiary)' }}>
-                2025
-              </th>
-            </tr>
-          </thead>
-          <tbody>
-            {productMixData.map((item, index) => (
-              <tr
-                key={item.category}
-                style={{ borderBottom: index < productMixData.length - 1 ? '1px solid var(--divider-standard)' : 'none' }}
-              >
-                <td className="py-3 text-body" style={{ color: 'var(--text-primary)' }}>
-                  {item.category}
-                </td>
-                <td className="py-3 text-body text-right" style={{ color: 'var(--text-secondary)' }}>
-                  {item.y2023}%
-                </td>
-                <td className="py-3 text-body text-right" style={{ color: 'var(--text-secondary)' }}>
-                  {item.y2024}%
-                </td>
-                <td className="py-3 text-body text-right font-medium" style={{ color: '#E91E63' }}>
-                  {item.y2025}%
-                </td>
+
+        {/* Desktop table */}
+        <div className="hidden md:block">
+          <table className="w-full">
+            <thead>
+              <tr style={{ borderBottom: '1px solid var(--divider-standard)' }}>
+                <th className="text-left py-3 text-label uppercase" style={{ color: 'var(--text-tertiary)' }}>
+                  Category
+                </th>
+                <th className="text-right py-3 text-label uppercase" style={{ color: 'var(--text-tertiary)' }}>
+                  2023
+                </th>
+                <th className="text-right py-3 text-label uppercase" style={{ color: 'var(--text-tertiary)' }}>
+                  2024
+                </th>
+                <th className="text-right py-3 text-label uppercase" style={{ color: 'var(--text-tertiary)' }}>
+                  2025
+                </th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {productMixData.map((item, index) => (
+                <tr
+                  key={item.category}
+                  style={{ borderBottom: index < productMixData.length - 1 ? '1px solid var(--divider-standard)' : 'none' }}
+                >
+                  <td className="py-3 text-body" style={{ color: 'var(--text-primary)' }}>
+                    {item.category}
+                  </td>
+                  <td className="py-3 text-body text-right" style={{ color: 'var(--text-secondary)' }}>
+                    {item.y2023}%
+                  </td>
+                  <td className="py-3 text-body text-right" style={{ color: 'var(--text-secondary)' }}>
+                    {item.y2024}%
+                  </td>
+                  <td className="py-3 text-body text-right font-medium" style={{ color: '#E91E63' }}>
+                    {item.y2025}%
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+
+        {/* Mobile cards */}
+        <div className="md:hidden space-y-3">
+          {productMixData.map((item) => (
+            <div
+              key={item.category}
+              className="p-3 border"
+              style={{ borderColor: 'var(--divider-standard)' }}
+            >
+              <p className="text-body font-medium mb-2" style={{ color: 'var(--text-primary)' }}>
+                {item.category}
+              </p>
+              <div className="flex justify-between text-body-sm">
+                <span style={{ color: 'var(--text-tertiary)' }}>2023: {item.y2023}%</span>
+                <span style={{ color: 'var(--text-tertiary)' }}>2024: {item.y2024}%</span>
+                <span style={{ color: '#E91E63' }}>2025: {item.y2025}%</span>
+              </div>
+            </div>
+          ))}
+        </div>
       </div>
 
       {/* Channel Performance */}
       <div
-        className="p-6 border"
+        className="p-4 md:p-6 border"
         style={{ backgroundColor: 'var(--bg-primary)', borderColor: 'var(--divider-standard)' }}
       >
         <h2
-          className="text-section-title mb-2"
+          className="text-body-lg md:text-section-title mb-1"
           style={{ color: 'var(--text-primary)' }}
         >
           Channel Performance
         </h2>
-        <p className="text-label-xs uppercase mb-6" style={{ color: 'var(--text-tertiary)' }}>
+        <p className="text-label-xs uppercase mb-4 md:mb-6" style={{ color: 'var(--text-tertiary)' }}>
           JANUARY - NOVEMBER 2025
         </p>
-        <table className="w-full">
-          <thead>
-            <tr style={{ borderBottom: '1px solid var(--divider-standard)' }}>
-              <th className="text-left py-3 text-label uppercase" style={{ color: 'var(--text-tertiary)' }}>
-                Channel
-              </th>
-              <th className="text-right py-3 text-label uppercase" style={{ color: 'var(--text-tertiary)' }}>
-                Share of Sales
-              </th>
-              <th className="text-right py-3 text-label uppercase" style={{ color: 'var(--text-tertiary)' }}>
-                Share of Profit
-              </th>
-            </tr>
-          </thead>
-          <tbody>
-            {channelData.map((item, index) => (
-              <tr
-                key={item.channel}
-                style={{ borderBottom: index < channelData.length - 1 ? '1px solid var(--divider-standard)' : 'none' }}
-              >
-                <td className="py-3 text-body" style={{ color: 'var(--text-primary)' }}>
-                  {item.channel}
-                </td>
-                <td className="py-3 text-body text-right" style={{ color: 'var(--text-secondary)' }}>
-                  {item.salesShare}%
-                </td>
-                <td className="py-3 text-body text-right font-medium" style={{ color: '#E91E63' }}>
-                  {item.profitShare}%
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-        {/* Visual bars for channel comparison */}
-        <div className="mt-6 space-y-3">
+
+        {/* Comparison chart - works on both mobile and desktop */}
+        <div className="space-y-4">
           {channelData.map((item) => (
-            <div key={item.channel} className="flex items-center gap-4">
-              <div className="w-32 text-body-sm truncate" style={{ color: 'var(--text-tertiary)' }}>
-                {item.channel}
+            <div key={item.channel} className="space-y-2">
+              <div className="flex justify-between items-center">
+                <span className="text-body" style={{ color: 'var(--text-primary)' }}>
+                  {item.channel}
+                </span>
+                <div className="flex gap-4 text-body-sm">
+                  <span style={{ color: 'var(--text-tertiary)' }}>
+                    Sales: <strong>{item.salesShare}%</strong>
+                  </span>
+                  <span style={{ color: '#E91E63' }}>
+                    Profit: <strong>{item.profitShare}%</strong>
+                  </span>
+                </div>
               </div>
-              <div className="flex-1 flex gap-2">
+              {/* Stacked comparison bar */}
+              <div className="relative h-8 flex" style={{ backgroundColor: 'var(--surface-2)' }}>
+                {/* Sales bar */}
                 <div
-                  className="h-4"
+                  className="h-full flex items-center justify-end pr-2"
                   style={{
                     width: `${item.salesShare}%`,
                     backgroundColor: 'var(--surface-3)',
                   }}
-                />
+                >
+                  <span className="text-label-xs" style={{ color: 'var(--text-primary)' }}>
+                    {item.salesShare}%
+                  </span>
+                </div>
+                {/* Profit indicator line */}
                 <div
-                  className="h-4"
+                  className="absolute top-0 bottom-0 w-1"
                   style={{
-                    width: `${item.profitShare}%`,
+                    left: `${item.profitShare}%`,
                     backgroundColor: '#E91E63',
                   }}
                 />
+                {/* Profit label */}
+                <div
+                  className="absolute top-0 bottom-0 flex items-center"
+                  style={{
+                    left: `${item.profitShare + 1}%`,
+                  }}
+                >
+                  <span className="text-label-xs px-1 py-0.5" style={{ backgroundColor: '#E91E63', color: 'white' }}>
+                    {item.profitShare}%
+                  </span>
+                </div>
               </div>
             </div>
           ))}
-          <div className="flex gap-4 mt-2">
-            <div className="flex items-center gap-2">
-              <div className="w-4 h-4" style={{ backgroundColor: 'var(--surface-3)' }} />
-              <span className="text-label-xs" style={{ color: 'var(--text-tertiary)' }}>Sales</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <div className="w-4 h-4" style={{ backgroundColor: '#E91E63' }} />
-              <span className="text-label-xs" style={{ color: 'var(--text-tertiary)' }}>Profit</span>
-            </div>
+        </div>
+
+        {/* Legend */}
+        <div className="flex flex-wrap gap-4 mt-6 pt-4 border-t" style={{ borderColor: 'var(--divider-standard)' }}>
+          <div className="flex items-center gap-2">
+            <div className="w-4 h-4" style={{ backgroundColor: 'var(--surface-3)' }} />
+            <span className="text-label-xs" style={{ color: 'var(--text-tertiary)' }}>Share of Sales</span>
           </div>
+          <div className="flex items-center gap-2">
+            <div className="w-4 h-1" style={{ backgroundColor: '#E91E63' }} />
+            <span className="text-label-xs" style={{ color: 'var(--text-tertiary)' }}>Share of Profit (marker)</span>
+          </div>
+        </div>
+
+        {/* Insight text */}
+        <div
+          className="mt-4 p-3 text-body-sm"
+          style={{ backgroundColor: 'var(--surface-1)', color: 'var(--text-secondary)' }}
+        >
+          <strong style={{ color: '#E91E63' }}>Insight:</strong> Retail chains generate 63% of sales but 78% of profit.
+          Marketplaces have high sales (22%) but low profitability (3.5%).
         </div>
       </div>
     </div>

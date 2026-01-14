@@ -34,7 +34,7 @@ export const menuStructure: MenuStructure = {
   ],
   l2Items: {
     DASHBOARD: null,
-    CHANNELS: ['CUMULATIVE', 'OZON', 'WILDBERRIES', 'YANDEX', 'RESELLERS', 'TENDERS'],
+    CHANNELS: ['OZON', 'WILDBERRIES', 'COMUS', 'DNS', 'MERLION', 'EBURG', 'SARATOV'],
     MOTIVATION: null,
     FINANCE: null,
     PRODUCTS: ['CATALOG', 'PERFORMANCE', 'INVENTORY', 'CATEGORIES'],
@@ -58,9 +58,9 @@ export const menuStructure: MenuStructure = {
   tileGroups: {
     DASHBOARD: [],
     CHANNELS: [
-      { category: 'MARKETPLACES', items: ['OZON', 'WILDBERRIES', 'YANDEX'] },
-      { category: 'RETAIL', items: ['RESELLERS', 'TENDERS'] },
-      { category: 'ANALYTICS', items: ['CUMULATIVE'] },
+      { category: 'MARKETPLACES', items: ['OZON', 'WILDBERRIES'] },
+      { category: 'RETAIL', items: ['COMUS', 'DNS', 'MERLION'] },
+      { category: 'REGIONS', items: ['EBURG', 'SARATOV'] },
     ],
     MOTIVATION: [],
     FINANCE: [],

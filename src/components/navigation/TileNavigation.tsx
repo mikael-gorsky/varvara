@@ -77,12 +77,6 @@ export const TileNavigation: React.FC<TileNavigationProps> = ({
                   }}
                 >
                   <span
-                    className="text-label-xs uppercase mb-1"
-                    style={{ color: 'var(--text-tertiary)' }}
-                  >
-                    CHANNEL {String(itemIndex + 1).padStart(2, '0')}
-                  </span>
-                  <span
                     className="text-body-lg font-medium uppercase"
                     style={{ color: 'var(--text-primary)' }}
                   >

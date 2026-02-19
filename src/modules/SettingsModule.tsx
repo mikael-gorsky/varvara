@@ -3,6 +3,7 @@ import { useTheme } from '../contexts/ThemeContext';
 import { useStyle } from '../contexts/StyleContext';
 import { AVAILABLE_FONTS, PRESET_COLOR_SCHEMES, Density } from '../services/stylePreferencesService';
 import { getSetting, updateSetting } from '../services/settings';
+import { getSettings, updateSettings, resetToDefaults as resetInventoryDefaults, type InventorySettings } from '../services/inventorySettingsService';
 
 interface SettingsModuleProps {
   activeL2: string | null;
@@ -337,6 +338,412 @@ const ExchangeRatePanel: React.FC = () => {
   );
 };
 
+const InventorySettingsPanel: React.FC = () => {
+  const [settings, setSettings] = useState<InventorySettings | null>(null);
+  const [formData, setFormData] = useState<InventorySettings | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [message, setMessage] = useState<string | null>(null);
+
+  useEffect(() => {
+    loadSettings();
+  }, []);
+
+  const loadSettings = async () => {
+    try {
+      const data = await getSettings();
+      setSettings(data);
+      setFormData(data);
+    } catch (err) {
+      console.error('Error loading inventory settings:', err);
+      setMessage('Failed to load settings');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleSave = async () => {
+    if (!formData) return;
+
+    setSaving(true);
+    setMessage(null);
+
+    try {
+      await updateSettings(formData);
+      setSettings(formData);
+      setMessage('Inventory settings updated successfully');
+    } catch (err) {
+      console.error('Error saving inventory settings:', err);
+      setMessage('Failed to save settings');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleReset = async () => {
+    if (!window.confirm('Reset all inventory settings to defaults?')) return;
+
+    setSaving(true);
+    setMessage(null);
+
+    try {
+      await resetInventoryDefaults();
+      await loadSettings();
+      setMessage('Settings reset to defaults');
+    } catch (err) {
+      console.error('Error resetting settings:', err);
+      setMessage('Failed to reset settings');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleChange = (key: keyof InventorySettings, value: any) => {
+    if (!formData) return;
+    setFormData({ ...formData, [key]: value });
+  };
+
+  if (loading) {
+    return <div style={{ color: 'var(--text-secondary)' }}>Loading...</div>;
+  }
+
+  if (!formData) {
+    return <div style={{ color: 'var(--text-secondary)' }}>Failed to load settings</div>;
+  }
+
+  const hasChanges = JSON.stringify(settings) !== JSON.stringify(formData);
+
+  return (
+    <div className="pt-1">
+      <h2 className="text-page-title-mobile md:text-page-title-desktop uppercase mb-8" style={{ color: 'var(--accent)' }}>
+        INVENTORY SETTINGS
+      </h2>
+
+      <div className="space-y-12">
+        {/* Reorder Planning Settings */}
+        <div>
+          <h3 className="text-subsection uppercase mb-4" style={{ color: 'var(--text-primary)' }}>
+            REORDER PLANNING
+          </h3>
+          <p className="text-body mb-6" style={{ color: 'var(--text-secondary)' }}>
+            Default parameters for automated reorder calculations
+          </p>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+              <label className="text-label uppercase mb-2 block" style={{ color: 'var(--text-secondary)' }}>
+                DEFAULT LEAD TIME (DAYS)
+              </label>
+              <input
+                type="number"
+                min="1"
+                max="365"
+                value={formData.default_lead_time_days}
+                onChange={(e) => handleChange('default_lead_time_days', parseInt(e.target.value))}
+                className="w-full p-4 border transition-all duration-fast"
+                style={{
+                  backgroundColor: 'var(--bg-secondary)',
+                  borderColor: 'var(--divider-standard)',
+                  color: 'var(--text-primary)',
+                  fontSize: '16px',
+                }}
+              />
+              <p className="text-xs mt-1" style={{ color: 'var(--text-secondary)' }}>
+                Typical for Chinese suppliers: 45 days
+              </p>
+            </div>
+
+            <div>
+              <label className="text-label uppercase mb-2 block" style={{ color: 'var(--text-secondary)' }}>
+                DEFAULT SAFETY STOCK (DAYS)
+              </label>
+              <input
+                type="number"
+                min="0"
+                max="90"
+                value={formData.default_safety_stock_days}
+                onChange={(e) => handleChange('default_safety_stock_days', parseInt(e.target.value))}
+                className="w-full p-4 border transition-all duration-fast"
+                style={{
+                  backgroundColor: 'var(--bg-secondary)',
+                  borderColor: 'var(--divider-standard)',
+                  color: 'var(--text-primary)',
+                  fontSize: '16px',
+                }}
+              />
+              <p className="text-xs mt-1" style={{ color: 'var(--text-secondary)' }}>
+                Buffer stock to prevent stockouts
+              </p>
+            </div>
+
+            <div>
+              <label className="text-label uppercase mb-2 block" style={{ color: 'var(--text-secondary)' }}>
+                DEFAULT MOQ (UNITS)
+              </label>
+              <input
+                type="number"
+                min="1"
+                value={formData.default_moq}
+                onChange={(e) => handleChange('default_moq', parseInt(e.target.value))}
+                className="w-full p-4 border transition-all duration-fast"
+                style={{
+                  backgroundColor: 'var(--bg-secondary)',
+                  borderColor: 'var(--divider-standard)',
+                  color: 'var(--text-primary)',
+                  fontSize: '16px',
+                }}
+              />
+              <p className="text-xs mt-1" style={{ color: 'var(--text-secondary)' }}>
+                Minimum order quantity
+              </p>
+            </div>
+
+            <div>
+              <label className="text-label uppercase mb-2 block" style={{ color: 'var(--text-secondary)' }}>
+                REORDER ALERT THRESHOLD (UNITS)
+              </label>
+              <input
+                type="number"
+                min="0"
+                value={formData.reorder_alert_threshold}
+                onChange={(e) => handleChange('reorder_alert_threshold', parseInt(e.target.value))}
+                className="w-full p-4 border transition-all duration-fast"
+                style={{
+                  backgroundColor: 'var(--bg-secondary)',
+                  borderColor: 'var(--divider-standard)',
+                  color: 'var(--text-primary)',
+                  fontSize: '16px',
+                }}
+              />
+              <p className="text-xs mt-1" style={{ color: 'var(--text-secondary)' }}>
+                Alert when stock falls below this level
+              </p>
+            </div>
+          </div>
+        </div>
+
+        {/* Container Settings */}
+        <div>
+          <h3 className="text-subsection uppercase mb-4" style={{ color: 'var(--text-primary)' }}>
+            CONTAINER SPECIFICATIONS
+          </h3>
+          <p className="text-body mb-6" style={{ color: 'var(--text-secondary)' }}>
+            Weight limits for container optimization
+          </p>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+              <label className="text-label uppercase mb-2 block" style={{ color: 'var(--text-secondary)' }}>
+                20FT CONTAINER WEIGHT LIMIT (KG)
+              </label>
+              <input
+                type="number"
+                min="1000"
+                max="50000"
+                value={formData.container_20ft_weight_kg}
+                onChange={(e) => handleChange('container_20ft_weight_kg', parseInt(e.target.value))}
+                className="w-full p-4 border transition-all duration-fast"
+                style={{
+                  backgroundColor: 'var(--bg-secondary)',
+                  borderColor: 'var(--divider-standard)',
+                  color: 'var(--text-primary)',
+                  fontSize: '16px',
+                }}
+              />
+              <p className="text-xs mt-1" style={{ color: 'var(--text-secondary)' }}>
+                Standard: 28,000 kg (33 CBM volume)
+              </p>
+            </div>
+
+            <div>
+              <label className="text-label uppercase mb-2 block" style={{ color: 'var(--text-secondary)' }}>
+                40HQ CONTAINER WEIGHT LIMIT (KG)
+              </label>
+              <input
+                type="number"
+                min="1000"
+                max="50000"
+                value={formData.container_40hq_weight_kg}
+                onChange={(e) => handleChange('container_40hq_weight_kg', parseInt(e.target.value))}
+                className="w-full p-4 border transition-all duration-fast"
+                style={{
+                  backgroundColor: 'var(--bg-secondary)',
+                  borderColor: 'var(--divider-standard)',
+                  color: 'var(--text-primary)',
+                  fontSize: '16px',
+                }}
+              />
+              <p className="text-xs mt-1" style={{ color: 'var(--text-secondary)' }}>
+                Standard: 27,000 kg (68 CBM volume)
+              </p>
+            </div>
+          </div>
+        </div>
+
+        {/* Aging & Turnover Settings */}
+        <div>
+          <h3 className="text-subsection uppercase mb-4" style={{ color: 'var(--text-primary)' }}>
+            AGING & TURNOVER THRESHOLDS
+          </h3>
+          <p className="text-body mb-6" style={{ color: 'var(--text-secondary)' }}>
+            Alert thresholds for inventory aging and turnover analysis
+          </p>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div>
+              <label className="text-label uppercase mb-2 block" style={{ color: 'var(--text-secondary)' }}>
+                CRITICAL STOCK (DAYS)
+              </label>
+              <input
+                type="number"
+                min="1"
+                max="30"
+                value={formData.critical_stock_days}
+                onChange={(e) => handleChange('critical_stock_days', parseInt(e.target.value))}
+                className="w-full p-4 border transition-all duration-fast"
+                style={{
+                  backgroundColor: 'var(--bg-secondary)',
+                  borderColor: 'var(--divider-standard)',
+                  color: 'var(--text-primary)',
+                  fontSize: '16px',
+                }}
+              />
+              <p className="text-xs mt-1" style={{ color: 'var(--text-secondary)' }}>
+                Flag products with less than this many days of stock
+              </p>
+            </div>
+
+            <div>
+              <label className="text-label uppercase mb-2 block" style={{ color: 'var(--text-secondary)' }}>
+                AGED INVENTORY (MONTHS)
+              </label>
+              <input
+                type="number"
+                min="1"
+                max="60"
+                value={formData.aged_inventory_months}
+                onChange={(e) => handleChange('aged_inventory_months', parseInt(e.target.value))}
+                className="w-full p-4 border transition-all duration-fast"
+                style={{
+                  backgroundColor: 'var(--bg-secondary)',
+                  borderColor: 'var(--divider-standard)',
+                  color: 'var(--text-primary)',
+                  fontSize: '16px',
+                }}
+              />
+              <p className="text-xs mt-1" style={{ color: 'var(--text-secondary)' }}>
+                Alert for inventory older than this threshold
+              </p>
+            </div>
+
+            <div>
+              <label className="text-label uppercase mb-2 block" style={{ color: 'var(--text-secondary)' }}>
+                TARGET TURNOVER (DAYS)
+              </label>
+              <input
+                type="number"
+                min="30"
+                max="365"
+                value={formData.default_turnover_threshold_days}
+                onChange={(e) => handleChange('default_turnover_threshold_days', parseInt(e.target.value))}
+                className="w-full p-4 border transition-all duration-fast"
+                style={{
+                  backgroundColor: 'var(--bg-secondary)',
+                  borderColor: 'var(--divider-standard)',
+                  color: 'var(--text-primary)',
+                  fontSize: '16px',
+                }}
+              />
+              <p className="text-xs mt-1" style={{ color: 'var(--text-secondary)' }}>
+                Expected inventory turnover period
+              </p>
+            </div>
+          </div>
+        </div>
+
+        {/* Quality Mixing */}
+        <div>
+          <h3 className="text-subsection uppercase mb-4" style={{ color: 'var(--text-primary)' }}>
+            QUALITY CONTROL
+          </h3>
+          <p className="text-body mb-6" style={{ color: 'var(--text-secondary)' }}>
+            Rules for mixing products with different quality statuses
+          </p>
+
+          <div className="flex items-center gap-4">
+            <input
+              type="checkbox"
+              id="quality-mixing"
+              checked={formData.allow_quality_mixing}
+              onChange={(e) => handleChange('allow_quality_mixing', e.target.checked)}
+              className="w-6 h-6 cursor-pointer"
+              style={{ accentColor: 'var(--accent)' }}
+            />
+            <label htmlFor="quality-mixing" className="text-body cursor-pointer" style={{ color: 'var(--text-primary)' }}>
+              Allow mixing different quality statuses in same container (with warning)
+            </label>
+          </div>
+          <p className="text-xs mt-2 ml-10" style={{ color: 'var(--text-secondary)' }}>
+            When enabled, products with "годные" and "негодные" status can be packed together
+          </p>
+        </div>
+
+        {/* Actions */}
+        <div className="pt-6 border-t flex gap-4" style={{ borderColor: 'var(--divider-standard)' }}>
+          <button
+            onClick={handleSave}
+            disabled={saving || !hasChanges}
+            className="px-8 py-4 border transition-all duration-fast"
+            style={{
+              backgroundColor: 'var(--bg-secondary)',
+              borderColor: 'var(--accent)',
+              color: 'var(--text-primary)',
+              opacity: saving || !hasChanges ? 0.5 : 1,
+              cursor: saving || !hasChanges ? 'not-allowed' : 'pointer',
+            }}
+          >
+            <span className="text-body uppercase">{saving ? 'SAVING...' : 'SAVE CHANGES'}</span>
+          </button>
+
+          <button
+            onClick={handleReset}
+            disabled={saving}
+            className="px-8 py-4 border transition-all duration-fast"
+            style={{
+              backgroundColor: 'var(--bg-secondary)',
+              borderColor: 'var(--divider-strong)',
+              color: 'var(--text-primary)',
+              opacity: saving ? 0.5 : 1,
+              cursor: saving ? 'not-allowed' : 'pointer',
+            }}
+          >
+            <span className="text-body uppercase">RESET TO DEFAULTS</span>
+          </button>
+        </div>
+
+        {message && (
+          <div
+            className="p-4 border"
+            style={{
+              borderColor: message.includes('success') ? 'var(--accent)' : 'var(--status-error)',
+              backgroundColor: 'var(--bg-secondary)',
+            }}
+          >
+            <p
+              className="text-body"
+              style={{
+                color: message.includes('success') ? 'var(--accent)' : 'var(--status-error)',
+              }}
+            >
+              {message}
+            </p>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
+
 const SettingsModule: React.FC<SettingsModuleProps> = ({ activeL2 }) => {
   const { theme, setTheme } = useTheme();
 
@@ -346,6 +753,8 @@ const SettingsModule: React.FC<SettingsModuleProps> = ({ activeL2 }) => {
         return <InterfaceDesignPanel />;
       case 'EXCHANGE RATE':
         return <ExchangeRatePanel />;
+      case 'INVENTORY SETTINGS':
+        return <InventorySettingsPanel />;
       case 'THEME':
         return (
           <div className="pt-1">

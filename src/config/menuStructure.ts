@@ -56,7 +56,7 @@ export const menuStructure: MenuStructure = {
     INVENTORY: [],
     TARGETS: [],
     IMPORT: ['IMPORT WB REPORTS', 'IMPORT YANDEX.MARKET REPORTS', 'IMPORT OUR PRICE-LIST'],
-    SETTINGS: ['INVENTORY SETTINGS'],
+    SETTINGS: [],
   },
   tileGroups: {
     CUSTOMERS: [

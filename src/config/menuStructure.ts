@@ -43,7 +43,7 @@ export const menuStructure: MenuStructure = {
     INVENTORY: null,
     TARGETS: ['SALES PLANS', 'BUDGET', 'TIMELINE'],
     IMPORT: ['IMPORT SALES-MARGIN REPORT', 'IMPORT OZON REPORTS', 'IMPORT WB REPORTS', 'IMPORT YANDEX.MARKET REPORTS', 'IMPORT OUR PRICE-LIST'],
-    SETTINGS: ['INTERFACE DESIGN', 'THEME', 'LANGUAGE', 'USERS'],
+    SETTINGS: ['INTERFACE DESIGN', 'THEME', 'EXCHANGE RATE', 'LANGUAGE', 'USERS'],
   },
   l3Items: {
     OZON: ['COMPANIES', 'CATEGORIES', 'MARKETING'],
@@ -80,7 +80,7 @@ export const menuStructure: MenuStructure = {
       { category: 'DATA IMPORT', items: ['IMPORT OZON REPORTS', 'IMPORT WB REPORTS', 'IMPORT YANDEX.MARKET REPORTS', 'IMPORT OUR PRICE-LIST'] },
     ],
     SETTINGS: [
-      { category: 'PREFERENCES', items: ['INTERFACE DESIGN', 'THEME', 'LANGUAGE', 'USERS'] },
+      { category: 'PREFERENCES', items: ['INTERFACE DESIGN', 'THEME', 'EXCHANGE RATE', 'LANGUAGE', 'USERS'] },
     ],
   },
 };

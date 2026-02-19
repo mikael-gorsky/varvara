@@ -1,7 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useTheme } from '../contexts/ThemeContext';
 import { useStyle } from '../contexts/StyleContext';
 import { AVAILABLE_FONTS, PRESET_COLOR_SCHEMES, Density } from '../services/stylePreferencesService';
+import { getSetting, updateSetting } from '../services/settings';
 
 interface SettingsModuleProps {
   activeL2: string | null;
@@ -197,6 +198,145 @@ const InterfaceDesignPanel: React.FC = () => {
   );
 };
 
+const ExchangeRatePanel: React.FC = () => {
+  const [currentRate, setCurrentRate] = useState<string>('95.00');
+  const [inputRate, setInputRate] = useState<string>('95.00');
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [message, setMessage] = useState<string | null>(null);
+
+  useEffect(() => {
+    const loadCurrentRate = async () => {
+      try {
+        const rate = await getSetting('current_exchange_rate');
+        if (rate) {
+          setCurrentRate(rate);
+          setInputRate(rate);
+        }
+      } catch (err) {
+        console.error('Error loading exchange rate:', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadCurrentRate();
+  }, []);
+
+  const handleSave = async () => {
+    setSaving(true);
+    setMessage(null);
+
+    try {
+      const rateValue = parseFloat(inputRate);
+      if (isNaN(rateValue) || rateValue <= 0) {
+        setMessage('Please enter a valid positive number');
+        setSaving(false);
+        return;
+      }
+
+      await updateSetting('current_exchange_rate', inputRate);
+      setCurrentRate(inputRate);
+      setMessage('Exchange rate updated successfully');
+    } catch (err) {
+      console.error('Error saving exchange rate:', err);
+      setMessage('Failed to save exchange rate');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  if (loading) {
+    return <div style={{ color: 'var(--text-secondary)' }}>Loading...</div>;
+  }
+
+  return (
+    <div>
+      <h2 className="text-page-title-mobile md:text-page-title-desktop uppercase mb-8" style={{ color: 'var(--accent)' }}>
+        EXCHANGE RATE
+      </h2>
+
+      <div className="space-y-8">
+        <div>
+          <h3 className="text-subsection uppercase mb-4" style={{ color: 'var(--text-primary)' }}>
+            CURRENT USD/RUB RATE
+          </h3>
+          <p className="text-body mb-6" style={{ color: 'var(--text-secondary)' }}>
+            This rate is used as fallback when specific period rates are not available
+          </p>
+
+          <div className="max-w-md space-y-4">
+            <div>
+              <label className="text-label uppercase mb-2 block" style={{ color: 'var(--text-secondary)' }}>
+                RATE (RUB per 1 USD)
+              </label>
+              <input
+                type="number"
+                step="0.01"
+                min="0"
+                value={inputRate}
+                onChange={(e) => setInputRate(e.target.value)}
+                className="w-full p-4 border transition-all duration-fast"
+                style={{
+                  backgroundColor: 'var(--bg-secondary)',
+                  borderColor: 'var(--divider-standard)',
+                  color: 'var(--text-primary)',
+                  fontSize: '16px',
+                }}
+              />
+            </div>
+
+            <button
+              onClick={handleSave}
+              disabled={saving || inputRate === currentRate}
+              className="px-8 py-4 border transition-all duration-fast"
+              style={{
+                backgroundColor: 'var(--bg-secondary)',
+                borderColor: 'var(--accent)',
+                color: 'var(--text-primary)',
+                opacity: saving || inputRate === currentRate ? 0.5 : 1,
+                cursor: saving || inputRate === currentRate ? 'not-allowed' : 'pointer',
+              }}
+            >
+              <span className="text-body uppercase">{saving ? 'SAVING...' : 'SAVE'}</span>
+            </button>
+
+            {message && (
+              <p
+                className="text-body"
+                style={{
+                  color: message.includes('success') ? 'var(--accent)' : 'var(--status-error)',
+                }}
+              >
+                {message}
+              </p>
+            )}
+          </div>
+        </div>
+
+        <div className="pt-6 border-t" style={{ borderColor: 'var(--divider-standard)' }}>
+          <h3 className="text-subsection uppercase mb-4" style={{ color: 'var(--text-primary)' }}>
+            HISTORICAL RATES
+          </h3>
+          <p className="text-body mb-4" style={{ color: 'var(--text-secondary)' }}>
+            Fixed rates for historical periods:
+          </p>
+          <div className="space-y-2">
+            <div className="flex justify-between p-4" style={{ backgroundColor: 'var(--bg-secondary)' }}>
+              <span className="text-body" style={{ color: 'var(--text-primary)' }}>2025</span>
+              <span className="text-body" style={{ color: 'var(--text-secondary)' }}>83.21 RUB/USD</span>
+            </div>
+            <div className="flex justify-between p-4" style={{ backgroundColor: 'var(--bg-secondary)' }}>
+              <span className="text-body" style={{ color: 'var(--text-primary)' }}>2024</span>
+              <span className="text-body" style={{ color: 'var(--text-secondary)' }}>92.66 RUB/USD</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 const SettingsModule: React.FC<SettingsModuleProps> = ({ activeL2 }) => {
   const { theme, setTheme } = useTheme();
 
@@ -204,6 +344,8 @@ const SettingsModule: React.FC<SettingsModuleProps> = ({ activeL2 }) => {
     switch (activeL2) {
       case 'INTERFACE DESIGN':
         return <InterfaceDesignPanel />;
+      case 'EXCHANGE RATE':
+        return <ExchangeRatePanel />;
       case 'THEME':
         return (
           <div>

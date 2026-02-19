@@ -4,6 +4,7 @@
  */
 
 import { supabase } from '../lib/supabase';
+import { getCurrentExchangeRate } from './settings';
 
 export interface MarginKPIs {
   total_revenue_usd: number;
@@ -84,16 +85,18 @@ export async function getAvailableCategories(): Promise<string[]> {
 async function getExchangeRate(periodDate: string): Promise<number> {
   const { data, error } = await supabase
     .from('exchange_rates')
-    .select('rate')
+    .select('usd_rub')
     .eq('period_date', periodDate)
     .single();
 
   if (error || !data) {
-    console.warn(`No exchange rate found for ${periodDate}, using 95.0`);
-    return 95.0; // Fallback rate
+    // Use configured current rate from settings as fallback
+    const fallbackRate = await getCurrentExchangeRate();
+    console.warn(`No exchange rate found for ${periodDate}, using configured rate ${fallbackRate}`);
+    return fallbackRate;
   }
 
-  return data.rate;
+  return data.usd_rub;
 }
 
 /**

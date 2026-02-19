@@ -58,15 +58,10 @@ function App() {
     // Show menu/welcome screen if no L1 menu item is selected (default/home page)
     if (!activeL1) {
       return (
-        <div className="p-8 flex items-center justify-center min-h-screen">
-          <div className="text-center">
-            <h1 className="text-page-title-desktop uppercase mb-4" style={{ color: 'var(--accent)' }}>
-              VARVARA
-            </h1>
-            <p className="text-label uppercase" style={{ color: 'var(--text-tertiary)' }}>
-              Select a module from the menu
-            </p>
-          </div>
+        <div className="flex items-center justify-center min-h-screen">
+          <h1 className="text-page-title-desktop uppercase" style={{ color: 'var(--accent)' }}>
+            VARVARA
+          </h1>
         </div>
       );
     }

@@ -131,8 +131,9 @@ export async function getMarginKPIs(filters: MarginFilters = {}): Promise<Margin
   // Calculate aggregates
   const total_revenue_rub = data.reduce((sum, row) => sum + (row.revenue_rub || 0), 0);
   const total_margin_rub = data.reduce((sum, row) => sum + (row.margin_rub || 0), 0);
-  const avg_margin_percent = data.length > 0
-    ? data.reduce((sum, row) => sum + (row.margin_percent || 0), 0) / data.length
+  // Calculate actual margin % from totals, not average of individual percentages
+  const avg_margin_percent = total_revenue_rub > 0
+    ? (total_margin_rub / total_revenue_rub) * 100
     : 0;
 
   return {
@@ -164,7 +165,6 @@ export async function getCustomerGroupKPIs(periodDate: string): Promise<Customer
   const groupMap = new Map<string, {
     revenue_rub: number;
     margin_rub: number;
-    margin_percent_sum: number;
     count: number;
   }>();
 
@@ -175,7 +175,6 @@ export async function getCustomerGroupKPIs(periodDate: string): Promise<Customer
       groupMap.set(category, {
         revenue_rub: 0,
         margin_rub: 0,
-        margin_percent_sum: 0,
         count: 0,
       });
     }
@@ -183,11 +182,10 @@ export async function getCustomerGroupKPIs(periodDate: string): Promise<Customer
     const group = groupMap.get(category)!;
     group.revenue_rub += row.revenue_rub || 0;
     group.margin_rub += row.margin_rub || 0;
-    group.margin_percent_sum += row.margin_percent || 0;
     group.count += 1;
   }
 
-  // Convert to array and calculate averages
+  // Convert to array and calculate actual margin % from totals
   const groups: CustomerGroupKPIs[] = Array.from(groupMap.entries())
     .map(([category, stats]) => ({
       customer_category: category,
@@ -195,7 +193,8 @@ export async function getCustomerGroupKPIs(periodDate: string): Promise<Customer
       revenue_usd: stats.revenue_rub / usdRate,
       margin_rub: stats.margin_rub,
       margin_usd: stats.margin_rub / usdRate,
-      avg_margin_percent: stats.count > 0 ? stats.margin_percent_sum / stats.count : 0,
+      // Calculate actual margin % from totals, not average of individual percentages
+      avg_margin_percent: stats.revenue_rub > 0 ? (stats.margin_rub / stats.revenue_rub) * 100 : 0,
       transaction_count: stats.count,
     }))
     .sort((a, b) => b.revenue_rub - a.revenue_rub); // Sort by revenue descending

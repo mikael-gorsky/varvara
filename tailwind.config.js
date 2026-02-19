@@ -89,9 +89,9 @@ export default {
         'menu-mobile-active': ['48px', { lineHeight: '1.3', fontWeight: '600' }],
         'menu-desktop-active': ['36px', { lineHeight: '1.4', fontWeight: '600' }],
         // Page titles
-        'page-title': ['48px', { lineHeight: '1.1', fontWeight: '300', letterSpacing: 'normal' }],
-        'page-title-mobile': ['32px', { lineHeight: '1.15', fontWeight: '300', letterSpacing: 'normal' }],
-        'page-title-desktop': ['56px', { lineHeight: '1.1', fontWeight: '300', letterSpacing: 'normal' }],
+        'page-title': ['48px', { lineHeight: '1.1', fontWeight: '300', letterSpacing: '0.15em' }],
+        'page-title-mobile': ['32px', { lineHeight: '1.15', fontWeight: '300', letterSpacing: '0.12em' }],
+        'page-title-desktop': ['56px', { lineHeight: '1.1', fontWeight: '300', letterSpacing: '0.15em' }],
         // Section headers
         'section-title': ['24px', { lineHeight: '1.2', fontWeight: '400' }],
         // KPI values

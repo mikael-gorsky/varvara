@@ -2,9 +2,7 @@ import React, { useState } from 'react';
 import OzonDataImport from '../components/ozon/OzonDataImport';
 import OzonReportsList from '../components/ozon/OzonReportsList';
 import ImportSalesModule from './ImportSalesModule';
-import ImportInventorySnapshotModule from './ImportInventorySnapshotModule';
-import ImportABCModule from './ImportABCModule';
-import ImportProcurementModule from './ImportProcurementModule';
+import ImportInventoryFilesModule from './ImportInventoryFilesModule';
 
 interface ImportModuleProps {
   activeL2: string | null;
@@ -34,12 +32,8 @@ const ImportModule: React.FC<ImportModuleProps> = ({ activeL2 }) => {
     switch (activeL2) {
       case 'IMPORT SALES-MARGIN REPORT':
         return <ImportSalesModule />;
-      case 'IMPORT INVENTORY SNAPSHOT':
-        return <ImportInventorySnapshotModule />;
-      case 'IMPORT ABC CLASSIFICATION':
-        return <ImportABCModule />;
-      case 'IMPORT PROCUREMENT DATA':
-        return <ImportProcurementModule />;
+      case 'IMPORT INVENTORY FILES':
+        return <ImportInventoryFilesModule />;
       case 'IMPORT OZON REPORTS':
         return <OzonReportsList onNewImport={() => setShowOzonImport(true)} />;
       case 'IMPORT WB REPORTS':

@@ -227,7 +227,7 @@ function App() {
       case 'PRODUCTS':
         return <ProductsModule activeL2={activeL2} />;
       case 'INVENTORY':
-        return <InventoryModule />;
+        return <InventoryModule activeL2={activeL2} />;
       case 'TARGETS':
         return <TargetsModule activeL2={activeL2} />;
       case 'IMPORT':

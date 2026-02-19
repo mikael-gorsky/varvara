@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { Sparkles, Search } from 'lucide-react';
 import { Level1MenuItem, menuStructure } from './config/menuStructure';
 import { AppLayout } from './components/layout/AppLayout';
 import { TileNavigation } from './components/navigation/TileNavigation';
@@ -58,29 +59,80 @@ function App() {
     // Show menu/welcome screen if no L1 menu item is selected (default/home page)
     if (!activeL1) {
       return (
-        <div className="flex flex-col items-center justify-center min-h-screen p-8">
-          <h1 className="text-page-title-desktop uppercase mb-12" style={{ color: 'var(--accent)' }}>
-            VARVARA
-          </h1>
+        <div className="flex flex-col min-h-screen">
+          {/* Header */}
+          <div className="flex items-center justify-center px-4 py-4">
+            <span
+              className="text-logo uppercase"
+              style={{ color: 'var(--text-primary)' }}
+            >
+              VARVARA
+            </span>
+          </div>
 
-          {/* Visible Menu */}
-          <nav className="w-full max-w-md">
-            <div className="space-y-2">
-              {menuStructure.l1Items.map((item) => (
-                <button
-                  key={item}
-                  onClick={() => handleSelectL1(item)}
-                  className="w-full text-left py-4 px-6 transition-all hover:opacity-80"
-                  style={{
-                    backgroundColor: 'var(--bg-secondary)',
-                    color: 'var(--text-primary)',
-                  }}
-                >
-                  <span className="text-body uppercase">{item}</span>
-                </button>
-              ))}
+          {/* Menu Content */}
+          <div className="flex-1 px-4 py-6 overflow-y-auto">
+            {/* Section Label */}
+            <div className="flex items-center gap-2 mb-4">
+              <div className="w-4 h-0.5" style={{ backgroundColor: '#E91E63' }} />
+              <span
+                className="text-label-sm uppercase"
+                style={{ color: '#E91E63' }}
+              >
+                SYSTEM CORE
+              </span>
             </div>
-          </nav>
+
+            {/* L1 Menu Items */}
+            <nav className="space-y-1">
+              {menuStructure.l1Items.map((item) => {
+                const hasAI = item === 'MOTIVATION' || item === 'PLAN';
+
+                return (
+                  <button
+                    key={item}
+                    onClick={() => handleSelectL1(item)}
+                    className="flex items-center gap-3 w-full text-left py-3 transition-colors text-menu-mobile"
+                    style={{ color: 'var(--text-primary)' }}
+                  >
+                    {item.toLowerCase()}
+                    {hasAI && item === 'MOTIVATION' && (
+                      <Sparkles size={24} style={{ color: '#E91E63' }} />
+                    )}
+                  </button>
+                );
+              })}
+            </nav>
+          </div>
+
+          {/* Footer */}
+          <div
+            className="px-4 py-4 border-t"
+            style={{ borderColor: 'var(--divider-standard)' }}
+          >
+            <div className="flex items-center justify-between">
+              <div>
+                <p
+                  className="text-label-xs uppercase"
+                  style={{ color: 'var(--text-tertiary)' }}
+                >
+                  SYSTEM READY
+                </p>
+                <p
+                  className="text-body-sm"
+                  style={{ color: 'var(--text-secondary)' }}
+                >
+                  v2.0.4 • trade portal
+                </p>
+              </div>
+              <button
+                className="w-12 h-12 rounded-full flex items-center justify-center"
+                style={{ backgroundColor: 'var(--text-primary)', color: 'var(--bg-primary)' }}
+              >
+                <Search size={20} />
+              </button>
+            </div>
+          </div>
         </div>
       );
     }
@@ -177,8 +229,8 @@ function App() {
     }
   };
 
-  // Determine if we should show bottom tabs (only on dashboard/home in mobile)
-  const showBottomTabs = isMobile && activeL1 === null;
+  // Determine if we should show bottom tabs (disabled on home screen)
+  const showBottomTabs = false;
 
   // Determine if we should show L2 sidebar (show when L1 has L2 items)
   const hasL2Items = activeL1 && menuStructure.l2Items[activeL1] !== null;

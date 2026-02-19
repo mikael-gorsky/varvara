@@ -84,7 +84,7 @@ export const AppLayout: React.FC<AppLayoutProps> = ({
       {/* Mobile Header - hidden on home screen */}
       {isMobile && activeL1 && (
         <header
-          className="fixed top-0 left-0 right-0 z-30 flex items-center justify-between px-4 py-3 safe-area-top"
+          className="fixed top-0 left-0 right-0 z-30 flex items-center justify-between px-4 py-2 safe-area-top"
           style={{ backgroundColor: 'var(--bg-primary)' }}
         >
           <button

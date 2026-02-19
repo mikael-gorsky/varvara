@@ -23,7 +23,7 @@ const InterfaceDesignPanel: React.FC = () => {
   ];
 
   return (
-    <div>
+    <div className="pt-1">
       <h2 className="text-page-title-mobile md:text-page-title-desktop uppercase mb-8" style={{ color: 'var(--accent)' }}>
         INTERFACE DESIGN
       </h2>
@@ -251,7 +251,7 @@ const ExchangeRatePanel: React.FC = () => {
   }
 
   return (
-    <div>
+    <div className="pt-1">
       <h2 className="text-page-title-mobile md:text-page-title-desktop uppercase mb-8" style={{ color: 'var(--accent)' }}>
         EXCHANGE RATE
       </h2>
@@ -348,7 +348,7 @@ const SettingsModule: React.FC<SettingsModuleProps> = ({ activeL2 }) => {
         return <ExchangeRatePanel />;
       case 'THEME':
         return (
-          <div>
+          <div className="pt-1">
             <h2 className="text-page-title-mobile md:text-page-title-desktop uppercase mb-8" style={{ color: 'var(--accent)' }}>
               THEME
             </h2>
@@ -385,7 +385,7 @@ const SettingsModule: React.FC<SettingsModuleProps> = ({ activeL2 }) => {
         );
       case 'LANGUAGE':
         return (
-          <div>
+          <div className="pt-1">
             <h2 className="text-page-title-mobile md:text-page-title-desktop uppercase mb-8" style={{ color: 'var(--accent)' }}>
               LANGUAGE
             </h2>
@@ -396,7 +396,7 @@ const SettingsModule: React.FC<SettingsModuleProps> = ({ activeL2 }) => {
         );
       case 'USERS':
         return (
-          <div>
+          <div className="pt-1">
             <h2 className="text-page-title-mobile md:text-page-title-desktop uppercase mb-8" style={{ color: 'var(--accent)' }}>
               USERS
             </h2>
@@ -407,7 +407,7 @@ const SettingsModule: React.FC<SettingsModuleProps> = ({ activeL2 }) => {
         );
       default:
         return (
-          <div>
+          <div className="pt-1">
             <h2 className="text-page-title-mobile md:text-page-title-desktop uppercase mb-8" style={{ color: 'var(--accent)' }}>
               SETTINGS
             </h2>

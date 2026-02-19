@@ -178,7 +178,7 @@ const MarginAnalyticsModule: React.FC = () => {
   }
 
   return (
-    <div className="p-4 lg:p-8">
+    <div className="p-4 lg:p-8 pt-5 lg:pt-8">
       {/* Page Title */}
       <div className="mb-8">
         <h2

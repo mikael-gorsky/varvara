@@ -45,7 +45,19 @@ export const DesktopSidebar: React.FC<DesktopSidebarProps> = ({
           {activeL1 && (
             <>
               <span style={{ color: 'var(--text-tertiary)' }}>&gt;</span>
-              <span style={{ color: '#E91E63' }}>{activeL1}</span>
+              <button
+                onClick={() => onSelectL1(activeL1)}
+                className="transition-colors hover:opacity-80"
+                style={{ color: '#E91E63' }}
+              >
+                {activeL1}
+              </button>
+            </>
+          )}
+          {activeL2 && (
+            <>
+              <span style={{ color: 'var(--text-tertiary)' }}>&gt;</span>
+              <span style={{ color: '#E91E63' }}>{activeL2}</span>
             </>
           )}
         </div>

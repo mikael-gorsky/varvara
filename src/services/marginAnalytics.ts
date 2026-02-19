@@ -33,6 +33,16 @@ export interface MarginFilters {
   customer_category?: string;
 }
 
+export interface CustomerGroupKPIs {
+  customer_category: string;
+  revenue_rub: number;
+  revenue_usd: number;
+  margin_rub: number;
+  margin_usd: number;
+  avg_margin_percent: number;
+  transaction_count: number;
+}
+
 /**
  * Get available periods (months with data)
  */
@@ -133,6 +143,64 @@ export async function getMarginKPIs(filters: MarginFilters = {}): Promise<Margin
     avg_margin_percent,
     transaction_count: data.length,
   };
+}
+
+/**
+ * Get KPIs grouped by customer category for a specific period
+ */
+export async function getCustomerGroupKPIs(periodDate: string): Promise<CustomerGroupKPIs[]> {
+  const { data, error } = await supabase
+    .from('margin_analytics_data')
+    .select('customer_category, revenue_rub, margin_rub, margin_percent')
+    .eq('period_date', periodDate)
+    .not('customer_category', 'is', null);
+
+  if (error) throw error;
+
+  // Get exchange rate for the period
+  const usdRate = await getExchangeRate(periodDate);
+
+  // Group by customer category
+  const groupMap = new Map<string, {
+    revenue_rub: number;
+    margin_rub: number;
+    margin_percent_sum: number;
+    count: number;
+  }>();
+
+  for (const row of data) {
+    const category = row.customer_category || 'Unknown';
+
+    if (!groupMap.has(category)) {
+      groupMap.set(category, {
+        revenue_rub: 0,
+        margin_rub: 0,
+        margin_percent_sum: 0,
+        count: 0,
+      });
+    }
+
+    const group = groupMap.get(category)!;
+    group.revenue_rub += row.revenue_rub || 0;
+    group.margin_rub += row.margin_rub || 0;
+    group.margin_percent_sum += row.margin_percent || 0;
+    group.count += 1;
+  }
+
+  // Convert to array and calculate averages
+  const groups: CustomerGroupKPIs[] = Array.from(groupMap.entries())
+    .map(([category, stats]) => ({
+      customer_category: category,
+      revenue_rub: stats.revenue_rub,
+      revenue_usd: stats.revenue_rub / usdRate,
+      margin_rub: stats.margin_rub,
+      margin_usd: stats.margin_rub / usdRate,
+      avg_margin_percent: stats.count > 0 ? stats.margin_percent_sum / stats.count : 0,
+      transaction_count: stats.count,
+    }))
+    .sort((a, b) => b.revenue_rub - a.revenue_rub); // Sort by revenue descending
+
+  return groups;
 }
 
 /**

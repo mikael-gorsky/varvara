@@ -1,16 +1,18 @@
 import React, { useState, useEffect } from 'react';
 import {
   getAvailablePeriods,
-  getAvailableCategories,
   getMarginKPIs,
+  getCustomerGroupKPIs,
   formatCurrency,
   formatPeriod,
   type MarginKPIs,
+  type CustomerGroupKPIs,
 } from '../services/marginAnalytics';
 
 interface PeriodData {
   period: string;
   kpis: MarginKPIs | null;
+  groupKPIs: CustomerGroupKPIs[];
   exchangeRate: number | null;
 }
 
@@ -20,28 +22,25 @@ const MarginAnalyticsModule: React.FC = () => {
 
   // Filter options
   const [availablePeriods, setAvailablePeriods] = useState<string[]>([]);
-  const [availableCategories, setAvailableCategories] = useState<string[]>([]);
-  const [selectedCategory, setSelectedCategory] = useState<string>('all');
 
   // Three periods to compare
   const [periods, setPeriods] = useState<[string, string, string]>(['', '', '']);
   const [periodData, setPeriodData] = useState<[PeriodData, PeriodData, PeriodData]>([
-    { period: '', kpis: null, exchangeRate: null },
-    { period: '', kpis: null, exchangeRate: null },
-    { period: '', kpis: null, exchangeRate: null },
+    { period: '', kpis: null, groupKPIs: [], exchangeRate: null },
+    { period: '', kpis: null, groupKPIs: [], exchangeRate: null },
+    { period: '', kpis: null, groupKPIs: [], exchangeRate: null },
   ]);
+
+  // All unique customer groups across all periods
+  const [customerGroups, setCustomerGroups] = useState<string[]>([]);
 
   // Load available filter options on mount
   useEffect(() => {
     const loadFilterOptions = async () => {
       try {
-        const [fetchedPeriods, categories] = await Promise.all([
-          getAvailablePeriods(),
-          getAvailableCategories(),
-        ]);
+        const fetchedPeriods = await getAvailablePeriods();
 
         setAvailablePeriods(fetchedPeriods);
-        setAvailableCategories(categories);
 
         // Set default periods: latest month, same month last year, same month 2 years ago
         if (fetchedPeriods.length > 0) {
@@ -63,7 +62,7 @@ const MarginAnalyticsModule: React.FC = () => {
     loadFilterOptions();
   }, []);
 
-  // Load data when periods or category change
+  // Load data when periods change
   useEffect(() => {
     if (!periods[0]) return; // Wait for periods to be set
 
@@ -72,15 +71,11 @@ const MarginAnalyticsModule: React.FC = () => {
       setError(null);
 
       try {
-        const filters = {
-          customer_category: selectedCategory !== 'all' ? selectedCategory : undefined,
-        };
-
         const dataPromises = periods.map(async (period) => {
-          const kpis = await getMarginKPIs({
-            ...filters,
-            period_date: period,
-          });
+          const [kpis, groupKPIs] = await Promise.all([
+            getMarginKPIs({ period_date: period }),
+            getCustomerGroupKPIs(period),
+          ]);
 
           // Calculate exchange rate from KPIs
           const exchangeRate =
@@ -88,11 +83,18 @@ const MarginAnalyticsModule: React.FC = () => {
               ? kpis.total_revenue_rub / kpis.total_revenue_usd
               : null;
 
-          return { period, kpis, exchangeRate };
+          return { period, kpis, groupKPIs, exchangeRate };
         });
 
         const data = await Promise.all(dataPromises);
         setPeriodData(data as [PeriodData, PeriodData, PeriodData]);
+
+        // Collect all unique customer groups across all periods
+        const allGroups = new Set<string>();
+        data.forEach(pd => {
+          pd.groupKPIs.forEach(g => allGroups.add(g.customer_category));
+        });
+        setCustomerGroups(Array.from(allGroups).sort());
       } catch (err) {
         console.error('Error loading margin data:', err);
         setError('Failed to load margin data');
@@ -102,43 +104,63 @@ const MarginAnalyticsModule: React.FC = () => {
     };
 
     loadData();
-  }, [periods, selectedCategory]);
-
-  const formatValue = (valueRub: number, valueUsd: number, hasExchangeRate: boolean) => {
-    if (!hasExchangeRate) {
-      return (
-        <>
-          <p className="text-kpi-value my-2" style={{ color: 'var(--text-primary)' }}>
-            ***
-          </p>
-          <p className="text-label-xs uppercase" style={{ color: 'var(--text-tertiary)' }}>
-            RUB {formatCurrency(valueRub, 'RUB')}
-          </p>
-        </>
-      );
-    }
-
-    return (
-      <>
-        <p className="text-kpi-value my-2" style={{ color: 'var(--text-primary)' }}>
-          RUB {formatCurrency(valueRub, 'RUB')}
-        </p>
-        <p className="text-label-xs" style={{ color: 'var(--text-tertiary)' }}>
-          ${formatCurrency(valueUsd, 'USD')}
-        </p>
-      </>
-    );
-  };
-
-  const formatPercent = (value: number): string => {
-    return `${value.toFixed(1)}%`;
-  };
+  }, [periods]);
 
   const handlePeriodChange = (index: number, newPeriod: string) => {
     const newPeriods: [string, string, string] = [...periods] as [string, string, string];
     newPeriods[index] = newPeriod;
     setPeriods(newPeriods);
   };
+
+  const formatValue = (
+    valueRub: number,
+    valueUsd: number,
+    hasExchangeRate: boolean,
+    color: string
+  ) => {
+    if (!hasExchangeRate) {
+      return (
+        <div>
+          <p className="text-body-lg font-medium" style={{ color }}>
+            ***
+          </p>
+          <p className="text-body-sm ml-8" style={{ color: 'var(--text-tertiary)' }}>
+            RUB {formatCurrency(valueRub, 'RUB')}
+          </p>
+        </div>
+      );
+    }
+
+    return (
+      <div>
+        <p className="text-body-lg font-medium" style={{ color }}>
+          RUB {formatCurrency(valueRub, 'RUB')}
+        </p>
+        <p className="text-body-sm ml-8" style={{ color: 'var(--text-tertiary)' }}>
+          ${formatCurrency(valueUsd, 'USD')}
+        </p>
+      </div>
+    );
+  };
+
+  const formatPercent = (value: number, color: string): JSX.Element => {
+    return (
+      <p className="text-body-lg font-medium" style={{ color }}>
+        {value.toFixed(1)}%
+      </p>
+    );
+  };
+
+  const formatCount = (value: number, color: string): JSX.Element => {
+    return (
+      <p className="text-body-lg font-medium" style={{ color }}>
+        {value}
+      </p>
+    );
+  };
+
+  // Period colors
+  const periodColors = ['var(--text-primary)', '#E91E63', '#2196F3']; // white, magenta, blue
 
   if (error) {
     return (
@@ -179,7 +201,7 @@ const MarginAnalyticsModule: React.FC = () => {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           {periods.map((period, index) => (
             <div key={index}>
-              <p className="text-label-xs uppercase mb-2" style={{ color: 'var(--text-tertiary)' }}>
+              <p className="text-label-xs uppercase mb-2" style={{ color: periodColors[index] }}>
                 PERIOD {index + 1}
               </p>
               <select
@@ -206,131 +228,215 @@ const MarginAnalyticsModule: React.FC = () => {
             </div>
           ))}
         </div>
+      </div>
 
-        {/* Category Filter */}
-        <div>
-          <p className="text-label-xs uppercase mb-2" style={{ color: 'var(--text-tertiary)' }}>
-            CUSTOMER CATEGORY
+      {/* TOTAL METRICS */}
+      <div className="mb-8 p-6" style={{ backgroundColor: 'var(--bg-secondary)' }}>
+        <h3 className="text-section-title uppercase mb-6" style={{ color: 'var(--accent)' }}>
+          TOTAL
+        </h3>
+
+        {/* Total Revenue Row */}
+        <div className="mb-8 pb-6" style={{ borderBottom: '1px solid var(--divider-standard)' }}>
+          <p className="text-label uppercase mb-4" style={{ color: 'var(--text-tertiary)' }}>
+            TOTAL REVENUE
           </p>
-          <select
-            className="w-full p-3 text-body bg-transparent border"
-            style={{
-              backgroundColor: 'var(--bg-tertiary)',
-              borderColor: 'var(--divider-standard)',
-              color: 'var(--text-primary)',
-            }}
-            value={selectedCategory}
-            onChange={(e) => setSelectedCategory(e.target.value)}
-            disabled={loading}
-          >
-            <option value="all">All Categories</option>
-            {availableCategories.map((category) => (
-              <option key={category} value={category}>
-                {category}
-              </option>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {periodData.map((data, index) => (
+              <div key={index}>
+                {loading || !data.kpis ? (
+                  <p className="text-body-lg" style={{ color: 'var(--text-tertiary)' }}>
+                    ...
+                  </p>
+                ) : (
+                  formatValue(
+                    data.kpis.total_revenue_rub,
+                    data.kpis.total_revenue_usd,
+                    !!data.exchangeRate,
+                    periodColors[index]
+                  )
+                )}
+              </div>
             ))}
-          </select>
+          </div>
+        </div>
+
+        {/* Total Margin Row */}
+        <div className="mb-8 pb-6" style={{ borderBottom: '1px solid var(--divider-standard)' }}>
+          <p className="text-label uppercase mb-4" style={{ color: 'var(--text-tertiary)' }}>
+            TOTAL MARGIN
+          </p>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {periodData.map((data, index) => (
+              <div key={index}>
+                {loading || !data.kpis ? (
+                  <p className="text-body-lg" style={{ color: 'var(--text-tertiary)' }}>
+                    ...
+                  </p>
+                ) : (
+                  formatValue(
+                    data.kpis.total_margin_rub,
+                    data.kpis.total_margin_usd,
+                    !!data.exchangeRate,
+                    periodColors[index]
+                  )
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Margin % Row */}
+        <div className="mb-8 pb-6" style={{ borderBottom: '1px solid var(--divider-standard)' }}>
+          <p className="text-label uppercase mb-4" style={{ color: 'var(--text-tertiary)' }}>
+            MARGIN %
+          </p>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {periodData.map((data, index) => (
+              <div key={index}>
+                {loading || !data.kpis ? (
+                  <p className="text-body-lg" style={{ color: 'var(--text-tertiary)' }}>
+                    ...
+                  </p>
+                ) : (
+                  formatPercent(data.kpis.avg_margin_percent, periodColors[index])
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Transactions Row */}
+        <div>
+          <p className="text-label uppercase mb-4" style={{ color: 'var(--text-tertiary)' }}>
+            TRANSACTIONS
+          </p>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {periodData.map((data, index) => (
+              <div key={index}>
+                {loading || !data.kpis ? (
+                  <p className="text-body-lg" style={{ color: 'var(--text-tertiary)' }}>
+                    ...
+                  </p>
+                ) : (
+                  formatCount(data.kpis.transaction_count, periodColors[index])
+                )}
+              </div>
+            ))}
+          </div>
         </div>
       </div>
 
-      {/* KPI Grid - 3 Columns for 3 Periods */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
-        {periodData.map((data, periodIndex) => (
-          <div key={periodIndex} className="space-y-4">
-            {/* Period Header */}
-            <div className="p-4" style={{ backgroundColor: 'var(--bg-secondary)' }}>
-              <p className="text-section-title uppercase" style={{ color: '#E91E63' }}>
-                {data.period ? formatPeriod(data.period) : '...'}
-              </p>
-              {data.exchangeRate && (
-                <p className="text-label-xs uppercase mt-1" style={{ color: 'var(--text-tertiary)' }}>
-                  {data.exchangeRate.toFixed(2)} RUB/USD
-                </p>
-              )}
-            </div>
+      {/* CUSTOMER GROUP BREAKDOWN */}
+      {customerGroups.map((groupName) => (
+        <div key={groupName} className="mb-8 p-6" style={{ backgroundColor: 'var(--bg-secondary)' }}>
+          <h3 className="text-section-title uppercase mb-6" style={{ color: 'var(--accent)' }}>
+            {groupName}
+          </h3>
 
-            {/* Total Revenue */}
-            <div
-              className="p-6 min-h-[140px] flex flex-col justify-between"
-              style={{ backgroundColor: 'var(--bg-secondary)' }}
-            >
-              <p className="text-label uppercase" style={{ color: 'var(--text-tertiary)' }}>
-                TOTAL REVENUE
-              </p>
-              {loading || !data.kpis ? (
-                <p className="text-kpi-value my-2" style={{ color: 'var(--text-tertiary)' }}>
-                  ...
-                </p>
-              ) : (
-                formatValue(
-                  data.kpis.total_revenue_rub,
-                  data.kpis.total_revenue_usd,
-                  !!data.exchangeRate
-                )
-              )}
-            </div>
-
-            {/* Total Margin */}
-            <div
-              className="p-6 min-h-[140px] flex flex-col justify-between"
-              style={{ backgroundColor: 'var(--bg-secondary)' }}
-            >
-              <p className="text-label uppercase" style={{ color: 'var(--text-tertiary)' }}>
-                TOTAL MARGIN
-              </p>
-              {loading || !data.kpis ? (
-                <p className="text-kpi-value my-2" style={{ color: 'var(--text-tertiary)' }}>
-                  ...
-                </p>
-              ) : (
-                formatValue(
-                  data.kpis.total_margin_rub,
-                  data.kpis.total_margin_usd,
-                  !!data.exchangeRate
-                )
-              )}
-            </div>
-
-            {/* Margin % */}
-            <div
-              className="p-6 min-h-[140px] flex flex-col justify-between"
-              style={{ backgroundColor: 'var(--bg-secondary)' }}
-            >
-              <p className="text-label uppercase" style={{ color: 'var(--text-tertiary)' }}>
-                MARGIN %
-              </p>
-              {loading || !data.kpis ? (
-                <p className="text-kpi-value my-2" style={{ color: 'var(--text-tertiary)' }}>
-                  ...
-                </p>
-              ) : (
-                <p className="text-kpi-value my-2" style={{ color: 'var(--text-primary)' }}>
-                  {formatPercent(data.kpis.avg_margin_percent)}
-                </p>
-              )}
-            </div>
-
-            {/* Transaction Count */}
-            <div
-              className="p-6 min-h-[140px] flex flex-col justify-between"
-              style={{ backgroundColor: 'var(--bg-secondary)' }}
-            >
-              <p className="text-label uppercase" style={{ color: 'var(--text-tertiary)' }}>
-                TRANSACTIONS
-              </p>
-              {loading || !data.kpis ? (
-                <p className="text-kpi-value my-2" style={{ color: 'var(--text-tertiary)' }}>
-                  ...
-                </p>
-              ) : (
-                <p className="text-kpi-value my-2" style={{ color: 'var(--text-primary)' }}>
-                  {data.kpis.transaction_count}
-                </p>
-              )}
+          {/* Revenue Row */}
+          <div className="mb-8 pb-6" style={{ borderBottom: '1px solid var(--divider-standard)' }}>
+            <p className="text-label uppercase mb-4" style={{ color: 'var(--text-tertiary)' }}>
+              REVENUE
+            </p>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              {periodData.map((data, index) => {
+                const groupData = data.groupKPIs.find(g => g.customer_category === groupName);
+                return (
+                  <div key={index}>
+                    {loading || !groupData ? (
+                      <p className="text-body-lg" style={{ color: 'var(--text-tertiary)' }}>
+                        —
+                      </p>
+                    ) : (
+                      formatValue(
+                        groupData.revenue_rub,
+                        groupData.revenue_usd,
+                        !!data.exchangeRate,
+                        periodColors[index]
+                      )
+                    )}
+                  </div>
+                );
+              })}
             </div>
           </div>
-        ))}
-      </div>
+
+          {/* Margin Row */}
+          <div className="mb-8 pb-6" style={{ borderBottom: '1px solid var(--divider-standard)' }}>
+            <p className="text-label uppercase mb-4" style={{ color: 'var(--text-tertiary)' }}>
+              MARGIN
+            </p>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              {periodData.map((data, index) => {
+                const groupData = data.groupKPIs.find(g => g.customer_category === groupName);
+                return (
+                  <div key={index}>
+                    {loading || !groupData ? (
+                      <p className="text-body-lg" style={{ color: 'var(--text-tertiary)' }}>
+                        —
+                      </p>
+                    ) : (
+                      formatValue(
+                        groupData.margin_rub,
+                        groupData.margin_usd,
+                        !!data.exchangeRate,
+                        periodColors[index]
+                      )
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Margin % Row */}
+          <div className="mb-8 pb-6" style={{ borderBottom: '1px solid var(--divider-standard)' }}>
+            <p className="text-label uppercase mb-4" style={{ color: 'var(--text-tertiary)' }}>
+              MARGIN %
+            </p>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              {periodData.map((data, index) => {
+                const groupData = data.groupKPIs.find(g => g.customer_category === groupName);
+                return (
+                  <div key={index}>
+                    {loading || !groupData ? (
+                      <p className="text-body-lg" style={{ color: 'var(--text-tertiary)' }}>
+                        —
+                      </p>
+                    ) : (
+                      formatPercent(groupData.avg_margin_percent, periodColors[index])
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Transactions Row */}
+          <div>
+            <p className="text-label uppercase mb-4" style={{ color: 'var(--text-tertiary)' }}>
+              TRANSACTIONS
+            </p>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              {periodData.map((data, index) => {
+                const groupData = data.groupKPIs.find(g => g.customer_category === groupName);
+                return (
+                  <div key={index}>
+                    {loading || !groupData ? (
+                      <p className="text-body-lg" style={{ color: 'var(--text-tertiary)' }}>
+                        —
+                      </p>
+                    ) : (
+                      formatCount(groupData.transaction_count, periodColors[index])
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+      ))}
     </div>
   );
 };

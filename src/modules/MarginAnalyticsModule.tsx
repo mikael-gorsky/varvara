@@ -45,12 +45,12 @@ const MarginAnalyticsModule: React.FC = () => {
 
         // Set default periods: latest month, same month last year, same month 2 years ago
         if (fetchedPeriods.length > 0) {
-          const latestPeriod = fetchedPeriods[0]; // Most recent (e.g., "2026-01")
-          const [year, month] = latestPeriod.split('-');
+          const latestPeriod = fetchedPeriods[0]; // Most recent (e.g., "2025-12-01")
+          const [year, month, day] = latestPeriod.split('-');
 
           const period1 = latestPeriod;
-          const period2 = `${parseInt(year) - 1}-${month}`; // Same month last year
-          const period3 = `${parseInt(year) - 2}-${month}`; // Same month 2 years ago
+          const period2 = `${parseInt(year) - 1}-${month}-${day}`; // Same month last year
+          const period3 = `${parseInt(year) - 2}-${month}-${day}`; // Same month 2 years ago
 
           setPeriods([period1, period2, period3]);
         }

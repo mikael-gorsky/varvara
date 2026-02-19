@@ -44,7 +44,7 @@ export async function getAvailablePeriods(): Promise<string[]> {
 
   if (error) throw error;
 
-  // Get unique periods
+  // Get unique periods (dates are stored as YYYY-MM-DD)
   const periods = [...new Set(data.map(row => row.period_date))];
   return periods;
 }
@@ -251,6 +251,7 @@ export function formatCurrency(value: number, currency: 'USD' | 'RUB' = 'USD'): 
  * Format period date for display
  */
 export function formatPeriod(periodDate: string): string {
-  const date = new Date(periodDate + '-01');
+  // Period dates are stored as YYYY-MM-DD (e.g., "2024-01-01")
+  const date = new Date(periodDate);
   return date.toLocaleDateString('en-US', { year: 'numeric', month: 'long' });
 }

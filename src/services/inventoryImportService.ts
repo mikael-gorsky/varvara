@@ -36,7 +36,7 @@ export async function parseAgedInventoryFile(file: File): Promise<AgedInventoryR
   for (let i = 0; i < Math.min(20, data.length); i++) {
     const row = data[i];
     const rowStr = row.map(cell => String(cell || '').toLowerCase()).join(' ');
-    if (rowStr.includes('склад') || rowStr.includes('номенклатура') || rowStr.includes('warehouse')) {
+    if (rowStr.includes('склад') && rowStr.includes('номенклатура')) {
       headerRowIndex = i;
       break;
     }
@@ -50,22 +50,22 @@ export async function parseAgedInventoryFile(file: File): Promise<AgedInventoryR
 
   // Find column indices (flexible mapping)
   const warehouseCol = headers.findIndex(h =>
-    h.includes('склад') || h === 'warehouse' || h.includes('отгруз')
+    h === 'склад' || h === 'warehouse'
   );
   const productCol = headers.findIndex(h =>
-    h.includes('номенклатура') || h === 'product' || h.includes('товар')
+    h === 'номенклатура' || h === 'product'
   );
   const quantityCol = headers.findIndex(h =>
-    h.includes('количество') || h === 'quantity' || h.includes('кол-во') || h === 'qty'
+    h === 'всего' || h.includes('количество') || h === 'quantity' || h.includes('кол-во')
   );
   const costCol = headers.findIndex(h =>
-    h.includes('цена') || h.includes('cost') || h.includes('себестоимость')
+    h.includes('себест') || h.includes('цена') || h.includes('cost')
   );
   const ageCol = headers.findIndex(h =>
-    h.includes('срок') || h.includes('age') || h.includes('месяц')
+    h.includes('месяц') && h.includes('склад') || h.includes('age')
   );
   const qualityCol = headers.findIndex(h =>
-    h.includes('состояние') || h.includes('quality') || h.includes('годн')
+    h === 'качество' || h.includes('состояние') || h === 'quality'
   );
 
   if (warehouseCol === -1 || productCol === -1 || quantityCol === -1) {

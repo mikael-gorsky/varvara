@@ -33,12 +33,12 @@ export async function parseABCFile(file: File): Promise<ABCClassificationRow[]> 
 
   const rows: ABCClassificationRow[] = [];
 
-  // Find header row
+  // Find header row (look for "Группировка")
   let headerRowIndex = -1;
   for (let i = 0; i < Math.min(20, data.length); i++) {
     const row = data[i];
     const rowStr = row.map(cell => String(cell || '').toLowerCase()).join(' ');
-    if (rowStr.includes('номенклатура') || rowStr.includes('product') || rowStr.includes('abc')) {
+    if (rowStr.includes('группировка') || (rowStr.includes('номенклатура') && rowStr.includes('выручка'))) {
       headerRowIndex = i;
       break;
     }
@@ -50,57 +50,60 @@ export async function parseABCFile(file: File): Promise<ABCClassificationRow[]> 
 
   const headers = data[headerRowIndex].map(h => String(h || '').toLowerCase().trim());
 
-  // Find column indices (flexible mapping)
-  const productCol = headers.findIndex(h =>
-    h.includes('номенклатура') || h === 'product' || h.includes('товар') || h.includes('наименование')
-  );
-  const abcCol = headers.findIndex(h =>
-    h.includes('abc') || h.includes('класс') || h === 'class'
-  );
+  // Find column indices - column 1 is product/grouping
+  const productCol = 1; // Second column is always the grouping/product column
   const revenueCol = headers.findIndex(h =>
-    h.includes('выручка') || h.includes('revenue') || h.includes('продаж')
+    h.includes('выручка') && h.includes('валюте') && h.includes('упр')
   );
   const profitCol = headers.findIndex(h =>
-    h.includes('прибыль') || h.includes('profit') || h.includes('маржа')
-  );
-  const rankCol = headers.findIndex(h =>
-    h.includes('ранг') || h.includes('rank') || h.includes('место')
-  );
-  const cumulativeCol = headers.findIndex(h =>
-    h.includes('накопл') || h.includes('cumulative') || h.includes('%')
+    h.includes('валовой') && h.includes('прибыл')
   );
 
-  if (productCol === -1 || abcCol === -1) {
-    throw new Error(`Missing required columns. Found: product=${productCol}, abc=${abcCol}`);
+  if (productCol === -1) {
+    throw new Error(`Missing required columns. Found: product=${productCol}`);
   }
 
-  // Parse data rows
+  // Parse data rows - track current ABC class from section headers
+  let currentClass: 'A' | 'B' | 'C' | null = null;
+  let rank = 0;
+
   for (let i = headerRowIndex + 1; i < data.length; i++) {
     const row = data[i];
 
-    const product_name = row[productCol] ? String(row[productCol]).trim() : '';
-    const abc_class_raw = row[abcCol] ? String(row[abcCol]).trim().toUpperCase() : '';
-    const revenue = revenueCol !== -1 && row[revenueCol] ? parseFloat(row[revenueCol]) : 0;
-    const profit = profitCol !== -1 && row[profitCol] ? parseFloat(row[profitCol]) : 0;
-    const rank = rankCol !== -1 && row[rankCol] ? parseInt(row[rankCol]) : 0;
-    const cumulative = cumulativeCol !== -1 && row[cumulativeCol] ? parseFloat(row[cumulativeCol]) : 0;
+    const cellValue = row[productCol] ? String(row[productCol]).trim() : '';
 
-    // Skip empty rows
-    if (!product_name || !abc_class_raw) continue;
+    if (!cellValue) continue;
 
-    // Validate ABC class
-    const abc_class = abc_class_raw === 'A' || abc_class_raw === 'B' || abc_class_raw === 'C'
-      ? abc_class_raw as 'A' | 'B' | 'C'
-      : 'C'; // Default to C if invalid
+    // Check if this is an ABC class header (e.g., "A - класс")
+    const classMatch = cellValue.match(/^([ABC])\s*[-–]\s*класс/i);
+    if (classMatch) {
+      currentClass = classMatch[1].toUpperCase() as 'A' | 'B' | 'C';
+      continue; // Skip header rows
+    }
 
-    rows.push({
-      product_name,
-      abc_class,
-      revenue_rub_2025: revenue,
-      profit_rub_2025: profit,
-      revenue_rank: rank || 0,
-      revenue_cumulative_percent: cumulative
-    });
+    // Check for summary rows (Итого)
+    if (cellValue.toLowerCase().includes('итого')) {
+      continue;
+    }
+
+    // This is a product row
+    if (currentClass && cellValue) {
+      const revenue = revenueCol !== -1 && row[revenueCol] ? parseFloat(row[revenueCol]) : 0;
+      const profit = profitCol !== -1 && row[profitCol] ? parseFloat(row[profitCol]) : 0;
+
+      // Only include rows with actual revenue data
+      if (revenue > 0) {
+        rank++;
+        rows.push({
+          product_name: cellValue,
+          abc_class: currentClass,
+          revenue_rub_2025: revenue,
+          profit_rub_2025: profit,
+          revenue_rank: rank,
+          revenue_cumulative_percent: 0 // Will calculate later if needed
+        });
+      }
+    }
   }
 
   return rows;

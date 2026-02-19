@@ -58,10 +58,29 @@ function App() {
     // Show menu/welcome screen if no L1 menu item is selected (default/home page)
     if (!activeL1) {
       return (
-        <div className="flex items-center justify-center min-h-screen">
-          <h1 className="text-page-title-desktop uppercase" style={{ color: 'var(--accent)' }}>
+        <div className="flex flex-col items-center justify-center min-h-screen p-8">
+          <h1 className="text-page-title-desktop uppercase mb-12" style={{ color: 'var(--accent)' }}>
             VARVARA
           </h1>
+
+          {/* Visible Menu */}
+          <nav className="w-full max-w-md">
+            <div className="space-y-2">
+              {menuStructure.l1Items.map((item) => (
+                <button
+                  key={item}
+                  onClick={() => handleSelectL1(item)}
+                  className="w-full text-left py-4 px-6 transition-all hover:opacity-80"
+                  style={{
+                    backgroundColor: 'var(--bg-secondary)',
+                    color: 'var(--text-primary)',
+                  }}
+                >
+                  <span className="text-body uppercase">{item}</span>
+                </button>
+              ))}
+            </div>
+          </nav>
         </div>
       );
     }

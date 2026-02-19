@@ -2,6 +2,7 @@ import React from 'react';
 import StockLevelsPanel from '../components/inventory/StockLevelsPanel';
 import ABCAnalysisPanel from '../components/inventory/ABCAnalysisPanel';
 import AgingAlertsPanel from '../components/inventory/AgingAlertsPanel';
+import ReorderPlanningPanel from '../components/inventory/ReorderPlanningPanel';
 
 interface InventoryModuleProps {
   activeL2: string | null;
@@ -33,16 +34,7 @@ const InventoryModule: React.FC<InventoryModuleProps> = ({ activeL2 }) => {
         return <AgingAlertsPanel />;
 
       case 'REORDER PLANNING':
-        return (
-          <div>
-            <h2 className="text-page-title-mobile md:text-page-title-desktop uppercase mb-8" style={{ color: 'var(--accent)' }}>
-              {activeL2}
-            </h2>
-            <p className="text-body" style={{ color: 'var(--text-secondary)' }}>
-              This feature is coming soon...
-            </p>
-          </div>
-        );
+        return <ReorderPlanningPanel />;
 
       default:
         return (

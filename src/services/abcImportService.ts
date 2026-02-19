@@ -119,7 +119,7 @@ export async function importABCClassification(
     const batchId = crypto.randomUUID();
 
     // Prepare records for bulk insert
-    const records = rows.map(row => ({
+    const recordsRaw = rows.map(row => ({
       product_name: row.product_name,
       period_year: year,
       abc_class: row.abc_class,
@@ -129,6 +129,17 @@ export async function importABCClassification(
       revenue_cumulative_percent: row.revenue_cumulative_percent,
       import_batch_id: batchId
     }));
+
+    // Deduplicate by unique key (product_name, period_year)
+    const recordsMap = new Map<string, typeof recordsRaw[0]>();
+    for (const record of recordsRaw) {
+      const key = `${record.product_name}|${record.period_year}`;
+      // Keep last occurrence if duplicates exist
+      recordsMap.set(key, record);
+    }
+    const records = Array.from(recordsMap.values());
+
+    console.log(`ABC Import - Deduped: ${recordsRaw.length} → ${records.length} records`);
 
     // Insert in batches of 1000
     const BATCH_SIZE = 1000;

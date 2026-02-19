@@ -53,15 +53,14 @@ export async function parseABCFile(file: File): Promise<ABCClassificationRow[]> 
   // Find column indices - column 1 is product/grouping
   const productCol = 1; // Second column is always the grouping/product column
   const revenueCol = headers.findIndex(h =>
-    h.includes('выручка') && h.includes('валюте') && h.includes('упр')
+    h.includes('выручка') && (h.includes('валюте') || h.includes('упр'))
   );
   const profitCol = headers.findIndex(h =>
-    h.includes('валовой') && h.includes('прибыл')
+    h.includes('валов') && h.includes('приб')
   );
 
-  if (productCol === -1) {
-    throw new Error(`Missing required columns. Found: product=${productCol}`);
-  }
+  console.log('ABC Parse - Found columns:', { productCol, revenueCol, profitCol });
+  console.log('ABC Parse - Headers:', headers);
 
   // Parse data rows - track current ABC class from section headers
   let currentClass: 'A' | 'B' | 'C' | null = null;
@@ -78,6 +77,7 @@ export async function parseABCFile(file: File): Promise<ABCClassificationRow[]> 
     const classMatch = cellValue.match(/^([ABC])\s*[-–]\s*класс/i);
     if (classMatch) {
       currentClass = classMatch[1].toUpperCase() as 'A' | 'B' | 'C';
+      console.log(`ABC Parse - Found class header: ${currentClass} at row ${i}`);
       continue; // Skip header rows
     }
 
@@ -91,18 +91,16 @@ export async function parseABCFile(file: File): Promise<ABCClassificationRow[]> 
       const revenue = revenueCol !== -1 && row[revenueCol] ? parseFloat(row[revenueCol]) : 0;
       const profit = profitCol !== -1 && row[profitCol] ? parseFloat(row[profitCol]) : 0;
 
-      // Only include rows with actual revenue data
-      if (revenue > 0) {
-        rank++;
-        rows.push({
-          product_name: cellValue,
-          abc_class: currentClass,
-          revenue_rub_2025: revenue,
-          profit_rub_2025: profit,
-          revenue_rank: rank,
-          revenue_cumulative_percent: 0 // Will calculate later if needed
-        });
-      }
+      // Include all products under a class, even with 0 revenue
+      rank++;
+      rows.push({
+        product_name: cellValue,
+        abc_class: currentClass,
+        revenue_rub_2025: revenue,
+        profit_rub_2025: profit,
+        revenue_rank: rank,
+        revenue_cumulative_percent: 0 // Will calculate later if needed
+      });
     }
   }
 

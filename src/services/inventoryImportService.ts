@@ -153,7 +153,7 @@ export async function importInventorySnapshot(
     }
 
     // Prepare snapshots for bulk insert
-    const snapshots = rows.map(row => ({
+    const snapshotsRaw = rows.map(row => ({
       snapshot_date: dateStr,
       product_name: row.product_name,
       warehouse_id: warehouseMap.get(row.warehouse)!,
@@ -164,6 +164,17 @@ export async function importInventorySnapshot(
       quality_status: row.quality_status,
       import_batch_id: batchId
     }));
+
+    // Deduplicate by unique key (snapshot_date, product_name, warehouse_id)
+    const snapshotsMap = new Map<string, typeof snapshotsRaw[0]>();
+    for (const snapshot of snapshotsRaw) {
+      const key = `${snapshot.snapshot_date}|${snapshot.product_name}|${snapshot.warehouse_id}`;
+      // Keep last occurrence if duplicates exist
+      snapshotsMap.set(key, snapshot);
+    }
+    const snapshots = Array.from(snapshotsMap.values());
+
+    console.log(`Inventory Import - Deduped: ${snapshotsRaw.length} → ${snapshots.length} records`);
 
     // Insert in batches of 1000 to avoid payload limits
     const BATCH_SIZE = 1000;

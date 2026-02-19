@@ -73,8 +73,8 @@ export const AppLayout: React.FC<AppLayoutProps> = ({
 
   return (
     <div className="min-h-screen" style={{ backgroundColor: 'var(--bg-primary)' }}>
-      {/* Mobile Header */}
-      {isMobile && (
+      {/* Mobile Header - hidden on home screen */}
+      {isMobile && activeL1 && (
         <header
           className="fixed top-0 left-0 right-0 z-30 flex items-center justify-between px-4 py-3 safe-area-top"
           style={{ backgroundColor: 'var(--bg-primary)' }}
@@ -119,7 +119,7 @@ export const AppLayout: React.FC<AppLayoutProps> = ({
       <main
         className={`
           min-h-screen transition-all
-          ${isMobile ? 'pt-16' : 'pl-sidebar'}
+          ${isMobile && activeL1 ? 'pt-16' : isMobile ? '' : 'pl-sidebar'}
           ${isMobile && showBottomTabs ? 'pb-20' : ''}
         `}
         style={{ backgroundColor: 'var(--bg-secondary)' }}

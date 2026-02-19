@@ -35,7 +35,13 @@ export const DesktopSidebar: React.FC<DesktopSidebarProps> = ({
       {/* Header with breadcrumb */}
       <div className="px-6 py-6">
         <div className="flex items-center gap-2 text-label-xs uppercase tracking-wider">
-          <span style={{ color: 'var(--text-tertiary)' }}>VARVARA</span>
+          <button
+            onClick={() => onSelectL1(null as any)}
+            className="transition-colors hover:text-white"
+            style={{ color: 'var(--text-tertiary)' }}
+          >
+            VARVARA
+          </button>
           {activeL1 && (
             <>
               <span style={{ color: 'var(--text-tertiary)' }}>&gt;</span>

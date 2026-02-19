@@ -3,16 +3,17 @@ import { Level1MenuItem, menuStructure } from './config/menuStructure';
 import { AppLayout } from './components/layout/AppLayout';
 import { TileNavigation } from './components/navigation/TileNavigation';
 import Dashboard from './pages/Dashboard';
-import ChannelsModule from './modules/ChannelsModule';
+import CustomersModule from './modules/CustomersModule';
 import MotivationModule from './modules/MotivationModule';
 import FinanceModule from './modules/FinanceModule';
 import ProductsModule from './modules/ProductsModule';
-import PlanModule from './modules/PlanModule';
+import InventoryModule from './modules/InventoryModule';
+import TargetsModule from './modules/TargetsModule';
 import ImportModule from './modules/ImportModule';
 import SettingsModule from './modules/SettingsModule';
 
 function App() {
-  const [activeL1, setActiveL1] = useState<Level1MenuItem | null>('DASHBOARD');
+  const [activeL1, setActiveL1] = useState<Level1MenuItem | null>(null);
   const [activeL2, setActiveL2] = useState<string | null>(null);
   const [activeL3, setActiveL3] = useState<string | null>(null);
   const [isMobile, setIsMobile] = useState(false);
@@ -54,14 +55,9 @@ function App() {
   };
 
   const renderContent = () => {
+    // Show Dashboard if no L1 menu item is selected (default/home page)
     if (!activeL1) {
-      return (
-        <div className="flex items-center justify-center min-h-[50vh]">
-          <p className="text-body" style={{ color: 'var(--text-tertiary)' }}>
-            Select a menu item to get started
-          </p>
-        </div>
-      );
+      return <Dashboard isMobile={isMobile} />;
     }
 
     // On desktop, show tile navigation for L1 items with L2 subitems (when no L2 selected)
@@ -133,18 +129,18 @@ function App() {
     }
 
     switch (activeL1) {
-      case 'DASHBOARD':
-        return <Dashboard isMobile={isMobile} />;
-      case 'CHANNELS':
-        return <ChannelsModule activeL2={activeL2} activeL3={activeL3} />;
+      case 'CUSTOMERS':
+        return <CustomersModule activeL2={activeL2} activeL3={activeL3} />;
       case 'MOTIVATION':
         return <MotivationModule />;
       case 'FINANCE':
-        return <FinanceModule />;
+        return <FinanceModule activeL2={activeL2} />;
       case 'PRODUCTS':
         return <ProductsModule activeL2={activeL2} />;
-      case 'PLAN':
-        return <PlanModule activeL2={activeL2} />;
+      case 'INVENTORY':
+        return <InventoryModule />;
+      case 'TARGETS':
+        return <TargetsModule activeL2={activeL2} />;
       case 'IMPORT':
         return <ImportModule activeL2={activeL2} />;
       case 'SETTINGS':
@@ -154,8 +150,8 @@ function App() {
     }
   };
 
-  // Determine if we should show bottom tabs (only on dashboard in mobile)
-  const showBottomTabs = isMobile && activeL1 === 'DASHBOARD';
+  // Determine if we should show bottom tabs (only on dashboard/home in mobile)
+  const showBottomTabs = isMobile && activeL1 === null;
 
   // Determine if we should show L2 sidebar (show when L1 has L2 items)
   const hasL2Items = activeL1 && menuStructure.l2Items[activeL1] !== null;

@@ -1,10 +1,10 @@
 import React from 'react';
 
-interface PlanModuleProps {
+interface TargetsModuleProps {
   activeL2: string | null;
 }
 
-const PlanModule: React.FC<PlanModuleProps> = ({ activeL2 }) => {
+const TargetsModule: React.FC<TargetsModuleProps> = ({ activeL2 }) => {
   const renderContent = () => {
     switch (activeL2) {
       case 'SALES PLANS':
@@ -29,17 +29,6 @@ const PlanModule: React.FC<PlanModuleProps> = ({ activeL2 }) => {
             </p>
           </div>
         );
-      case 'TARGETS':
-        return (
-          <div>
-            <h2 className="text-page-title-mobile md:text-page-title-desktop uppercase mb-8" style={{ color: 'var(--accent)' }}>
-              TARGETS
-            </h2>
-            <p className="text-body" style={{ color: 'var(--text-secondary)' }}>
-              Target management coming soon...
-            </p>
-          </div>
-        );
       case 'TIMELINE':
         return (
           <div>
@@ -55,7 +44,7 @@ const PlanModule: React.FC<PlanModuleProps> = ({ activeL2 }) => {
         return (
           <div>
             <h2 className="text-page-title-mobile md:text-page-title-desktop uppercase mb-8" style={{ color: 'var(--accent)' }}>
-              PLAN
+              TARGETS
             </h2>
             <p className="text-body" style={{ color: 'var(--text-secondary)' }}>
               Select a planning category
@@ -68,4 +57,4 @@ const PlanModule: React.FC<PlanModuleProps> = ({ activeL2 }) => {
   return <>{renderContent()}</>;
 };
 
-export default PlanModule;
+export default TargetsModule;

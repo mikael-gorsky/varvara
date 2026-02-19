@@ -88,12 +88,13 @@ export const AppLayout: React.FC<AppLayoutProps> = ({
             <Menu size={24} />
           </button>
 
-          <span
+          <button
+            onClick={() => onSelectL1(null as any)}
             className="text-logo uppercase"
             style={{ color: 'var(--text-primary)' }}
           >
             VARVARA
-          </span>
+          </button>
 
           {/* Empty div for spacing */}
           <div className="w-10" />

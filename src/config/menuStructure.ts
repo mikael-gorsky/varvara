@@ -1,10 +1,10 @@
 export type Level1MenuItem =
-  | 'DASHBOARD'
-  | 'CHANNELS'
+  | 'CUSTOMERS'
   | 'MOTIVATION'
   | 'FINANCE'
   | 'PRODUCTS'
-  | 'PLAN'
+  | 'INVENTORY'
+  | 'TARGETS'
   | 'IMPORT'
   | 'SETTINGS';
 
@@ -23,22 +23,22 @@ export interface MenuStructure {
 
 export const menuStructure: MenuStructure = {
   l1Items: [
-    'DASHBOARD',
-    'CHANNELS',
+    'CUSTOMERS',
     'MOTIVATION',
     'FINANCE',
     'PRODUCTS',
-    'PLAN',
+    'INVENTORY',
+    'TARGETS',
     'IMPORT',
     'SETTINGS',
   ],
   l2Items: {
-    DASHBOARD: null,
-    CHANNELS: ['OZON', 'WILDBERRIES', 'COMUS', 'DNS', 'MERLION', 'EBURG', 'SARATOV'],
+    CUSTOMERS: ['OZON', 'WILDBERRIES', 'COMUS', 'DNS', 'MERLION', 'EBURG', 'SARATOV'],
     MOTIVATION: null,
-    FINANCE: null,
-    PRODUCTS: ['CATALOG', 'PERFORMANCE', 'INVENTORY', 'CATEGORIES'],
-    PLAN: ['SALES PLANS', 'BUDGET', 'TARGETS', 'TIMELINE'],
+    FINANCE: ['MARGINS', 'PROFITS', 'CALENDAR'],
+    PRODUCTS: ['CATALOG', 'PERFORMANCE', 'CATEGORIES'],
+    INVENTORY: null,
+    TARGETS: ['SALES PLANS', 'BUDGET', 'TIMELINE'],
     IMPORT: ['IMPORT OZON REPORTS', 'IMPORT WB REPORTS', 'IMPORT YANDEX.MARKET REPORTS', 'IMPORT OUR PRICE-LIST'],
     SETTINGS: ['INTERFACE DESIGN', 'THEME', 'LANGUAGE', 'USERS'],
   },
@@ -46,30 +46,32 @@ export const menuStructure: MenuStructure = {
     OZON: ['COMPANIES', 'CATEGORIES', 'MARKETING'],
   },
   disabledL2Items: {
-    DASHBOARD: [],
-    CHANNELS: [],
+    CUSTOMERS: [],
     MOTIVATION: [],
-    FINANCE: [],
+    FINANCE: ['PROFITS', 'CALENDAR'],
     PRODUCTS: [],
-    PLAN: [],
+    INVENTORY: [],
+    TARGETS: [],
     IMPORT: ['IMPORT WB REPORTS', 'IMPORT YANDEX.MARKET REPORTS', 'IMPORT OUR PRICE-LIST'],
     SETTINGS: [],
   },
   tileGroups: {
-    DASHBOARD: [],
-    CHANNELS: [
+    CUSTOMERS: [
       { category: 'MARKETPLACES', items: ['OZON', 'WILDBERRIES'] },
       { category: 'RETAIL', items: ['COMUS', 'DNS', 'MERLION'] },
       { category: 'REGIONS', items: ['EBURG', 'SARATOV'] },
     ],
     MOTIVATION: [],
-    FINANCE: [],
-    PRODUCTS: [
-      { category: 'INVENTORY', items: ['CATALOG', 'INVENTORY'] },
-      { category: 'ANALYTICS', items: ['PERFORMANCE', 'CATEGORIES'] },
+    FINANCE: [
+      { category: 'FINANCIAL ANALYTICS', items: ['MARGINS', 'PROFITS', 'CALENDAR'] },
     ],
-    PLAN: [
-      { category: 'PLANNING', items: ['SALES PLANS', 'BUDGET', 'TARGETS', 'TIMELINE'] },
+    PRODUCTS: [
+      { category: 'CATALOG', items: ['CATALOG', 'CATEGORIES'] },
+      { category: 'ANALYTICS', items: ['PERFORMANCE'] },
+    ],
+    INVENTORY: [],
+    TARGETS: [
+      { category: 'PLANNING', items: ['SALES PLANS', 'BUDGET', 'TIMELINE'] },
     ],
     IMPORT: [
       { category: 'DATA IMPORT', items: ['IMPORT OZON REPORTS', 'IMPORT WB REPORTS', 'IMPORT YANDEX.MARKET REPORTS', 'IMPORT OUR PRICE-LIST'] },

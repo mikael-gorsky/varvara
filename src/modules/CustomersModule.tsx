@@ -2,12 +2,12 @@ import React from 'react';
 import OzonCompaniesAnalytics from '../components/ozon/OzonCompaniesAnalytics';
 import OzonCategoriesAnalytics from '../components/ozon/OzonCategoriesAnalytics';
 
-interface ChannelsModuleProps {
+interface CustomersModuleProps {
   activeL2: string | null;
   activeL3: string | null;
 }
 
-const ChannelsModule: React.FC<ChannelsModuleProps> = ({ activeL2, activeL3 }) => {
+const CustomersModule: React.FC<CustomersModuleProps> = ({ activeL2, activeL3 }) => {
 
   const renderOzonContent = () => {
     if (activeL3 === 'COMPANIES') {
@@ -57,10 +57,10 @@ const ChannelsModule: React.FC<ChannelsModuleProps> = ({ activeL2, activeL3 }) =
         return (
           <div style={{ padding: 'var(--spacing-3)' }}>
             <h2 className="text-page-title-mobile md:text-page-title-desktop uppercase mb-8" style={{ color: 'var(--accent)' }}>
-              CHANNELS
+              CUSTOMERS
             </h2>
             <p className="text-body" style={{ color: 'var(--text-secondary)' }}>
-              Select a channel to view analytics
+              Select a customer to view analytics
             </p>
           </div>
         );
@@ -70,4 +70,4 @@ const ChannelsModule: React.FC<ChannelsModuleProps> = ({ activeL2, activeL3 }) =
   return <>{renderContent()}</>;
 };
 
-export default ChannelsModule;
+export default CustomersModule;

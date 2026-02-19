@@ -23,7 +23,11 @@ interface KPIData {
   averageProductMargin: number;
 }
 
-const FinanceModule: React.FC = () => {
+interface FinanceModuleProps {
+  activeL2?: string | null;
+}
+
+const FinanceModule: React.FC<FinanceModuleProps> = ({ activeL2 }) => {
   const [currentTime, setCurrentTime] = useState(new Date());
 
   useEffect(() => {
@@ -73,7 +77,7 @@ const FinanceModule: React.FC = () => {
     return percentage.toFixed(1);
   };
 
-  return (
+  const renderFinanceOverview = () => (
     <div>
       <h2 className="text-page-title-mobile md:text-page-title-desktop uppercase mb-8" style={{ color: 'var(--accent)' }}>
         FINANCE
@@ -204,6 +208,48 @@ const FinanceModule: React.FC = () => {
       </div>
     </div>
   );
+
+  const renderContent = () => {
+    switch (activeL2) {
+      case 'MARGINS':
+        return (
+          <div style={{ padding: 'var(--spacing-3)' }}>
+            <h2 className="text-page-title-mobile md:text-page-title-desktop uppercase mb-8" style={{ color: 'var(--accent)' }}>
+              MARGINS
+            </h2>
+            <p className="text-body" style={{ color: 'var(--text-secondary)' }}>
+              Margin analytics dashboard coming soon...
+            </p>
+          </div>
+        );
+      case 'PROFITS':
+        return (
+          <div style={{ padding: 'var(--spacing-3)' }}>
+            <h2 className="text-page-title-mobile md:text-page-title-desktop uppercase mb-8" style={{ color: 'var(--accent)' }}>
+              PROFITS
+            </h2>
+            <p className="text-body" style={{ color: 'var(--text-secondary)' }}>
+              Profit analysis coming soon...
+            </p>
+          </div>
+        );
+      case 'CALENDAR':
+        return (
+          <div style={{ padding: 'var(--spacing-3)' }}>
+            <h2 className="text-page-title-mobile md:text-page-title-desktop uppercase mb-8" style={{ color: 'var(--accent)' }}>
+              CALENDAR
+            </h2>
+            <p className="text-body" style={{ color: 'var(--text-secondary)' }}>
+              Payment calendar coming soon...
+            </p>
+          </div>
+        );
+      default:
+        return renderFinanceOverview();
+    }
+  };
+
+  return <>{renderContent()}</>;
 };
 
 export default FinanceModule;

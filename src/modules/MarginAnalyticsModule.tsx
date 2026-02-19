@@ -3,16 +3,15 @@ import {
   getAvailablePeriods,
   getAvailableCategories,
   getMarginKPIs,
-  getCustomerMargins,
   formatCurrency,
   formatPeriod,
   type MarginKPIs,
-  type CustomerMarginData,
 } from '../services/marginAnalytics';
 
-interface FilterState {
+interface PeriodData {
   period: string;
-  category: string;
+  kpis: MarginKPIs | null;
+  exchangeRate: number | null;
 }
 
 const MarginAnalyticsModule: React.FC = () => {
@@ -22,33 +21,38 @@ const MarginAnalyticsModule: React.FC = () => {
   // Filter options
   const [availablePeriods, setAvailablePeriods] = useState<string[]>([]);
   const [availableCategories, setAvailableCategories] = useState<string[]>([]);
+  const [selectedCategory, setSelectedCategory] = useState<string>('all');
 
-  // Filter state
-  const [filterState, setFilterState] = useState<FilterState>({
-    period: '',
-    category: 'all',
-  });
-
-  // Data state
-  const [kpiData, setKpiData] = useState<MarginKPIs | null>(null);
-  const [customers, setCustomers] = useState<CustomerMarginData[]>([]);
-  const [exchangeRate, setExchangeRate] = useState<number>(95.0);
+  // Three periods to compare
+  const [periods, setPeriods] = useState<[string, string, string]>(['', '', '']);
+  const [periodData, setPeriodData] = useState<[PeriodData, PeriodData, PeriodData]>([
+    { period: '', kpis: null, exchangeRate: null },
+    { period: '', kpis: null, exchangeRate: null },
+    { period: '', kpis: null, exchangeRate: null },
+  ]);
 
   // Load available filter options on mount
   useEffect(() => {
     const loadFilterOptions = async () => {
       try {
-        const [periods, categories] = await Promise.all([
+        const [fetchedPeriods, categories] = await Promise.all([
           getAvailablePeriods(),
           getAvailableCategories(),
         ]);
 
-        setAvailablePeriods(periods);
+        setAvailablePeriods(fetchedPeriods);
         setAvailableCategories(categories);
 
-        // Set default period to most recent
-        if (periods.length > 0) {
-          setFilterState((prev) => ({ ...prev, period: periods[0] }));
+        // Set default periods: latest month, same month last year, same month 2 years ago
+        if (fetchedPeriods.length > 0) {
+          const latestPeriod = fetchedPeriods[0]; // Most recent (e.g., "2026-01")
+          const [year, month] = latestPeriod.split('-');
+
+          const period1 = latestPeriod;
+          const period2 = `${parseInt(year) - 1}-${month}`; // Same month last year
+          const period3 = `${parseInt(year) - 2}-${month}`; // Same month 2 years ago
+
+          setPeriods([period1, period2, period3]);
         }
       } catch (err) {
         console.error('Error loading filter options:', err);
@@ -59,9 +63,9 @@ const MarginAnalyticsModule: React.FC = () => {
     loadFilterOptions();
   }, []);
 
-  // Load data when filters change
+  // Load data when periods or category change
   useEffect(() => {
-    if (!filterState.period) return; // Wait for period to be set
+    if (!periods[0]) return; // Wait for periods to be set
 
     const loadData = async () => {
       setLoading(true);
@@ -69,22 +73,26 @@ const MarginAnalyticsModule: React.FC = () => {
 
       try {
         const filters = {
-          period_date: filterState.period,
-          customer_category: filterState.category !== 'all' ? filterState.category : undefined,
+          customer_category: selectedCategory !== 'all' ? selectedCategory : undefined,
         };
 
-        const [kpis, customerData] = await Promise.all([
-          getMarginKPIs(filters),
-          getCustomerMargins(filters, 50),
-        ]);
+        const dataPromises = periods.map(async (period) => {
+          const kpis = await getMarginKPIs({
+            ...filters,
+            period_date: period,
+          });
 
-        setKpiData(kpis);
-        setCustomers(customerData);
+          // Calculate exchange rate from KPIs
+          const exchangeRate =
+            kpis.total_revenue_rub > 0 && kpis.total_revenue_usd > 0
+              ? kpis.total_revenue_rub / kpis.total_revenue_usd
+              : null;
 
-        // Calculate exchange rate from KPIs
-        if (kpis.total_revenue_rub > 0 && kpis.total_revenue_usd > 0) {
-          setExchangeRate(kpis.total_revenue_rub / kpis.total_revenue_usd);
-        }
+          return { period, kpis, exchangeRate };
+        });
+
+        const data = await Promise.all(dataPromises);
+        setPeriodData(data as [PeriodData, PeriodData, PeriodData]);
       } catch (err) {
         console.error('Error loading margin data:', err);
         setError('Failed to load margin data');
@@ -94,16 +102,42 @@ const MarginAnalyticsModule: React.FC = () => {
     };
 
     loadData();
-  }, [filterState]);
+  }, [periods, selectedCategory]);
+
+  const formatValue = (valueRub: number, valueUsd: number, hasExchangeRate: boolean) => {
+    if (!hasExchangeRate) {
+      return (
+        <>
+          <p className="text-kpi-value my-2" style={{ color: 'var(--text-primary)' }}>
+            ***
+          </p>
+          <p className="text-label-xs uppercase" style={{ color: 'var(--text-tertiary)' }}>
+            RUB {formatCurrency(valueRub, 'RUB')}
+          </p>
+        </>
+      );
+    }
+
+    return (
+      <>
+        <p className="text-kpi-value my-2" style={{ color: 'var(--text-primary)' }}>
+          RUB {formatCurrency(valueRub, 'RUB')}
+        </p>
+        <p className="text-label-xs" style={{ color: 'var(--text-tertiary)' }}>
+          ${formatCurrency(valueUsd, 'USD')}
+        </p>
+      </>
+    );
+  };
 
   const formatPercent = (value: number): string => {
     return `${value.toFixed(1)}%`;
   };
 
-  const handleApplyFilters = () => {
-    // Filters are applied automatically via useEffect
-    // This button is here for explicit user action if needed
-    console.log('Filters applied:', filterState);
+  const handlePeriodChange = (index: number, newPeriod: string) => {
+    const newPeriods: [string, string, string] = [...periods] as [string, string, string];
+    newPeriods[index] = newPeriod;
+    setPeriods(newPeriods);
   };
 
   if (error) {
@@ -132,137 +166,51 @@ const MarginAnalyticsModule: React.FC = () => {
           MARGIN ANALYTICS
         </h2>
         <p className="text-label-xs uppercase" style={{ color: 'var(--text-tertiary)' }}>
-          Exchange rate: {exchangeRate.toFixed(2)} RUB/USD (
-          {filterState.period ? formatPeriod(filterState.period) : '...'} avg)
+          Comparative analysis across three time periods
         </p>
       </div>
 
-      {/* KPI Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-        {/* Total Revenue */}
-        <div
-          className="p-6 min-h-[140px] flex flex-col justify-between"
-          style={{ backgroundColor: 'var(--bg-secondary)' }}
-        >
-          <p className="text-label uppercase" style={{ color: 'var(--text-tertiary)' }}>
-            TOTAL REVENUE
-          </p>
-          {loading || !kpiData ? (
-            <p className="text-kpi-value my-2" style={{ color: 'var(--text-tertiary)' }}>
-              ...
-            </p>
-          ) : (
-            <>
-              <p className="text-kpi-value my-2" style={{ color: 'var(--text-primary)' }}>
-                ${formatCurrency(kpiData.total_revenue_usd, 'USD')}
-              </p>
-              <p className="text-label-xs uppercase" style={{ color: 'var(--text-tertiary)' }}>
-                RUB {formatCurrency(kpiData.total_revenue_rub, 'RUB')}
-              </p>
-            </>
-          )}
-        </div>
+      {/* Period Selection */}
+      <div className="mb-6 p-6 space-y-4" style={{ backgroundColor: 'var(--bg-secondary)' }}>
+        <p className="text-label uppercase mb-4" style={{ color: 'var(--text-secondary)' }}>
+          SELECT PERIODS
+        </p>
 
-        {/* Total Margin */}
-        <div
-          className="p-6 min-h-[140px] flex flex-col justify-between"
-          style={{ backgroundColor: 'var(--bg-secondary)' }}
-        >
-          <p className="text-label uppercase" style={{ color: 'var(--text-tertiary)' }}>
-            TOTAL MARGIN
-          </p>
-          {loading || !kpiData ? (
-            <p className="text-kpi-value my-2" style={{ color: 'var(--text-tertiary)' }}>
-              ...
-            </p>
-          ) : (
-            <>
-              <p className="text-kpi-value my-2" style={{ color: 'var(--text-primary)' }}>
-                ${formatCurrency(kpiData.total_margin_usd, 'USD')}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          {periods.map((period, index) => (
+            <div key={index}>
+              <p className="text-label-xs uppercase mb-2" style={{ color: 'var(--text-tertiary)' }}>
+                PERIOD {index + 1}
               </p>
-              <p className="text-label-xs uppercase" style={{ color: 'var(--text-tertiary)' }}>
-                RUB {formatCurrency(kpiData.total_margin_rub, 'RUB')}
-              </p>
-            </>
-          )}
-        </div>
-
-        {/* Margin % */}
-        <div
-          className="p-6 min-h-[140px] flex flex-col justify-between"
-          style={{ backgroundColor: 'var(--bg-secondary)' }}
-        >
-          <p className="text-label uppercase" style={{ color: 'var(--text-tertiary)' }}>
-            MARGIN %
-          </p>
-          {loading || !kpiData ? (
-            <p className="text-kpi-value my-2" style={{ color: 'var(--text-tertiary)' }}>
-              ...
-            </p>
-          ) : (
-            <p className="text-kpi-value my-2" style={{ color: 'var(--text-primary)' }}>
-              {formatPercent(kpiData.avg_margin_percent)}
-            </p>
-          )}
-        </div>
-
-        {/* Active Customers */}
-        <div
-          className="p-6 min-h-[140px] flex flex-col justify-between"
-          style={{ backgroundColor: 'var(--bg-secondary)' }}
-        >
-          <p className="text-label uppercase" style={{ color: 'var(--text-tertiary)' }}>
-            ACTIVE CUSTOMERS
-          </p>
-          {loading ? (
-            <p className="text-kpi-value my-2" style={{ color: 'var(--text-tertiary)' }}>
-              ...
-            </p>
-          ) : (
-            <p className="text-kpi-value my-2" style={{ color: 'var(--text-primary)' }}>
-              {customers.length}
-            </p>
-          )}
-        </div>
-      </div>
-
-      {/* Filter Bar */}
-      <div
-        className="p-6 mb-6 space-y-4 lg:space-y-0 lg:flex lg:gap-4 lg:items-end"
-        style={{ backgroundColor: 'var(--bg-secondary)' }}
-      >
-        {/* Period Filter */}
-        <div className="flex-1 min-w-[200px]">
-          <p className="text-label-xs uppercase mb-2" style={{ color: 'var(--text-tertiary)' }}>
-            PERIOD
-          </p>
-          <select
-            className="w-full p-3 text-body bg-transparent border"
-            style={{
-              backgroundColor: 'var(--bg-tertiary)',
-              borderColor: 'var(--divider-standard)',
-              color: 'var(--text-primary)',
-            }}
-            value={filterState.period}
-            onChange={(e) => setFilterState({ ...filterState, period: e.target.value })}
-            disabled={loading}
-          >
-            {availablePeriods.length === 0 ? (
-              <option value="">Loading...</option>
-            ) : (
-              availablePeriods.map((period) => (
-                <option key={period} value={period}>
-                  {formatPeriod(period)}
-                </option>
-              ))
-            )}
-          </select>
+              <select
+                className="w-full p-3 text-body bg-transparent border"
+                style={{
+                  backgroundColor: 'var(--bg-tertiary)',
+                  borderColor: 'var(--divider-standard)',
+                  color: 'var(--text-primary)',
+                }}
+                value={period}
+                onChange={(e) => handlePeriodChange(index, e.target.value)}
+                disabled={loading}
+              >
+                {availablePeriods.length === 0 ? (
+                  <option value="">Loading...</option>
+                ) : (
+                  availablePeriods.map((p) => (
+                    <option key={p} value={p}>
+                      {formatPeriod(p)}
+                    </option>
+                  ))
+                )}
+              </select>
+            </div>
+          ))}
         </div>
 
         {/* Category Filter */}
-        <div className="flex-1 min-w-[200px]">
+        <div>
           <p className="text-label-xs uppercase mb-2" style={{ color: 'var(--text-tertiary)' }}>
-            CATEGORY
+            CUSTOMER CATEGORY
           </p>
           <select
             className="w-full p-3 text-body bg-transparent border"
@@ -271,8 +219,8 @@ const MarginAnalyticsModule: React.FC = () => {
               borderColor: 'var(--divider-standard)',
               color: 'var(--text-primary)',
             }}
-            value={filterState.category}
-            onChange={(e) => setFilterState({ ...filterState, category: e.target.value })}
+            value={selectedCategory}
+            onChange={(e) => setSelectedCategory(e.target.value)}
             disabled={loading}
           >
             <option value="all">All Categories</option>
@@ -283,110 +231,105 @@ const MarginAnalyticsModule: React.FC = () => {
             ))}
           </select>
         </div>
-
-        {/* Apply Button */}
-        <button
-          className="w-full lg:w-auto px-6 py-3 text-body uppercase transition-opacity hover:opacity-80 disabled:opacity-50"
-          style={{ backgroundColor: '#E91E63', color: 'white' }}
-          onClick={handleApplyFilters}
-          disabled={loading}
-        >
-          {loading ? 'Loading...' : 'Apply Filters'}
-        </button>
       </div>
 
-      {/* Customer List */}
-      <div className="p-6" style={{ backgroundColor: 'var(--bg-secondary)' }}>
-        <h3 className="text-section-title uppercase mb-6" style={{ color: 'var(--text-secondary)' }}>
-          TOP CUSTOMERS BY REVENUE
-        </h3>
+      {/* KPI Grid - 3 Columns for 3 Periods */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+        {periodData.map((data, periodIndex) => (
+          <div key={periodIndex} className="space-y-4">
+            {/* Period Header */}
+            <div className="p-4" style={{ backgroundColor: 'var(--bg-secondary)' }}>
+              <p className="text-section-title uppercase" style={{ color: '#E91E63' }}>
+                {data.period ? formatPeriod(data.period) : '...'}
+              </p>
+              {data.exchangeRate && (
+                <p className="text-label-xs uppercase mt-1" style={{ color: 'var(--text-tertiary)' }}>
+                  {data.exchangeRate.toFixed(2)} RUB/USD
+                </p>
+              )}
+            </div>
 
-        {loading ? (
-          <p className="text-body" style={{ color: 'var(--text-tertiary)' }}>
-            Loading customers...
-          </p>
-        ) : customers.length === 0 ? (
-          <p className="text-body" style={{ color: 'var(--text-tertiary)' }}>
-            No customers found for selected filters
-          </p>
-        ) : (
-          <div className="space-y-4">
-            {customers.map((customer) => (
-              <div
-                key={customer.customer_id}
-                className="p-4 border-l-2 transition-colors duration-fast hover:bg-[var(--bg-primary)]"
-                style={{
-                  backgroundColor: 'var(--bg-tertiary)',
-                  borderColor: '#E91E63',
-                }}
-              >
-                <div className="flex items-start gap-3">
-                  {/* Rank */}
-                  <span className="text-label uppercase" style={{ color: 'var(--text-tertiary)' }}>
-                    {String(customer.rank).padStart(2, '0')}
-                  </span>
+            {/* Total Revenue */}
+            <div
+              className="p-6 min-h-[140px] flex flex-col justify-between"
+              style={{ backgroundColor: 'var(--bg-secondary)' }}
+            >
+              <p className="text-label uppercase" style={{ color: 'var(--text-tertiary)' }}>
+                TOTAL REVENUE
+              </p>
+              {loading || !data.kpis ? (
+                <p className="text-kpi-value my-2" style={{ color: 'var(--text-tertiary)' }}>
+                  ...
+                </p>
+              ) : (
+                formatValue(
+                  data.kpis.total_revenue_rub,
+                  data.kpis.total_revenue_usd,
+                  !!data.exchangeRate
+                )
+              )}
+            </div>
 
-                  <div className="flex-1 min-w-0">
-                    {/* Customer Name */}
-                    <p className="text-body mb-1" style={{ color: 'var(--text-primary)' }}>
-                      {customer.customer_name}
-                    </p>
+            {/* Total Margin */}
+            <div
+              className="p-6 min-h-[140px] flex flex-col justify-between"
+              style={{ backgroundColor: 'var(--bg-secondary)' }}
+            >
+              <p className="text-label uppercase" style={{ color: 'var(--text-tertiary)' }}>
+                TOTAL MARGIN
+              </p>
+              {loading || !data.kpis ? (
+                <p className="text-kpi-value my-2" style={{ color: 'var(--text-tertiary)' }}>
+                  ...
+                </p>
+              ) : (
+                formatValue(
+                  data.kpis.total_margin_rub,
+                  data.kpis.total_margin_usd,
+                  !!data.exchangeRate
+                )
+              )}
+            </div>
 
-                    {/* INN & Category */}
-                    <p className="text-label-xs uppercase mb-2" style={{ color: 'var(--text-tertiary)' }}>
-                      INN: {customer.customer_inn} • {customer.customer_category}
-                    </p>
+            {/* Margin % */}
+            <div
+              className="p-6 min-h-[140px] flex flex-col justify-between"
+              style={{ backgroundColor: 'var(--bg-secondary)' }}
+            >
+              <p className="text-label uppercase" style={{ color: 'var(--text-tertiary)' }}>
+                MARGIN %
+              </p>
+              {loading || !data.kpis ? (
+                <p className="text-kpi-value my-2" style={{ color: 'var(--text-tertiary)' }}>
+                  ...
+                </p>
+              ) : (
+                <p className="text-kpi-value my-2" style={{ color: 'var(--text-primary)' }}>
+                  {formatPercent(data.kpis.avg_margin_percent)}
+                </p>
+              )}
+            </div>
 
-                    {/* Metrics Row */}
-                    <div className="flex gap-4 flex-wrap">
-                      <div>
-                        <p className="text-label-xs uppercase" style={{ color: 'var(--text-tertiary)' }}>
-                          REVENUE
-                        </p>
-                        <p className="text-body-sm" style={{ color: 'var(--text-primary)' }}>
-                          ${formatCurrency(customer.revenue_usd, 'USD')}{' '}
-                          <span style={{ color: 'var(--text-tertiary)' }}>
-                            RUB {formatCurrency(customer.revenue_rub, 'RUB')}
-                          </span>
-                        </p>
-                      </div>
-
-                      <div>
-                        <p className="text-label-xs uppercase" style={{ color: 'var(--text-tertiary)' }}>
-                          MARGIN
-                        </p>
-                        <p className="text-body-sm" style={{ color: 'var(--text-primary)' }}>
-                          ${formatCurrency(customer.margin_usd, 'USD')}{' '}
-                          <span style={{ color: 'var(--text-tertiary)' }}>
-                            RUB {formatCurrency(customer.margin_rub, 'RUB')}
-                          </span>
-                        </p>
-                      </div>
-
-                      <div>
-                        <p className="text-label-xs uppercase" style={{ color: 'var(--text-tertiary)' }}>
-                          MARGIN %
-                        </p>
-                        <p className="text-body-sm" style={{ color: 'var(--text-primary)' }}>
-                          {formatPercent(customer.margin_percent)}
-                        </p>
-                      </div>
-
-                      <div>
-                        <p className="text-label-xs uppercase" style={{ color: 'var(--text-tertiary)' }}>
-                          TRANSACTIONS
-                        </p>
-                        <p className="text-body-sm" style={{ color: 'var(--text-primary)' }}>
-                          {customer.transaction_count}
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            ))}
+            {/* Transaction Count */}
+            <div
+              className="p-6 min-h-[140px] flex flex-col justify-between"
+              style={{ backgroundColor: 'var(--bg-secondary)' }}
+            >
+              <p className="text-label uppercase" style={{ color: 'var(--text-tertiary)' }}>
+                TRANSACTIONS
+              </p>
+              {loading || !data.kpis ? (
+                <p className="text-kpi-value my-2" style={{ color: 'var(--text-tertiary)' }}>
+                  ...
+                </p>
+              ) : (
+                <p className="text-kpi-value my-2" style={{ color: 'var(--text-primary)' }}>
+                  {data.kpis.transaction_count}
+                </p>
+              )}
+            </div>
           </div>
-        )}
+        ))}
       </div>
     </div>
   );

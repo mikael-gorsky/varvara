@@ -1,4 +1,5 @@
 export type Level1MenuItem =
+  | 'DASHBOARD'
   | 'CUSTOMERS'
   | 'MOTIVATION'
   | 'FINANCE'
@@ -23,6 +24,7 @@ export interface MenuStructure {
 
 export const menuStructure: MenuStructure = {
   l1Items: [
+    'DASHBOARD',
     'CUSTOMERS',
     'MOTIVATION',
     'FINANCE',
@@ -33,6 +35,7 @@ export const menuStructure: MenuStructure = {
     'SETTINGS',
   ],
   l2Items: {
+    DASHBOARD: null,
     CUSTOMERS: ['OZON', 'WILDBERRIES', 'COMUS', 'DNS', 'MERLION', 'EBURG', 'SARATOV'],
     MOTIVATION: null,
     FINANCE: ['MARGINS', 'PROFITS', 'CALENDAR'],

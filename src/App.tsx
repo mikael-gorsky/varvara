@@ -55,9 +55,20 @@ function App() {
   };
 
   const renderContent = () => {
-    // Show Dashboard if no L1 menu item is selected (default/home page)
+    // Show menu/welcome screen if no L1 menu item is selected (default/home page)
     if (!activeL1) {
-      return <Dashboard isMobile={isMobile} />;
+      return (
+        <div className="p-8 flex items-center justify-center min-h-screen">
+          <div className="text-center">
+            <h1 className="text-page-title-desktop uppercase mb-4" style={{ color: 'var(--accent)' }}>
+              VARVARA
+            </h1>
+            <p className="text-label uppercase" style={{ color: 'var(--text-tertiary)' }}>
+              Select a module from the menu
+            </p>
+          </div>
+        </div>
+      );
     }
 
     // On desktop, show tile navigation for L1 items with L2 subitems (when no L2 selected)
@@ -129,6 +140,8 @@ function App() {
     }
 
     switch (activeL1) {
+      case 'DASHBOARD':
+        return <Dashboard isMobile={isMobile} />;
       case 'CUSTOMERS':
         return <CustomersModule activeL2={activeL2} activeL3={activeL3} />;
       case 'MOTIVATION':

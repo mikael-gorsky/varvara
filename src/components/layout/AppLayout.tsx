@@ -17,6 +17,8 @@ interface AppLayoutProps {
   showBottomTabs?: boolean;
   showL2Sidebar?: boolean;
   hasL3Items?: boolean;
+  isMobileMenuOpen?: boolean;
+  setIsMobileMenuOpen?: (open: boolean) => void;
 }
 
 export const AppLayout: React.FC<AppLayoutProps> = ({
@@ -31,10 +33,16 @@ export const AppLayout: React.FC<AppLayoutProps> = ({
   showBottomTabs = false,
   showL2Sidebar = false,
   hasL3Items = false,
+  isMobileMenuOpen: externalIsMobileMenuOpen,
+  setIsMobileMenuOpen: externalSetIsMobileMenuOpen,
 }) => {
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [internalIsMobileMenuOpen, setInternalIsMobileMenuOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
   const [activeTab, setActiveTab] = useState<TabId>('metrics');
+
+  // Use external state if provided, otherwise use internal state
+  const isMobileMenuOpen = externalIsMobileMenuOpen ?? internalIsMobileMenuOpen;
+  const setIsMobileMenuOpen = externalSetIsMobileMenuOpen ?? setInternalIsMobileMenuOpen;
 
   // Detect mobile viewport
   useEffect(() => {

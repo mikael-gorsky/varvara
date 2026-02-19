@@ -18,6 +18,7 @@ function App() {
   const [activeL2, setActiveL2] = useState<string | null>(null);
   const [activeL3, setActiveL3] = useState<string | null>(null);
   const [isMobile, setIsMobile] = useState(false);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   // Detect mobile viewport
   useEffect(() => {
@@ -87,11 +88,20 @@ function App() {
             <nav className="space-y-1">
               {menuStructure.l1Items.map((item) => {
                 const hasAI = item === 'MOTIVATION' || item === 'PLAN';
+                const hasL2 = menuStructure.l2Items[item] !== null;
+
+                const handleClick = () => {
+                  handleSelectL1(item);
+                  // On mobile, if item has L2 submenu, open hamburger menu to show it
+                  if (isMobile && hasL2) {
+                    setIsMobileMenuOpen(true);
+                  }
+                };
 
                 return (
                   <button
                     key={item}
-                    onClick={() => handleSelectL1(item)}
+                    onClick={handleClick}
                     className="flex items-center gap-3 w-full text-left py-3 transition-colors text-menu-mobile"
                     style={{ color: 'var(--text-primary)' }}
                   >
@@ -251,6 +261,8 @@ function App() {
       showBottomTabs={showBottomTabs}
       showL2Sidebar={showL2Sidebar}
       hasL3Items={!!hasL3Items}
+      isMobileMenuOpen={isMobileMenuOpen}
+      setIsMobileMenuOpen={setIsMobileMenuOpen}
     >
       {renderContent()}
     </AppLayout>

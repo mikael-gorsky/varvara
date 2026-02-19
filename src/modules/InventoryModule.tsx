@@ -1,5 +1,7 @@
 import React from 'react';
 import StockLevelsPanel from '../components/inventory/StockLevelsPanel';
+import ABCAnalysisPanel from '../components/inventory/ABCAnalysisPanel';
+import AgingAlertsPanel from '../components/inventory/AgingAlertsPanel';
 
 interface InventoryModuleProps {
   activeL2: string | null;
@@ -25,7 +27,11 @@ const InventoryModule: React.FC<InventoryModuleProps> = ({ activeL2 }) => {
         return <StockLevelsPanel />;
 
       case 'ABC ANALYSIS':
+        return <ABCAnalysisPanel />;
+
       case 'AGING ALERTS':
+        return <AgingAlertsPanel />;
+
       case 'REORDER PLANNING':
         return (
           <div>

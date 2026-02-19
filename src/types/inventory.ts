@@ -150,3 +150,25 @@ export interface InventorySummary {
   avg_age_months: number;
   aged_value_rub: number; // Value of items > 12 months
 }
+
+export interface ABCSummary {
+  classA: {
+    count: number;
+    revenue: number;
+    revenuePercent: number;
+  };
+  classB: {
+    count: number;
+    revenue: number;
+    revenuePercent: number;
+  };
+  classC: {
+    count: number;
+    revenue: number;
+    revenuePercent: number;
+  };
+  total: {
+    count: number;
+    revenue: number;
+  };
+}

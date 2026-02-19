@@ -32,12 +32,12 @@ export async function parseProcurementFile(file: File): Promise<ProcurementDataR
 
   const rows: ProcurementDataRow[] = [];
 
-  // Find header row
+  // Find header row (Row 10 has main headers like "Номенклатура")
   let headerRowIndex = -1;
   for (let i = 0; i < Math.min(20, data.length); i++) {
     const row = data[i];
     const rowStr = row.map(cell => String(cell || '').toLowerCase()).join(' ');
-    if (rowStr.includes('номенклатура') || rowStr.includes('product') || rowStr.includes('поставщик')) {
+    if (rowStr.includes('номенклатура') && rowStr.includes('объем')) {
       headerRowIndex = i;
       break;
     }
@@ -47,31 +47,41 @@ export async function parseProcurementFile(file: File): Promise<ProcurementDataR
     throw new Error('Could not find header row in Excel file');
   }
 
-  const headers = data[headerRowIndex].map(h => String(h || '').toLowerCase().trim());
+  const mainHeaders = data[headerRowIndex].map(h => String(h || '').toLowerCase().trim());
+  // Row 11 (next row) has sub-headers like "Поставщик"
+  const subHeaders = headerRowIndex + 1 < data.length
+    ? data[headerRowIndex + 1].map(h => String(h || '').toLowerCase().trim())
+    : [];
 
-  // Find column indices
-  const productCol = headers.findIndex(h =>
-    h.includes('номенклатура') || h === 'product' || h.includes('товар')
+  // Find column indices from main headers
+  const productCol = mainHeaders.findIndex(h =>
+    h === 'номенклатура' || h === 'product'
   );
-  const supplierCol = headers.findIndex(h =>
-    h.includes('поставщик') || h.includes('supplier')
-  );
-  const priceCol = headers.findIndex(h =>
-    h.includes('цена') || h.includes('price') || h.includes('usd')
-  );
-  const volumeCol = headers.findIndex(h =>
-    h.includes('объем') || h.includes('volume') || h.includes('cbm') || h.includes('м3')
+  const volumeCol = mainHeaders.findIndex(h =>
+    h === 'объем' || h.includes('volume')
   );
 
-  // Find month columns (look for date patterns or month names)
+  // Find supplier from sub-headers (Row 11)
+  const supplierCol = subHeaders.findIndex(h =>
+    h === 'поставщик' || h === 'supplier'
+  );
+
+  // Find price USD from sub-headers
+  const priceCol = subHeaders.findIndex(h =>
+    h.includes('себест') && h.includes('usd')
+  );
+
+  // Find month columns from main headers (format: "Январь.2025", "Февраль.2025")
   const monthColumns: { col: number; month: string }[] = [];
-  for (let i = 0; i < headers.length; i++) {
-    const header = headers[i];
-    // Match patterns like "янв.25", "01.2025", "jan-2025", etc.
-    const monthMatch = header.match(/(янв|фев|мар|апр|май|июн|июл|авг|сен|окт|ноя|дек|jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)[\.\-\s]?(\d{2,4})?/i);
-    const dateMatch = header.match(/(\d{2})\.(\d{4})/); // DD.YYYY format
+  const monthNamesRu = ['январь', 'февраль', 'март', 'апрель', 'май', 'июнь',
+                        'июль', 'август', 'сентябрь', 'октябрь', 'ноябрь', 'декабрь'];
 
-    if (monthMatch || dateMatch) {
+  for (let i = 0; i < mainHeaders.length; i++) {
+    const header = mainHeaders[i];
+    // Match "Январь.2025" pattern
+    const monthMatch = header.match(/(январь|февраль|март|апрель|май|июнь|июль|август|сентябрь|октябрь|ноябрь|декабрь)\.(\d{4})/i);
+
+    if (monthMatch) {
       monthColumns.push({ col: i, month: header });
     }
   }
@@ -80,8 +90,11 @@ export async function parseProcurementFile(file: File): Promise<ProcurementDataR
     throw new Error(`Missing required product column. Found: product=${productCol}`);
   }
 
+  // Data starts at headerRowIndex + 2 (skip both header rows)
+  const dataStartRow = headerRowIndex + 2;
+
   // Parse data rows
-  for (let i = headerRowIndex + 1; i < data.length; i++) {
+  for (let i = dataStartRow; i < data.length; i++) {
     const row = data[i];
 
     const product_name = row[productCol] ? String(row[productCol]).trim() : '';
@@ -236,33 +249,45 @@ export async function importProcurementData(
 
 /**
  * Parse month string to YYYY-MM-DD format (first day of month)
- * Handles formats: "янв.25", "01.2025", "Jan-2025", etc.
+ * Handles formats: "Январь.2025", "янв.25", "01.2025", "Jan-2025", etc.
  */
 function parseMonthString(monthStr: string): string | null {
   const normalized = monthStr.toLowerCase().trim();
 
-  // Map of month names to numbers
+  // Map of month names to numbers (including full Russian month names)
   const monthMap: Record<string, number> = {
-    'янв': 1, 'jan': 1, 'january': 1,
-    'фев': 2, 'feb': 2, 'february': 2,
-    'мар': 3, 'mar': 3, 'march': 3,
-    'апр': 4, 'apr': 4, 'april': 4,
+    'январь': 1, 'янв': 1, 'jan': 1, 'january': 1,
+    'февраль': 2, 'фев': 2, 'feb': 2, 'february': 2,
+    'март': 3, 'мар': 3, 'mar': 3, 'march': 3,
+    'апрель': 4, 'апр': 4, 'apr': 4, 'april': 4,
     'май': 5, 'may': 5,
-    'июн': 6, 'jun': 6, 'june': 6,
-    'июл': 7, 'jul': 7, 'july': 7,
-    'авг': 8, 'aug': 8, 'august': 8,
-    'сен': 9, 'sep': 9, 'september': 9,
-    'окт': 10, 'oct': 10, 'october': 10,
-    'ноя': 11, 'nov': 11, 'november': 11,
-    'дек': 12, 'dec': 12, 'december': 12
+    'июнь': 6, 'июн': 6, 'jun': 6, 'june': 6,
+    'июль': 7, 'июл': 7, 'jul': 7, 'july': 7,
+    'август': 8, 'авг': 8, 'aug': 8, 'august': 8,
+    'сентябрь': 9, 'сен': 9, 'sep': 9, 'september': 9,
+    'октябрь': 10, 'окт': 10, 'oct': 10, 'october': 10,
+    'ноябрь': 11, 'ноя': 11, 'nov': 11, 'november': 11,
+    'декабрь': 12, 'дек': 12, 'dec': 12, 'december': 12
   };
 
-  // Try to extract month and year
-  const match = normalized.match(/(янв|фев|мар|апр|май|июн|июл|авг|сен|окт|ноя|дек|jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)[^\d]*(\d{2,4})/i);
+  // Try to extract month and year - pattern: "Январь.2025"
+  const fullMonthMatch = normalized.match(/(январь|февраль|март|апрель|май|июнь|июль|август|сентябрь|октябрь|ноябрь|декабрь)\.(\d{4})/i);
+  if (fullMonthMatch) {
+    const monthName = fullMonthMatch[1];
+    const year = parseInt(fullMonthMatch[2]);
+    const month = monthMap[monthName];
 
-  if (match) {
-    const monthName = match[1];
-    const yearStr = match[2];
+    if (month && year) {
+      const monthPadded = month.toString().padStart(2, '0');
+      return `${year}-${monthPadded}-01`;
+    }
+  }
+
+  // Try short month format: "янв.25"
+  const shortMonthMatch = normalized.match(/(янв|фев|мар|апр|май|июн|июл|авг|сен|окт|ноя|дек|jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)[^\d]*(\d{2,4})/i);
+  if (shortMonthMatch) {
+    const monthName = shortMonthMatch[1];
+    const yearStr = shortMonthMatch[2];
     const month = monthMap[monthName];
     const year = yearStr.length === 2 ? 2000 + parseInt(yearStr) : parseInt(yearStr);
 

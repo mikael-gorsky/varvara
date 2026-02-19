@@ -1,6 +1,4 @@
 import React, { useState } from 'react';
-import OzonDashboard from '../components/OzonDashboard';
-import PricelistDashboard from '../components/PricelistDashboard';
 import OzonDataImport from '../components/ozon/OzonDataImport';
 import OzonReportsList from '../components/ozon/OzonReportsList';
 
@@ -9,16 +7,7 @@ interface ImportModuleProps {
 }
 
 const ImportModule: React.FC<ImportModuleProps> = ({ activeL2 }) => {
-  const [selectedImportSource, setSelectedImportSource] = useState<string | null>(null);
   const [showOzonImport, setShowOzonImport] = useState(false);
-
-  if (selectedImportSource === 'ozon') {
-    return <OzonDashboard onBack={() => setSelectedImportSource(null)} />;
-  }
-
-  if (selectedImportSource === 'pricelist') {
-    return <PricelistDashboard onBack={() => setSelectedImportSource(null)} />;
-  }
 
   if (showOzonImport) {
     return <OzonDataImport onBack={() => setShowOzonImport(false)} />;

@@ -3,11 +3,19 @@
  * Import 1C Sales Analysis Data to Supabase
  *
  * Parses Excel files with hierarchical structure:
- * Period → Category → Customer → Product
+ * Period → Customer Group → Customer → Product
+ *
+ * Customer Groups (5 fixed):
+ * - Конечные заказчики
+ * - Крупный опт -торговые сети
+ * - Маркетплейсы
+ * - Мелкий опт
+ * - Тендеры
+ *
+ * Product Groups: First 3 letters of product name (Cyrillic lowercase)
  *
  * Usage:
  *   node scripts/import-1c-data.js <excel-file-path>
- *   node scripts/import-1c-data.js "/path/to/АП 2024 ПродажаСебестоимостьДопРасходы.xls"
  */
 
 import { createClient } from '@supabase/supabase-js';
@@ -59,13 +67,47 @@ const data = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: null });
 
 console.log(`📊 Total rows: ${data.length}\n`);
 
+// Define valid customer groups (case-insensitive matching)
+const VALID_CUSTOMER_GROUPS = [
+  'конечные заказчики',
+  'крупный опт -торговые сети',
+  'маркетплейсы',
+  'мелкий опт',
+  'тендеры',
+];
+
+/**
+ * Check if a string matches one of the valid customer groups
+ */
+function isValidCustomerGroup(str) {
+  const normalized = str.toLowerCase().trim();
+  return VALID_CUSTOMER_GROUPS.find(group => normalized === group || normalized.startsWith(group));
+}
+
+/**
+ * Get product category (first 3 letters, lowercase Cyrillic)
+ */
+function getProductCategory(productName) {
+  if (!productName || typeof productName !== 'string') return 'zzz';
+
+  // Remove leading/trailing whitespace
+  const trimmed = productName.trim();
+
+  // Extract first 3 Cyrillic letters
+  const cyrillicLetters = trimmed.match(/[а-яё]/gi);
+  if (!cyrillicLetters || cyrillicLetters.length === 0) return 'zzz';
+
+  const prefix = cyrillicLetters.slice(0, 3).join('').toLowerCase();
+  return prefix.padEnd(3, 'z'); // Ensure 3 characters
+}
+
 // Parse hierarchical data
 let currentPeriod = null;
-let currentCategory = null;
+let currentCustomerGroup = null;
 let currentCustomer = null;
 let currentCustomerINN = null;
 
-const customers = new Map(); // name -> { inn, category }
+const customers = new Map(); // name -> { inn, customer_group }
 const transactions = [];
 
 console.log('🔍 Parsing hierarchical data...\n');
@@ -78,26 +120,19 @@ for (let i = 10; i < data.length; i++) { // Start from row 10 (skip headers)
 
   const cellAStr = String(cellA).trim();
 
-  // Extract data columns (convert to null if 0 or missing)
+  // Extract data columns
   const quantity = row[5] ? parseFloat(row[5]) : 0;
   const sales_rub = row[6] ? parseFloat(row[6]) : 0;
   const cogs_rub = row[7] ? parseFloat(row[7]) : 0;
-  const additional_expenses_rub = row[8] ? parseFloat(row[8]) : null; // null instead of 0
+  const additional_expenses_rub = row[8] ? parseFloat(row[8]) : 0;
 
   // Skip rows with no financial data at all
   if (quantity === 0 && sales_rub === 0 && cogs_rub === 0 && additional_expenses_rub === 0) {
     continue;
   }
 
-  // Determine row type:
-  // 1. Period: Date format "01.01.2026" or "01.01.2026 0:00:00"
-  // 2. Category: Text without INN, appears after period
-  // 3. Customer: Text with ", [numbers]" pattern (INN)
-  // 4. Product: Everything else with data
-
-  // Check if this is a period row (date format)
-  if (cellAStr.match(/^\d{2}\.\d{2}\.\d{4}/) || cellAStr.match(/^\d{4}-\d{2}-\d{2}/)) {
-    // Period row - parse date
+  // 1. Check if this is a period row (date format)
+  if (cellAStr.match(/^\d{2}\.\d{2}\.\d{4}/)) {
     const dateMatch = cellAStr.match(/(\d{2})\.(\d{2})\.(\d{4})/);
     if (dateMatch) {
       const [_, day, month, year] = dateMatch;
@@ -107,62 +142,84 @@ for (let i = 10; i < data.length; i++) { // Start from row 10 (skip headers)
     continue;
   }
 
-  // Check if this is a customer row (has INN: ", [digits]" pattern)
-  const innMatch = cellAStr.match(/,\s*(\d+)$/);
+  // 2. Check if this is a customer group row (one of 5 valid groups)
+  const matchedGroup = isValidCustomerGroup(cellAStr);
+  if (matchedGroup) {
+    currentCustomerGroup = matchedGroup;
+    console.log(`  📁 Customer Group: ${currentCustomerGroup}`);
+    continue;
+  }
 
+  // 3. Check if this is a customer row (has INN: ", [digits]" pattern)
+  const innMatch = cellAStr.match(/,\s*(\d+)$/);
   if (innMatch) {
-    // Customer row
     const inn = innMatch[1];
     const customerName = cellAStr.replace(/,\s*\d+$/, '').trim();
 
     currentCustomer = customerName;
     currentCustomerINN = inn;
 
-    // Store customer
+    // Store customer with their group
     if (!customers.has(customerName)) {
       customers.set(customerName, {
         name: customerName,
         inn: inn,
-        category: currentCategory || 'Unknown',
+        category: currentCustomerGroup || 'Неизвестно',
       });
-      console.log(`  👤 Customer: ${customerName} (${inn})`);
+      console.log(`    👤 Customer: ${customerName} (${inn}) [${currentCustomerGroup}]`);
     }
 
     continue;
   }
 
-  // Check if this might be a category (no INN, no product-like name, appears before customers)
-  // Category rows typically have totals but no specific product characteristics
-  // Simple heuristic: if it's not a customer and has round totals, it's likely a category
-  if (!currentCustomer && !cellAStr.includes('шт') && !cellAStr.includes('Office Kit') && !cellAStr.includes('мм')) {
-    currentCategory = cellAStr;
-    console.log(`  📁 Category: ${currentCategory}`);
-    continue;
-  }
-
-  // If we have a current customer, this must be a product row
+  // 4. If we have a current customer, this must be a product row
   if (currentCustomer && currentPeriod) {
     const productName = cellAStr;
+    const productCategory = getProductCategory(productName);
 
     // Create transaction record
     transactions.push({
       period_date: currentPeriod,
       customer_name: currentCustomer,
       customer_inn: currentCustomerINN,
-      customer_category: currentCategory || 'Unknown',
+      customer_category: currentCustomerGroup || 'Неизвестно',
       product_name: productName,
+      product_category: productCategory,
       quantity,
       revenue_rub: sales_rub,
       cogs_rub,
-      additional_expenses_rub,
+      additional_expenses_rub: additional_expenses_rub || 0,
     });
   }
 }
 
 console.log(`\n✅ Parsed ${customers.size} customers and ${transactions.length} transactions\n`);
 
+// Validate customer groups
+const groupCounts = {};
+transactions.forEach(t => {
+  groupCounts[t.customer_category] = (groupCounts[t.customer_category] || 0) + 1;
+});
+console.log('📊 Customer groups distribution:');
+Object.entries(groupCounts).forEach(([group, count]) => {
+  console.log(`   ${group}: ${count} transactions`);
+});
+
+// Validate product categories (show top 10)
+const productCategoryCounts = {};
+transactions.forEach(t => {
+  productCategoryCounts[t.product_category] = (productCategoryCounts[t.product_category] || 0) + 1;
+});
+console.log('\n📦 Top 10 product categories:');
+Object.entries(productCategoryCounts)
+  .sort((a, b) => b[1] - a[1])
+  .slice(0, 10)
+  .forEach(([cat, count]) => {
+    console.log(`   ${cat}: ${count} transactions`);
+  });
+
 // Insert customers into Supabase
-console.log('💾 Inserting customers into Supabase...');
+console.log('\n💾 Inserting customers into Supabase...');
 
 const customerRecords = Array.from(customers.values());
 const { data: insertedCustomers, error: customerError } = await supabase
@@ -191,7 +248,7 @@ const transactionRecords = transactions.map(t => ({
   customer_id: customerIdMap.get(t.customer_name),
   customer_category: t.customer_category,
   product_name: t.product_name,
-  product_category: null, // Could be extracted from hierarchy if needed
+  product_category: t.product_category,
   quantity: t.quantity || 0,
   revenue_rub: t.revenue_rub || 0,
   cogs_rub: t.cogs_rub || 0,
@@ -214,24 +271,6 @@ for (let i = 0; i < transactionRecords.length; i += BATCH_SIZE) {
   if (txError) {
     console.error(`❌ Error inserting batch ${i / BATCH_SIZE + 1}:`, txError.message);
     console.error('Full error:', JSON.stringify(txError, null, 2));
-    console.error('Sample record:', JSON.stringify(batch[0], null, 2));
-    console.error('Total records in batch:', batch.length);
-
-    // Try inserting records one by one to find the problematic one
-    console.log('\n🔍 Finding problematic record...');
-    for (let j = 0; j < Math.min(5, batch.length); j++) {
-      const { error: singleError } = await supabase
-        .from('margin_analytics_data')
-        .insert([batch[j]]);
-
-      if (singleError) {
-        console.error(`❌ Record ${j} failed:`, JSON.stringify(batch[j], null, 2));
-        console.error('Error:', singleError.message);
-      } else {
-        console.log(`✅ Record ${j} succeeded`);
-      }
-    }
-
     process.exit(1);
   }
 

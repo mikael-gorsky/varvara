@@ -1,100 +1,125 @@
 import React, { useState, useEffect } from 'react';
-
-interface Customer {
-  id: string;
-  name: string;
-  category: string;
-  revenue_rub: number;
-  revenue_usd: number;
-  margin_rub: number;
-  margin_usd: number;
-  margin_percent: number;
-  has_anomaly?: boolean;
-  anomaly_message?: string;
-}
-
-interface KPIData {
-  total_revenue_rub: number;
-  total_revenue_usd: number;
-  total_margin_rub: number;
-  total_margin_usd: number;
-  avg_margin_percent: number;
-  active_customers: number;
-}
+import {
+  getAvailablePeriods,
+  getAvailableCategories,
+  getMarginKPIs,
+  getCustomerMargins,
+  formatCurrency,
+  formatPeriod,
+  type MarginKPIs,
+  type CustomerMarginData,
+} from '../services/marginAnalytics';
 
 interface FilterState {
   period: string;
   category: string;
-  compare_to: string | null;
 }
 
 const MarginAnalyticsModule: React.FC = () => {
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  // Filter options
+  const [availablePeriods, setAvailablePeriods] = useState<string[]>([]);
+  const [availableCategories, setAvailableCategories] = useState<string[]>([]);
+
+  // Filter state
   const [filterState, setFilterState] = useState<FilterState>({
-    period: '2026-01',
+    period: '',
     category: 'all',
-    compare_to: null,
   });
 
-  const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
-  const [sortBy, setSortBy] = useState<'margin_rub' | 'revenue_rub' | 'margin_percent'>('margin_rub');
+  // Data state
+  const [kpiData, setKpiData] = useState<MarginKPIs | null>(null);
+  const [customers, setCustomers] = useState<CustomerMarginData[]>([]);
+  const [exchangeRate, setExchangeRate] = useState<number>(95.0);
 
-  // Mock data - will be replaced with Supabase queries
-  const exchangeRate = 92.3; // USD/RUB for period
+  // Load available filter options on mount
+  useEffect(() => {
+    const loadFilterOptions = async () => {
+      try {
+        const [periods, categories] = await Promise.all([
+          getAvailablePeriods(),
+          getAvailableCategories(),
+        ]);
 
-  const kpiData: KPIData = {
-    total_revenue_rub: 28487599,
-    total_revenue_usd: 28487599 / exchangeRate,
-    total_margin_rub: 10060830,
-    total_margin_usd: 10060830 / exchangeRate,
-    avg_margin_percent: 35.3,
-    active_customers: 42,
-  };
+        setAvailablePeriods(periods);
+        setAvailableCategories(categories);
 
-  const customers: Customer[] = [
-    {
-      id: '1',
-      name: 'Интернет Решения',
-      category: 'E-commerce',
-      revenue_rub: 3906946,
-      revenue_usd: 3906946 / exchangeRate,
-      margin_rub: 1104725,
-      margin_usd: 1104725 / exchangeRate,
-      margin_percent: 28.3,
-    },
-    {
-      id: '2',
-      name: 'Бердандер',
-      category: 'Manufacturing',
-      revenue_rub: 2450000,
-      revenue_usd: 2450000 / exchangeRate,
-      margin_rub: 850000,
-      margin_usd: 850000 / exchangeRate,
-      margin_percent: 34.7,
-      has_anomaly: true,
-      anomaly_message: 'MARGIN DROP: -22% vs last month',
-    },
-  ];
+        // Set default period to most recent
+        if (periods.length > 0) {
+          setFilterState((prev) => ({ ...prev, period: periods[0] }));
+        }
+      } catch (err) {
+        console.error('Error loading filter options:', err);
+        setError('Failed to load filter options');
+      }
+    };
 
-  const formatCurrency = (amount: number, currency: 'RUB' | 'USD'): string => {
-    if (currency === 'USD') {
-      return new Intl.NumberFormat('en-US', {
-        style: 'currency',
-        currency: 'USD',
-        minimumFractionDigits: 0,
-        maximumFractionDigits: 0,
-      }).format(amount);
-    } else {
-      return new Intl.NumberFormat('ru-RU', {
-        style: 'decimal',
-        minimumFractionDigits: 0,
-        maximumFractionDigits: 0,
-      }).format(amount);
-    }
-  };
+    loadFilterOptions();
+  }, []);
+
+  // Load data when filters change
+  useEffect(() => {
+    if (!filterState.period) return; // Wait for period to be set
+
+    const loadData = async () => {
+      setLoading(true);
+      setError(null);
+
+      try {
+        const filters = {
+          period_date: filterState.period,
+          customer_category: filterState.category !== 'all' ? filterState.category : undefined,
+        };
+
+        const [kpis, customerData] = await Promise.all([
+          getMarginKPIs(filters),
+          getCustomerMargins(filters, 50),
+        ]);
+
+        setKpiData(kpis);
+        setCustomers(customerData);
+
+        // Calculate exchange rate from KPIs
+        if (kpis.total_revenue_rub > 0 && kpis.total_revenue_usd > 0) {
+          setExchangeRate(kpis.total_revenue_rub / kpis.total_revenue_usd);
+        }
+      } catch (err) {
+        console.error('Error loading margin data:', err);
+        setError('Failed to load margin data');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadData();
+  }, [filterState]);
 
   const formatPercent = (value: number): string => {
     return `${value.toFixed(1)}%`;
   };
+
+  const handleApplyFilters = () => {
+    // Filters are applied automatically via useEffect
+    // This button is here for explicit user action if needed
+    console.log('Filters applied:', filterState);
+  };
+
+  if (error) {
+    return (
+      <div className="p-4 lg:p-8">
+        <div
+          className="p-6"
+          style={{ backgroundColor: 'var(--bg-secondary)', borderLeft: '2px solid var(--status-error)' }}
+        >
+          <p className="text-body" style={{ color: 'var(--status-error)' }}>
+            {error}
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="p-4 lg:p-8">
@@ -107,7 +132,8 @@ const MarginAnalyticsModule: React.FC = () => {
           MARGIN ANALYTICS
         </h2>
         <p className="text-label-xs uppercase" style={{ color: 'var(--text-tertiary)' }}>
-          Exchange rate: {exchangeRate.toFixed(2)} RUB/USD ({filterState.period} avg)
+          Exchange rate: {exchangeRate.toFixed(2)} RUB/USD (
+          {filterState.period ? formatPeriod(filterState.period) : '...'} avg)
         </p>
       </div>
 
@@ -121,12 +147,20 @@ const MarginAnalyticsModule: React.FC = () => {
           <p className="text-label uppercase" style={{ color: 'var(--text-tertiary)' }}>
             TOTAL REVENUE
           </p>
-          <p className="text-kpi-value my-2" style={{ color: 'var(--text-primary)' }}>
-            {formatCurrency(kpiData.total_revenue_usd, 'USD')}
-          </p>
-          <p className="text-label-xs uppercase" style={{ color: 'var(--text-tertiary)' }}>
-            RUB {formatCurrency(kpiData.total_revenue_rub, 'RUB')}
-          </p>
+          {loading || !kpiData ? (
+            <p className="text-kpi-value my-2" style={{ color: 'var(--text-tertiary)' }}>
+              ...
+            </p>
+          ) : (
+            <>
+              <p className="text-kpi-value my-2" style={{ color: 'var(--text-primary)' }}>
+                ${formatCurrency(kpiData.total_revenue_usd, 'USD')}
+              </p>
+              <p className="text-label-xs uppercase" style={{ color: 'var(--text-tertiary)' }}>
+                RUB {formatCurrency(kpiData.total_revenue_rub, 'RUB')}
+              </p>
+            </>
+          )}
         </div>
 
         {/* Total Margin */}
@@ -137,12 +171,20 @@ const MarginAnalyticsModule: React.FC = () => {
           <p className="text-label uppercase" style={{ color: 'var(--text-tertiary)' }}>
             TOTAL MARGIN
           </p>
-          <p className="text-kpi-value my-2" style={{ color: 'var(--text-primary)' }}>
-            {formatCurrency(kpiData.total_margin_usd, 'USD')}
-          </p>
-          <p className="text-label-xs uppercase" style={{ color: 'var(--text-tertiary)' }}>
-            RUB {formatCurrency(kpiData.total_margin_rub, 'RUB')}
-          </p>
+          {loading || !kpiData ? (
+            <p className="text-kpi-value my-2" style={{ color: 'var(--text-tertiary)' }}>
+              ...
+            </p>
+          ) : (
+            <>
+              <p className="text-kpi-value my-2" style={{ color: 'var(--text-primary)' }}>
+                ${formatCurrency(kpiData.total_margin_usd, 'USD')}
+              </p>
+              <p className="text-label-xs uppercase" style={{ color: 'var(--text-tertiary)' }}>
+                RUB {formatCurrency(kpiData.total_margin_rub, 'RUB')}
+              </p>
+            </>
+          )}
         </div>
 
         {/* Margin % */}
@@ -153,9 +195,15 @@ const MarginAnalyticsModule: React.FC = () => {
           <p className="text-label uppercase" style={{ color: 'var(--text-tertiary)' }}>
             MARGIN %
           </p>
-          <p className="text-kpi-value my-2" style={{ color: 'var(--text-primary)' }}>
-            {formatPercent(kpiData.avg_margin_percent)}
-          </p>
+          {loading || !kpiData ? (
+            <p className="text-kpi-value my-2" style={{ color: 'var(--text-tertiary)' }}>
+              ...
+            </p>
+          ) : (
+            <p className="text-kpi-value my-2" style={{ color: 'var(--text-primary)' }}>
+              {formatPercent(kpiData.avg_margin_percent)}
+            </p>
+          )}
         </div>
 
         {/* Active Customers */}
@@ -166,9 +214,15 @@ const MarginAnalyticsModule: React.FC = () => {
           <p className="text-label uppercase" style={{ color: 'var(--text-tertiary)' }}>
             ACTIVE CUSTOMERS
           </p>
-          <p className="text-kpi-value my-2" style={{ color: 'var(--text-primary)' }}>
-            {kpiData.active_customers}
-          </p>
+          {loading ? (
+            <p className="text-kpi-value my-2" style={{ color: 'var(--text-tertiary)' }}>
+              ...
+            </p>
+          ) : (
+            <p className="text-kpi-value my-2" style={{ color: 'var(--text-primary)' }}>
+              {customers.length}
+            </p>
+          )}
         </div>
       </div>
 
@@ -191,11 +245,17 @@ const MarginAnalyticsModule: React.FC = () => {
             }}
             value={filterState.period}
             onChange={(e) => setFilterState({ ...filterState, period: e.target.value })}
+            disabled={loading}
           >
-            <option value="2026-01">Jan 2026</option>
-            <option value="2025-12">Dec 2025</option>
-            <option value="2025-11">Nov 2025</option>
-            <option value="2025-10">Oct 2025</option>
+            {availablePeriods.length === 0 ? (
+              <option value="">Loading...</option>
+            ) : (
+              availablePeriods.map((period) => (
+                <option key={period} value={period}>
+                  {formatPeriod(period)}
+                </option>
+              ))
+            )}
           </select>
         </div>
 
@@ -213,64 +273,68 @@ const MarginAnalyticsModule: React.FC = () => {
             }}
             value={filterState.category}
             onChange={(e) => setFilterState({ ...filterState, category: e.target.value })}
+            disabled={loading}
           >
             <option value="all">All Categories</option>
-            <option value="E-commerce">E-commerce</option>
-            <option value="Manufacturing">Manufacturing</option>
-            <option value="Retail">Retail</option>
+            {availableCategories.map((category) => (
+              <option key={category} value={category}>
+                {category}
+              </option>
+            ))}
           </select>
         </div>
 
         {/* Apply Button */}
         <button
-          className="w-full lg:w-auto px-6 py-3 text-body uppercase transition-opacity hover:opacity-80"
+          className="w-full lg:w-auto px-6 py-3 text-body uppercase transition-opacity hover:opacity-80 disabled:opacity-50"
           style={{ backgroundColor: '#E91E63', color: 'white' }}
-          onClick={() => {
-            // Trigger data reload
-            console.log('Applying filters:', filterState);
-          }}
+          onClick={handleApplyFilters}
+          disabled={loading}
         >
-          Apply Filters
+          {loading ? 'Loading...' : 'Apply Filters'}
         </button>
       </div>
 
       {/* Customer List */}
       <div className="p-6" style={{ backgroundColor: 'var(--bg-secondary)' }}>
         <h3 className="text-section-title uppercase mb-6" style={{ color: 'var(--text-secondary)' }}>
-          CUSTOMERS BY MARGIN
+          TOP CUSTOMERS BY REVENUE
         </h3>
-        <div className="space-y-4">
-          {customers
-            .sort((a, b) => {
-              if (sortBy === 'margin_rub') return b.margin_rub - a.margin_rub;
-              if (sortBy === 'revenue_rub') return b.revenue_rub - a.revenue_rub;
-              return b.margin_percent - a.margin_percent;
-            })
-            .map((customer, index) => (
+
+        {loading ? (
+          <p className="text-body" style={{ color: 'var(--text-tertiary)' }}>
+            Loading customers...
+          </p>
+        ) : customers.length === 0 ? (
+          <p className="text-body" style={{ color: 'var(--text-tertiary)' }}>
+            No customers found for selected filters
+          </p>
+        ) : (
+          <div className="space-y-4">
+            {customers.map((customer) => (
               <div
-                key={customer.id}
-                className="p-4 border-l-2 transition-colors duration-fast hover:bg-[var(--bg-primary)] cursor-pointer"
+                key={customer.customer_id}
+                className="p-4 border-l-2 transition-colors duration-fast hover:bg-[var(--bg-primary)]"
                 style={{
                   backgroundColor: 'var(--bg-tertiary)',
                   borderColor: '#E91E63',
                 }}
-                onClick={() => setSelectedCustomer(customer)}
               >
                 <div className="flex items-start gap-3">
                   {/* Rank */}
                   <span className="text-label uppercase" style={{ color: 'var(--text-tertiary)' }}>
-                    {String(index + 1).padStart(2, '0')}
+                    {String(customer.rank).padStart(2, '0')}
                   </span>
 
                   <div className="flex-1 min-w-0">
                     {/* Customer Name */}
                     <p className="text-body mb-1" style={{ color: 'var(--text-primary)' }}>
-                      {customer.name}
+                      {customer.customer_name}
                     </p>
 
-                    {/* Category */}
+                    {/* INN & Category */}
                     <p className="text-label-xs uppercase mb-2" style={{ color: 'var(--text-tertiary)' }}>
-                      {customer.category}
+                      INN: {customer.customer_inn} • {customer.customer_category}
                     </p>
 
                     {/* Metrics Row */}
@@ -280,7 +344,7 @@ const MarginAnalyticsModule: React.FC = () => {
                           REVENUE
                         </p>
                         <p className="text-body-sm" style={{ color: 'var(--text-primary)' }}>
-                          {formatCurrency(customer.revenue_usd, 'USD')}{' '}
+                          ${formatCurrency(customer.revenue_usd, 'USD')}{' '}
                           <span style={{ color: 'var(--text-tertiary)' }}>
                             RUB {formatCurrency(customer.revenue_rub, 'RUB')}
                           </span>
@@ -292,7 +356,7 @@ const MarginAnalyticsModule: React.FC = () => {
                           MARGIN
                         </p>
                         <p className="text-body-sm" style={{ color: 'var(--text-primary)' }}>
-                          {formatCurrency(customer.margin_usd, 'USD')}{' '}
+                          ${formatCurrency(customer.margin_usd, 'USD')}{' '}
                           <span style={{ color: 'var(--text-tertiary)' }}>
                             RUB {formatCurrency(customer.margin_rub, 'RUB')}
                           </span>
@@ -307,27 +371,22 @@ const MarginAnalyticsModule: React.FC = () => {
                           {formatPercent(customer.margin_percent)}
                         </p>
                       </div>
-                    </div>
 
-                    {/* Anomaly Alert */}
-                    {customer.has_anomaly && (
-                      <div
-                        className="mt-2 p-2 border-l-2"
-                        style={{
-                          backgroundColor: 'var(--bg-primary)',
-                          borderColor: 'var(--status-warning)',
-                        }}
-                      >
-                        <p className="text-label-xs uppercase" style={{ color: 'var(--status-warning)' }}>
-                          ⚠ {customer.anomaly_message}
+                      <div>
+                        <p className="text-label-xs uppercase" style={{ color: 'var(--text-tertiary)' }}>
+                          TRANSACTIONS
+                        </p>
+                        <p className="text-body-sm" style={{ color: 'var(--text-primary)' }}>
+                          {customer.transaction_count}
                         </p>
                       </div>
-                    )}
+                    </div>
                   </div>
                 </div>
               </div>
             ))}
-        </div>
+          </div>
+        )}
       </div>
     </div>
   );

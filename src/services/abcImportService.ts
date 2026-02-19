@@ -52,11 +52,15 @@ export async function parseABCFile(file: File): Promise<ABCClassificationRow[]> 
 
   // Find column indices - column 1 is product/grouping
   const productCol = 1; // Second column is always the grouping/product column
+
+  // Find revenue column (prefer "без ндс" version)
   const revenueCol = headers.findIndex(h =>
-    h.includes('выручка') && (h.includes('валюте') || h.includes('упр'))
+    h.includes('выручк') && h.includes('валют')
   );
+
+  // Find profit column
   const profitCol = headers.findIndex(h =>
-    h.includes('валов') && h.includes('приб')
+    h.includes('прибыл') && h.includes('валют')
   );
 
   console.log('ABC Parse - Found columns:', { productCol, revenueCol, profitCol });
